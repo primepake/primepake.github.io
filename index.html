@@ -269,9 +269,28 @@
               }
             }
 
+            // Tiny click sound via Web Audio API
+            var audioCtx = null;
+            function playClick() {
+              if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+              var buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.04, audioCtx.sampleRate);
+              var data = buf.getChannelData(0);
+              for (var i = 0; i < data.length; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 10);
+              }
+              var src = audioCtx.createBufferSource();
+              src.buffer = buf;
+              var gain = audioCtx.createGain();
+              gain.gain.value = 0.15;
+              src.connect(gain);
+              gain.connect(audioCtx.destination);
+              src.start();
+            }
+
             function goTo(newIndex) {
               var prev = activeIndex;
               activeIndex = mod(newIndex, count);
+              playClick();
               loadNearbyVideos();
               render(prev);
             }
