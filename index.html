@@ -316,10 +316,14 @@
 
               lightboxPlayer.src = src;
               lightboxPlayer.currentTime = startTime || 0;
-              lightboxPlayer.muted = false;
               lightbox.classList.add('is-open');
               document.body.style.overflow = 'hidden';
-              lightboxPlayer.play().catch(function() {});
+              // Try unmuted first, fallback to muted for mobile autoplay restrictions
+              lightboxPlayer.muted = false;
+              lightboxPlayer.play().catch(function() {
+                lightboxPlayer.muted = true;
+                lightboxPlayer.play().catch(function() {});
+              });
             }
 
             function closeLightbox() {
