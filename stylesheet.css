@@ -1,5 +1,4 @@
-/* Inter - Modern Professional Font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Inter font loaded via <link> in HTML for non-blocking rendering */
 
 /* ===== Dark Blue/Teal Design System ===== */
 :root {
@@ -67,21 +66,6 @@
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
-}
-
-@keyframes softPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
-  50% { box-shadow: 0 0 20px 4px rgba(14, 165, 233, 0.3); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
 }
 
 /* Mirage-style animated gradient */
@@ -153,6 +137,7 @@ body {
   filter: blur(100px);
   opacity: 0.35;
   mix-blend-mode: screen;
+  will-change: transform;
 }
 
 .gradient-bg .blob-1 {
@@ -211,6 +196,7 @@ body::before {
   animation: gradientFlow 20s ease-in-out infinite;
   pointer-events: none;
   z-index: -1;
+  will-change: background-position;
 }
 
 /* Decorative floating sparkles */
@@ -1530,6 +1516,7 @@ span.highlight {
               filter 0.5s cubic-bezier(0.16, 1, 0.3, 1),
               border-color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
 
 /* Card sizes by aspect ratio */
@@ -1929,6 +1916,24 @@ span.highlight {
   text-transform: uppercase;
   margin-left: 8px;
   vertical-align: middle;
+}
+
+/* ===== Content Visibility (skip rendering for off-screen sections) ===== */
+.project-grid,
+.oss-grid,
+.misc-table,
+.impact-timeline {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* ===== Reduced Motion (accessibility) ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ===== Mobile Responsive ===== */
