@@ -174,23 +174,13 @@
 
             function mod(n, m) { return ((n % m) + m) % m; }
 
-            // Lazy-load videos within 5 positions, unload those beyond 7
+            // Load all videos
             function loadNearbyVideos() {
               for (var i = 0; i < count; i++) {
-                var diff = i - activeIndex;
-                if (diff > count / 2) diff -= count;
-                if (diff < -count / 2) diff += count;
-                var absDiff = Math.abs(diff);
                 var video = thumbs[i].querySelector('video');
                 if (!video) continue;
-                if (absDiff <= 5) {
-                  if (!video.src && video.dataset.src) {
-                    video.src = video.dataset.src;
-                  }
-                } else if (absDiff > 7 && video.src) {
-                  video.pause();
-                  video.removeAttribute('src');
-                  video.load();
+                if (!video.src && video.dataset.src) {
+                  video.src = video.dataset.src;
                 }
               }
             }
