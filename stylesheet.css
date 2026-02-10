@@ -183,19 +183,6 @@ body {
 }
 
 
-/* Decorative floating sparkles */
-body::after {
-  content: '\2726';
-  position: fixed;
-  top: 15%;
-  right: 10%;
-  font-size: 24px;
-  color: #22d3ee;
-  opacity: 0.4;
-  animation: float 4s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
-}
 
 a {
   color: var(--color-accent);
@@ -246,39 +233,29 @@ a:hover {
   overflow: visible;
   background: linear-gradient(135deg, #7dd3fc, #22d3ee, #0ea5e9, #0284c7);
   background-size: 300% 300%;
-  animation: gradientFlow 8s ease infinite;
+  animation: gradientFlow 25s ease infinite;
   padding: 4px;
   transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   box-shadow: 0 10px 30px rgba(14, 165, 233, 0.25);
 }
 
-.profile-photo-frame::before,
-.profile-photo-frame::after {
+
+.profile-photo-frame::before {
   content: '\2726';
   position: absolute;
+  top: 5%;
+  right: 5%;
   font-size: 14px;
   color: #22d3ee;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: sparkle 4s ease-in-out infinite;
 }
 
-.profile-photo-frame::before {
-  top: 5%;
-  right: 5%;
-  animation: sparkle 2s ease-in-out infinite;
-}
-
-.profile-photo-frame::after {
-  bottom: 10%;
-  left: 0%;
-  animation: sparkle 2s ease-in-out infinite 0.5s;
-}
-
-.profile-photo-frame:hover::before,
-.profile-photo-frame:hover::after {
-  opacity: 1;
+.profile-photo-frame:hover::before {
+  opacity: 0.6;
 }
 
 .profile-photo-frame:hover {
@@ -358,15 +335,6 @@ h2 {
   background-clip: text;
 }
 
-.name::after {
-  content: '\2728';
-  position: absolute;
-  top: 15px;
-  right: -30px;
-  font-size: 20px;
-  animation: float 2s ease-in-out infinite;
-  -webkit-text-fill-color: initial;
-}
 
 
 .one {
@@ -1592,13 +1560,6 @@ span.highlight {
     font-size: 30px;
     display: block;
     text-align: center;
-  }
-
-  .name::after {
-    font-size: 16px;
-    position: static;
-    display: inline;
-    margin-left: 4px;
   }
 
   /* --- Paper row (EditYourself): stack image above text --- */
