@@ -718,7 +718,95 @@
 
           </div>
 
-          
+          <!-- Articles Section -->
+          <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
+              <tr>
+              <td style="padding:16px;width:100%;vertical-align:middle">
+                <h2>Articles</h2>
+                <p>
+                  Interactive deep-dives into the concepts and architectures behind modern AI systems.
+                </p>
+              </td>
+            </tr>
+          </tbody></table>
+          <div class="articles-grid">
+
+            <div class="article-card" data-article="articles/edityourself_concepts.html">
+              <div class="article-card-icon">
+                <span class="article-icon-text">🎬</span>
+              </div>
+              <div class="article-card-body">
+                <span class="article-card-title">EditYourself — How It Works</span>
+                <div class="article-card-tags">
+                  <span class="venue-tag">Interactive</span>
+                  <span class="venue-tag">Diffusion</span>
+                  <span class="venue-tag">Lip-Sync</span>
+                </div>
+                <p class="article-card-desc">An interactive guide to EditYourself's audio-driven talking head pipeline — selective masking, audio conditioning, sliding window denoising, and multi-scale refinement.</p>
+                <span class="article-card-read">Read article →</span>
+              </div>
+            </div>
+
+            <div class="article-card" data-article="articles/transformer_rope_pipeline.html">
+              <div class="article-card-icon">
+                <span class="article-icon-text">🔄</span>
+              </div>
+              <div class="article-card-body">
+                <span class="article-card-title">Transformer + RoPE: Full Pipeline</span>
+                <div class="article-card-tags">
+                  <span class="venue-tag">Interactive</span>
+                  <span class="venue-tag">Transformer</span>
+                </div>
+                <p class="article-card-desc">Step-by-step walkthrough of the full Transformer pipeline with Rotary Position Embeddings — from raw text to output, with actual numbers and visualizations.</p>
+                <span class="article-card-read">Read article →</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Article Lightbox -->
+          <div class="article-lightbox" id="articleLightbox">
+            <div class="article-lightbox-backdrop"></div>
+            <div class="article-lightbox-content">
+              <iframe class="article-lightbox-iframe" id="articleIframe"></iframe>
+              <button class="article-lightbox-close" aria-label="Close">&#10005;</button>
+            </div>
+          </div>
+
+          <script>
+          (function() {
+            var lightbox = document.getElementById('articleLightbox');
+            var iframe = document.getElementById('articleIframe');
+            var closeBtn = lightbox.querySelector('.article-lightbox-close');
+            var backdrop = lightbox.querySelector('.article-lightbox-backdrop');
+
+            document.querySelectorAll('.article-card').forEach(function(card) {
+              card.addEventListener('click', function() {
+                var src = card.getAttribute('data-article');
+                if (!src) return;
+                iframe.src = src;
+                lightbox.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+              });
+            });
+
+            function closeArticle() {
+              lightbox.classList.remove('is-open');
+              document.body.style.overflow = '';
+              iframe.removeAttribute('src');
+            }
+
+            closeBtn.addEventListener('click', closeArticle);
+            backdrop.addEventListener('click', closeArticle);
+            document.addEventListener('keydown', function(e) {
+              if (e.key === 'Escape' && lightbox.classList.contains('is-open')) {
+                closeArticle();
+              }
+            });
+          })();
+          </script>
+
+
 					<table style="width:100%; margin:0 auto; border:0; border-spacing:0; padding:16px;"><tbody>
             <tr>
               <td>

@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EditYourself — How It Works</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:#05080e; --s1:#0a1019; --s2:#0e1524; --s3:#131d32;
+  --bd:#172038; --bd2:#243055;
+  --t:#8e9fb8; --td:#3f5070; --tb:#dee6f2;
+  --blue:#4a8ee6; --green:#30c878; --orange:#e89040; --red:#e05555;
+  --purple:#9078e8; --cyan:#28c8d8; --pink:#d868a0; --yellow:#dcc030;
+  --ba:rgba(74,142,230,.1); --ga:rgba(48,200,120,.08); --oa:rgba(232,144,64,.08);
+  --ra:rgba(224,85,85,.08); --pa:rgba(144,120,232,.08); --ca:rgba(40,200,216,.08);
+  --ka:rgba(216,104,160,.08); --ya:rgba(220,192,48,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+.pg{max-width:1080px;margin:0 auto;padding:36px 20px 100px}
+
+.hd{margin-bottom:32px;text-align:center}
+.hd h1{font-family:'Fraunces',serif;font-size:2rem;font-weight:800;color:var(--tb);letter-spacing:-.5px}
+.hd .paper{font-size:.88rem;color:var(--blue);margin:6px 0 4px;font-style:italic;font-weight:500;padding:0 12px}
+.hd .sub{font-size:.85rem;color:var(--td);font-weight:300}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border:1px solid var(--bd);border-radius:12px;overflow-x:auto;background:var(--s1);margin-bottom:30px;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{height:0;display:none}
+.tab{flex:1 0 auto;min-width:88px;padding:12px 6px;text-align:center;font-size:.68rem;color:var(--td);cursor:pointer;border-right:1px solid var(--bd);position:relative;transition:all .2s;font-weight:500;white-space:nowrap}
+.tab:last-child{border-right:none}
+.tab:hover{background:rgba(74,142,230,.04)}
+.tab.on{background:var(--ba);color:var(--blue)}
+.tab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;background:var(--blue);border-radius:2px 2px 0 0}
+
+.sec{display:none;animation:fu .35s ease}.sec.on{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.st{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--tb);margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;line-height:1.4}
+.chip{font-size:.6rem;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:16px;font-weight:500;flex-shrink:0}
+.desc{font-size:.9rem;color:var(--t);margin-bottom:22px;line-height:1.9;word-wrap:break-word;overflow-wrap:break-word}
+.desc strong{color:var(--tb);font-weight:600}
+
+/* Cards */
+.cd{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:26px;margin-bottom:16px;position:relative;overflow:hidden}
+.cd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:.12}
+.cl{font-size:.64rem;font-family:'DM Mono',monospace;color:var(--td);text-transform:uppercase;letter-spacing:1.6px;margin-bottom:14px;word-wrap:break-word}
+
+.ins,.wrn,.analogy{padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.ins{background:var(--ga);border-left:3px solid var(--green)}
+.ins b{color:var(--green);font-weight:600}
+.wrn{background:var(--oa);border-left:3px solid var(--orange)}
+.wrn b{color:var(--orange);font-weight:600}
+.analogy{background:var(--pa);border-left:3px solid var(--purple)}
+.analogy b{color:var(--purple);font-weight:600}
+
+canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.ctrl{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;margin:12px 0}
+.ctrl-g{display:flex;flex-direction:column;gap:4px}
+.ctrl label{font-size:.64rem;font-family:'DM Mono',monospace;color:var(--td);text-transform:uppercase;letter-spacing:.6px}
+.ctrl input[type=range]{width:180px;max-width:100%;height:3px;-webkit-appearance:none;background:var(--s3);border-radius:2px;outline:none}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--blue);border-radius:50%;cursor:pointer;box-shadow:0 0 8px rgba(74,142,230,.3)}
+.cv{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--blue);min-width:50px}
+
+.nav{display:flex;justify-content:space-between;margin-top:30px;gap:12px}
+.nb{padding:10px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.86rem;cursor:pointer;border:1px solid var(--bd);background:var(--s1);color:var(--t);transition:all .2s;font-weight:500;flex-shrink:0}
+.nb:hover{border-color:var(--blue);color:var(--blue)}
+.nb.pr{background:var(--ba);border-color:rgba(74,142,230,.3);color:var(--blue)}
+.nb:disabled{opacity:.25;cursor:not-allowed}
+
+/* Mobile responsive */
+@media(max-width:700px){
+  .cols{grid-template-columns:1fr}
+  .pg{padding:20px 12px 60px}
+  .hd h1{font-size:1.5rem}
+  .hd .paper{font-size:.78rem;padding:0 4px}
+  .hd .sub{font-size:.76rem}
+  .tabs{border-radius:8px;margin-bottom:20px}
+  .tab{min-width:auto;padding:10px 4px;font-size:.55rem;flex:0 0 auto;min-width:56px}
+  .st{font-size:1.1rem;gap:8px}
+  .chip{font-size:.52rem;padding:2px 8px}
+  .desc{font-size:.82rem;line-height:1.75}
+  .cd{padding:16px 14px;border-radius:10px}
+  .cl{font-size:.58rem;letter-spacing:1.2px;margin-bottom:10px}
+  .ins,.wrn,.analogy{padding:12px 14px;font-size:.8rem;line-height:1.7;margin:14px 0}
+  .ctrl input[type=range]{width:140px}
+  .nb{padding:8px 16px;font-size:.8rem}
+}
+
+@media(max-width:400px){
+  .pg{padding:14px 8px 50px}
+  .hd h1{font-size:1.3rem}
+  .tab{min-width:48px;font-size:.5rem;padding:8px 2px}
+  .st{font-size:1rem}
+  .cd{padding:12px 10px}
+  .nb{padding:8px 12px;font-size:.76rem}
+}
+</style>
+</head>
+<body>
+<div class="pg">
+
+<div class="hd">
+  <h1>🎬 EditYourself</h1>
+  <div class="paper">Audio-Driven Generation and Manipulation of Talking Head Videos<br>with Diffusion Transformers</div>
+  <div class="sub">An interactive guide to how the pipeline works — concepts</div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<!-- ===== S0: The Problem ===== -->
+<div class="sec on" id="s0">
+<div class="st">What Does EditYourself Do? <span class="chip" style="background:var(--ba);color:var(--blue)">THE PROBLEM</span></div>
+<p class="desc">Given a <strong>video of a person</strong> and an <strong>audio recording</strong> of someone speaking, EditYourself generates a new video where the person in the video appears to speak the audio — with <strong>realistic lip movements</strong>, <strong>preserved identity</strong>, and <strong>temporal coherence</strong>.</p>
+
+<div class="cd">
+<div class="cl">The challenge</div>
+<canvas id="problemC" width="1020" height="320"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">Why is this hard?</div>
+<div style="font-size:.9rem;line-height:2.2;word-wrap:break-word">
+  <span style="color:var(--red)">●</span> <strong>Lip sync must be precise</strong> — the mouth shape must match the audio phoneme-by-phoneme<br>
+  <span style="color:var(--orange)">●</span> <strong>Identity must be preserved</strong> — it should still look like the same person<br>
+  <span style="color:var(--green)">●</span> <strong>Only the mouth should change</strong> — hair, eyes, background, body should stay from the original<br>
+  <span style="color:var(--blue)">●</span> <strong>Long videos need temporal consistency</strong> — no flickering, smooth motion across frames<br>
+  <span style="color:var(--purple)">●</span> <strong>It must generalize</strong> — work with any person and any audio, not just trained subjects
+</div>
+</div>
+
+<div class="analogy"><b>Analogy:</b> Imagine you're a film editor. You have footage of an actor and a new voice-over audio. You need to seamlessly replace just the actor's mouth movements to match the new audio — frame by frame — without touching anything else in the scene. That's what EditYourself automates.</div>
+</div>
+
+<!-- ===== S1: Big Picture ===== -->
+<div class="sec" id="s1">
+<div class="st">The Big Picture <span class="chip" style="background:var(--ga);color:var(--green)">ARCHITECTURE</span></div>
+<p class="desc">EditYourself builds on a <strong>video diffusion transformer</strong> (LTX-Video). It starts from the reference video, adds noise, and then removes the noise — but with a twist: the mouth region is guided by audio instead of the original video.</p>
+
+<div class="cd">
+<div class="cl">Pipeline overview — interactive</div>
+<canvas id="archC" width="1020" height="420"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">The core idea in one sentence</div>
+<div style="font-size:1.05rem;color:var(--tb);font-family:'Fraunces',serif;text-align:center;padding:16px 8px;line-height:1.9;font-weight:500;word-wrap:break-word">
+  "Keep everything from the reference video <span style="color:var(--green)">except the lower face</span>,
+  which is regenerated from scratch, driven by <span style="color:var(--red)">audio features</span>."
+</div>
+</div>
+</div>
+
+<!-- ===== S2: The Selective Mask ===== -->
+<div class="sec" id="s2">
+<div class="st">The Selective Mask <span class="chip" style="background:var(--ra);color:var(--red)">KEY INNOVATION</span></div>
+<p class="desc">The most important idea: <strong>divide each frame into two zones</strong>. The upper face, hair, body, and background are locked to the reference video. The lower face (mouth + jaw) is left free for the model to generate, guided by audio.</p>
+
+<div class="cd">
+<div class="cl">Interactive: See how the mask works per frame</div>
+<div class="ctrl">
+  <div class="ctrl-g"><label>Mask Height</label><input type="range" id="mhR" min="30" max="90" value="60"><span class="cv" id="mhV">60%</span></div>
+</div>
+<canvas id="maskC" width="1020" height="340"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">Three signals working together</div>
+<canvas id="signalsC" width="1020" height="200"></canvas>
+</div>
+
+<div class="analogy"><b>Analogy — The stencil:</b> Think of a stencil placed over each video frame. The stencil has a hole cut out where the mouth is. Paint (audio-driven generation) only goes through the hole. Everything protected by the stencil (upper face, body, background) stays exactly as the original.</div>
+
+<div class="ins"><b>Special case — Frame 0:</b> The very first frame has NO audio mask. It's fully conditioned on the reference, providing a clean starting point for the model to animate forward from.</div>
+</div>
+
+<!-- ===== S3: Audio Conditioning ===== -->
+<div class="sec" id="s3">
+<div class="st">Audio → Lip Movements <span class="chip" style="background:var(--oa);color:var(--orange)">AUDIO CONDITIONING</span></div>
+<p class="desc">Audio features are extracted from the speech signal and projected into the same space as the visual tokens. But they don't attend to the whole image — <strong>audio only talks to mouth patches</strong>.</p>
+
+<div class="cd">
+<div class="cl">How audio reaches the mouth</div>
+<canvas id="audioC" width="1020" height="320"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">Per-frame alignment</div>
+<canvas id="alignC" width="1020" height="160"></canvas>
+</div>
+
+<div class="analogy"><b>Analogy — Whispering directions:</b> Imagine each video frame has many patches (small regions). The audio signal is like a director whispering "make an 'O' shape" to the mouth patches, while all other patches (eyes, hair, etc.) have earplugs and can't hear the director at all. The audio attention mask is those earplugs.</div>
+</div>
+
+<!-- ===== S4: Sliding Window ===== -->
+<div class="sec" id="s4">
+<div class="st">Processing Long Videos <span class="chip" style="background:var(--pa);color:var(--purple)">SLIDING WINDOW</span></div>
+<p class="desc">A 10-second video at 25fps has 250 frames. The transformer can't process all at once, so EditYourself uses a <strong>sliding window</strong>: process a chunk of frames, slide forward, process the next chunk, with overlapping regions to ensure smooth transitions.</p>
+
+<div class="cd">
+<div class="cl">Interactive: Sliding window denoising</div>
+<div class="ctrl">
+  <div class="ctrl-g"><label>Timestep</label><input type="range" id="tsR" min="0" max="4" value="0"><span class="cv" id="tsV">t=1.0 (noise)</span></div>
+</div>
+<canvas id="slideC" width="1020" height="280"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">Three tricks for seamless blocks</div>
+<canvas id="tricksC" width="1020" height="220"></canvas>
+</div>
+
+<div class="wrn"><b>Why overlap matters:</b> Without overlap, you'd see visible seams where one block ends and the next begins — like visible stitching on a quilt. Overlap regions are denoised by both blocks and averaged, creating a smooth blend.</div>
+</div>
+
+<!-- ===== S5: 3D Position Encoding ===== -->
+<div class="sec" id="s5">
+<div class="st">3D Position Encoding (RoPE) <span class="chip" style="background:var(--ca);color:var(--cyan)">WHERE AM I?</span></div>
+<p class="desc">Every patch in the video needs to know <strong>where</strong> it is — in time, height, and width. EditYourself uses <strong>3D Rotary Position Embedding</strong>, but with a twist: the time axis uses <strong>real timestamps</strong> (in seconds) instead of simple frame counts.</p>
+
+<div class="cd">
+<div class="cl">Each patch knows its 3D address</div>
+<canvas id="posC" width="1020" height="300"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">Why real timestamps instead of frame numbers?</div>
+<canvas id="whyTsC" width="1020" height="260"></canvas>
+</div>
+
+<div class="analogy"><b>Analogy — GPS for patches:</b> Every patch in the video gets a GPS coordinate (time, row, column). When two patches compute attention, the RoPE rotation makes the score naturally depend on how far apart they are — like signal strength dropping with distance. Nearby patches (same frame, adjacent position) communicate strongly. Distant patches (3 frames away, opposite corner) communicate weakly.</div>
+</div>
+
+<!-- ===== S6: Identity Reference ===== -->
+<div class="sec" id="s6">
+<div class="st">Identity Preservation <span class="chip" style="background:var(--oa);color:var(--orange)">FACE ID</span></div>
+<p class="desc">To keep the person's face looking like them (not a generic face), EditYourself extracts <strong>face tokens from reference frames</strong> and injects them as extra context. These tokens are placed at <strong>negative time positions</strong> — "before" the current window.</p>
+
+<div class="cd">
+<div class="cl">Interactive: Identity reference on the timeline</div>
+<div class="ctrl">
+  <div class="ctrl-g"><label>Num References</label><input type="range" id="nrR" min="1" max="5" value="3"><span class="cv" id="nrV">3 refs</span></div>
+</div>
+<canvas id="idC" width="1020" height="220"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">What makes reference tokens special</div>
+<canvas id="refPropsC" width="1020" height="180"></canvas>
+</div>
+
+<div class="analogy"><b>Analogy — Photo on the desk:</b> Imagine you're an artist painting a portrait from memory. You keep a few reference photos on your desk (identity tokens). They're from the past (negative time), they're clean and clear (zero noise), and you only look at them to remember what the person's face looks like — not to copy the exact expression.</div>
+</div>
+
+<!-- ===== S7: Guidance ===== -->
+<div class="sec" id="s7">
+<div class="st">Guidance Strategies <span class="chip" style="background:var(--ka);color:var(--pink)">QUALITY CONTROL</span></div>
+<p class="desc">EditYourself runs the transformer <strong>multiple times per denoising step</strong> with different conditions, then combines the results to amplify quality. This uses two complementary techniques: <strong>Classifier-Free Guidance (CFG)</strong> and <strong>Spatio-Temporal Guidance (STG)</strong>.</p>
+
+<div class="cd">
+<div class="cl">How guidance works — visually</div>
+<canvas id="guidC" width="1020" height="350"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">CFG* — the "star" variant</div>
+<canvas id="cfgStarC" width="1020" height="150"></canvas>
+</div>
+
+<div class="analogy"><b>Analogy — Two drafts:</b> CFG is like asking an artist to draw two versions: one following the brief (conditional) and one ignoring it (unconditional). The final image exaggerates the differences — amplifying what the brief contributed. STG is like asking the artist to draw with one hand tied (skipped layers) — the difference from the full version reveals what those layers contribute, which is then amplified.</div>
+</div>
+
+<!-- ===== S8: Multi-Scale ===== -->
+<div class="sec" id="s8">
+<div class="st">Multi-Scale Refinement <span class="chip" style="background:var(--ya);color:var(--yellow)">HIGH-RES</span></div>
+<p class="desc">For high-resolution output, EditYourself uses a <strong>two-pass approach</strong>: first generate at low resolution (where the mouth has enough tokens), then upsample and refine at full resolution.</p>
+
+<div class="cd">
+<div class="cl">Two-pass pipeline</div>
+<canvas id="msC" width="1020" height="250"></canvas>
+</div>
+
+<div class="wrn"><b>Why two passes?</b> At 720p, the mouth might only be 3-4 tokens in the latent space — too few pixels for the model to express different mouth shapes. By first rendering at half resolution, the mouth gets 12-16 tokens. The second pass adds crisp spatial detail to the upsampled result.</div>
+</div>
+
+<!-- ===== S9: Summary ===== -->
+<div class="sec" id="s9">
+<div class="st">Putting It All Together <span class="chip" style="background:var(--ba);color:var(--blue)">SUMMARY</span></div>
+
+<div class="cd">
+<div class="cl">The complete EditYourself pipeline</div>
+<canvas id="sumC" width="1020" height="520"></canvas>
+</div>
+
+<div class="cols">
+<div class="cd">
+<div class="cl">What enables lip-sync</div>
+<div style="font-size:.88rem;line-height:2.3">
+  <span style="color:var(--red)">①</span> Lower face mask removes conditioning<br>
+  <span style="color:var(--orange)">②</span> Audio cross-attention targets only mouth<br>
+  <span style="color:var(--green)">③</span> Per-frame audio features match phonemes<br>
+  <span style="color:var(--blue)">④</span> 3D RoPE tells model where the mouth is<br>
+  <span style="color:var(--purple)">⑤</span> Identity refs keep face shape consistent
+</div>
+</div>
+<div class="cd">
+<div class="cl">What enables temporal coherence</div>
+<div style="font-size:.88rem;line-height:2.3">
+  <span style="color:var(--cyan)">①</span> Real timestamps across sliding windows<br>
+  <span style="color:var(--orange)">②</span> Block overlap + per-frame noise tracking<br>
+  <span style="color:var(--purple)">③</span> Block shift avoids boundary artifacts<br>
+  <span style="color:var(--green)">④</span> Closest real frames anchor synthetic blocks<br>
+  <span style="color:var(--pink)">⑤</span> Timestamp clamping for distant references
+</div>
+</div>
+</div>
+</div>
+
+<div class="nav">
+  <button class="nb" id="pB" disabled onclick="go(-1)">← Previous</button>
+  <button class="nb pr" id="nB" onclick="go(1)">Next →</button>
+</div>
+</div>
+
+<script>
+// ========= Navigation =========
+const STEPS=['The Problem','Big Picture','The Selective Mask','Audio → Lips','Sliding Window','3D Positions','Identity Refs','Guidance','Multi-Scale','Summary'];
+let cur=0;
+const $=id=>document.getElementById(id);
+function buildTabs(){$('tabs').innerHTML=STEPS.map((s,i)=>`<div class="tab${i===0?' on':''}" data-i="${i}">${s}</div>`).join('');$('tabs').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTo(+t.dataset.i)))}
+function goTo(n){cur=n;document.querySelectorAll('.sec').forEach((e,i)=>e.classList.toggle('on',i===n));document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('on',i===n));$('pB').disabled=n===0;const nb=$('nB');nb.disabled=n===STEPS.length-1;nb.textContent=n===STEPS.length-1?'Done ✓':'Next →';render()}
+function go(d){if(cur+d>=0&&cur+d<STEPS.length)goTo(cur+d)}
+buildTabs();
+
+// ========= Drawing Helpers =========
+const DESIGN_W=1020;
+function dpr(c){
+  var r=window.devicePixelRatio||1;
+  var parent=c.parentElement;
+  var padL=parent?parseFloat(getComputedStyle(parent).paddingLeft)||0:0;
+  var padR=parent?parseFloat(getComputedStyle(parent).paddingRight)||0:0;
+  var availW=parent?(parent.clientWidth-padL-padR):DESIGN_W;
+  var logicW=Math.min(DESIGN_W,Math.max(280,availW));
+  var s=logicW/DESIGN_W;
+  var logicH=Math.round(c._origH*s);
+  c.width=logicW*r;c.height=logicH*r;
+  c.style.width=logicW+'px';c.style.height=logicH+'px';
+  var ctx=c.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.scale(r*s,r*s);
+  return{w:DESIGN_W,h:c._origH,x:ctx,s:s};
+}
+// Store original dimensions
+document.querySelectorAll('canvas').forEach(function(c){c._origW=c.width||DESIGN_W;c._origH=c.height||300;});
+
+function roundRect(x,y,w,h,r,ctx){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
+
+function arrow(ctx,x1,y1,x2,y2,color='#3f5070'){ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1),s=7;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-s*Math.cos(a-.4),y2-s*Math.sin(a-.4));ctx.lineTo(x2-s*Math.cos(a+.4),y2-s*Math.sin(a+.4));ctx.fill()}
+
+function box(ctx,x,y,w,h,fill,stroke,text,textColor,fontSize=11){
+  roundRect(x,y,w,h,6,ctx);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();
+  if(text){ctx.fillStyle=textColor||stroke;ctx.font=`${fontSize}px 'DM Sans'`;ctx.textAlign='center';ctx.textBaseline='middle';
+    const lines=text.split('\n');lines.forEach((l,i)=>ctx.fillText(l,x+w/2,y+h/2+(i-(lines.length-1)/2)*15));}
+}
+
+// ========= Renders =========
+function render(){
+  [renderProblem,renderArch,renderMask,renderAudio,renderSlide,renderPos,renderId,renderGuid,renderMS,renderSum][cur]?.();
+}
+
+// S0: Problem
+function renderProblem(){
+  const{w,h,x}=dpr($('problemC'));x.clearRect(0,0,w,h);
+  // Input video
+  box(x,30,30,160,100,'rgba(74,142,230,.08)','rgba(74,142,230,.3)','Reference Video\n🎥 Person talking\nabout weather','#8eb8e8');
+  // Plus
+  x.fillStyle='#3f5070';x.font='bold 28px DM Sans';x.textAlign='center';x.fillText('+',230,80);
+  // Audio
+  box(x,270,30,160,100,'rgba(232,144,64,.08)','rgba(232,144,64,.3)','New Audio\n🎤 "Hello, my name\nis Sam"','#e8b070');
+  // Arrow
+  arrow(x,460,80,530,80,'#3f5070');
+  // Magic box
+  box(x,540,20,180,120,'rgba(216,104,160,.08)','rgba(216,104,160,.3)','EditYourself\n✨ Diffusion\nTransformer','#d880a8');
+  // Arrow
+  arrow(x,740,80,810,80,'#3f5070');
+  // Output
+  box(x,820,30,170,100,'rgba(48,200,120,.08)','rgba(48,200,120,.3)','Output Video\n🎬 Same person\nsaying "Hello..."','#60d898');
+  
+  // Bottom details
+  x.font='12px DM Sans';x.fillStyle='#8eb8e8';x.textAlign='center';
+  x.fillText('Same identity',905,170);x.fillText('Same background',905,188);
+  x.fillStyle='#e05555';x.fillText('NEW lip movements',905,206);
+  x.fillStyle='#e8b070';x.fillText('Synced to audio',905,224);
+  
+  // Constraint arrows
+  const cy=260;x.font='11px DM Sans';x.textAlign='center';
+  [{l:'Identity',c:'#4a8ee6',px:170},{l:'Lip Sync',c:'#e05555',px:390},{l:'Coherence',c:'#9078e8',px:610},{l:'Quality',c:'#30c878',px:830}].forEach(item=>{
+    x.fillStyle=item.c;x.beginPath();x.arc(item.px,cy,22,0,Math.PI*2);x.fill();
+    x.fillStyle='#050810';x.font='bold 11px DM Sans';x.fillText('✓',item.px,cy+1);
+    x.fillStyle=item.c;x.font='11px DM Sans';x.fillText(item.l,item.px,cy+38);
+  });
+}
+
+// S1: Architecture
+function renderArch(){
+  const{w,h,x}=dpr($('archC'));x.clearRect(0,0,w,h);
+  // Input boxes
+  const inputs=[
+    {l:'Reference\nVideo',c:'#4a8ee6',y:20},
+    {l:'Audio\nTrack',c:'#e89040',y:100},
+    {l:'Text\nPrompt',c:'#9078e8',y:180},
+    {l:'Face\nCoordinates',c:'#d868a0',y:260},
+  ];
+  inputs.forEach(inp=>{
+    box(x,20,inp.y,110,65,`${inp.c}11`,`${inp.c}55`,inp.l,inp.c,11);
+    arrow(x,140,inp.y+32,190,inp.y+32,`${inp.c}55`);
+  });
+
+  // Encoders
+  const encoders=[
+    {l:'VAE\nEncoder',c:'#4a8ee6',y:20,out:'Latents\n(compressed\n3D grid)'},
+    {l:'Audio\nProjection',c:'#e89040',y:100,out:'Per-frame\naudio\nembeddings'},
+    {l:'T5 Text\nEncoder',c:'#9078e8',y:180,out:'Text\nembeddings'},
+    {l:'Face\nDetection',c:'#d868a0',y:260,out:'Lower face\nmask per\nframe'},
+  ];
+  encoders.forEach(enc=>{
+    box(x,195,enc.y,100,65,`${enc.c}18`,`${enc.c}44`,enc.l,enc.c,10);
+    arrow(x,305,enc.y+32,350,enc.y+32,`${enc.c}44`);
+    x.fillStyle=`${enc.c}aa`;x.font='9px DM Sans';x.textAlign='left';
+    enc.out.split('\n').forEach((l,i)=>x.fillText(l,355,enc.y+18+i*12));
+  });
+
+  // Big transformer box
+  const tx=480,ty=10,tw=280,th=340;
+  roundRect(tx,ty,tw,th,10,x);x.fillStyle='rgba(74,142,230,.04)';x.fill();
+  x.strokeStyle='rgba(74,142,230,.2)';x.lineWidth=1.5;x.stroke();
+  
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='center';
+  x.fillText('Diffusion Transformer',tx+tw/2,ty+24);
+  x.font='10px DM Sans';x.fillStyle='#8e9fb8';
+  x.fillText('(with 3D RoPE)',tx+tw/2,ty+40);
+
+  // Inside transformer
+  const items=[
+    {l:'Sliding Window\nBlock Selection',c:'#9078e8',y:55},
+    {l:'3D RoPE\n(time, height, width)',c:'#28c8d8',y:105},
+    {l:'Self-Attention\n+ Audio Cross-Attn',c:'#e89040',y:155},
+    {l:'Text Cross-Attention',c:'#9078e8',y:205},
+    {l:'Feed-Forward Network',c:'#30c878',y:245},
+    {l:'CFG + STG Guidance',c:'#d868a0',y:285},
+  ];
+  items.forEach(it=>{
+    box(x,tx+15,ty+it.y,tw-30,40,`${it.c}10`,`${it.c}33`,it.l,`${it.c}cc`,9);
+  });
+
+  // Repeat bracket
+  x.strokeStyle='rgba(74,142,230,.2)';x.setLineDash([3,3]);
+  x.strokeRect(tx+8,ty+95,tw-16,200);x.setLineDash([]);
+  x.fillStyle='#4a8ee6';x.font='9px DM Mono';x.textAlign='right';
+  x.fillText('× N layers',tx+tw-12,ty+100);
+
+  // Output
+  arrow(x,tx+tw+10,ty+th/2,tx+tw+50,ty+th/2,'#3f5070');
+  box(x,tx+tw+55,ty+th/2-40,130,80,'rgba(48,200,120,.08)','rgba(48,200,120,.3)','VAE Decode\nat t=0.025\n→ Video','#60d898',10);
+
+  // Denoising loop arrow
+  x.strokeStyle='rgba(224,85,85,.3)';x.lineWidth=1.5;x.setLineDash([4,4]);
+  x.beginPath();x.moveTo(tx+tw/2,ty+th+5);x.lineTo(tx+tw/2,ty+th+20);
+  x.lineTo(tx-30,ty+th+20);x.lineTo(tx-30,ty+th/2);x.lineTo(tx-10,ty+th/2);x.stroke();x.setLineDash([]);
+  x.fillStyle='#e05555';x.font='10px DM Sans';x.textAlign='center';
+  x.fillText('Repeat for each denoising timestep (t = 1.0 → 0.025)',tx+tw/2-20,ty+th+36);
+}
+
+// S2: Mask
+function renderMask(){
+  const{w,h,x}=dpr($('maskC'));x.clearRect(0,0,w,h);
+  const mh=+$('mhR').value;$('mhV').textContent=mh+'%';
+
+  const fw=140,fh=200,gap=16,pl=30,pt=40;
+  const frames=[
+    {l:'Frame 0',audio:false,note:'First frame\n(no audio — fully\nconditioned)'},
+    {l:'Frame 1',audio:true,note:''},
+    {l:'Frame 2',audio:true,note:''},
+    {l:'Frame 3',audio:true,note:''},
+    {l:'Frame N',audio:true,note:''},
+  ];
+
+  frames.forEach((f,i)=>{
+    const fx=pl+i*(fw+gap);
+    // Frame
+    roundRect(fx,pt,fw,fh,6,x);x.fillStyle='#0e1524';x.fill();x.strokeStyle='#172038';x.lineWidth=1;x.stroke();
+
+    // Head silhouette
+    const hx=fx+fw/2,hy=pt+60;
+    x.fillStyle='rgba(180,160,140,.06)';x.beginPath();x.ellipse(hx,hy,38,48,0,0,Math.PI*2);x.fill();
+
+    // Face bbox
+    const fbx=fx+28,fby=pt+18,fbw=fw-56,fbh=100;
+    const splitY=fby+fbh*(1-mh/100);
+
+    // Upper face — GREEN (conditioned)
+    roundRect(fbx,fby,fbw,splitY-fby,4,x);x.fillStyle='rgba(48,200,120,.12)';x.fill();x.strokeStyle='rgba(48,200,120,.3)';x.lineWidth=1;x.stroke();
+
+    // Lower face — RED (audio) or GREEN (frame 0)
+    if(f.audio){
+      roundRect(fbx,splitY,fbw,fby+fbh-splitY,4,x);x.fillStyle='rgba(224,85,85,.15)';x.fill();x.strokeStyle='rgba(224,85,85,.4)';x.lineWidth=1;x.stroke();
+      // Audio wave icon
+      x.strokeStyle='rgba(232,144,64,.5)';x.lineWidth=1.5;x.beginPath();
+      for(let wx=fbx+5;wx<fbx+fbw-5;wx+=2){x.lineTo(wx,splitY+(fby+fbh-splitY)/2+Math.sin(wx*.3+i*2)*6);}x.stroke();
+    } else {
+      roundRect(fbx,splitY,fbw,fby+fbh-splitY,4,x);x.fillStyle='rgba(48,200,120,.08)';x.fill();x.strokeStyle='rgba(48,200,120,.2)';x.lineWidth=1;x.stroke();
+    }
+
+    // Body (conditioned)
+    x.fillStyle='rgba(48,200,120,.05)';x.fillRect(fx+15,pt+130,fw-30,60);
+
+    // Label
+    x.fillStyle='#8e9fb8';x.font='11px DM Sans';x.textAlign='center';x.fillText(f.l,fx+fw/2,pt+fh+18);
+    if(f.note){x.fillStyle='#3f5070';x.font='9px DM Sans';f.note.split('\n').forEach((l,li)=>x.fillText(l,fx+fw/2,pt+fh+34+li*12));}
+  });
+
+  // Legend
+  const lx=pl+frames.length*(fw+gap)+8;
+  x.textAlign='left';x.font='11px DM Sans';
+  [{c:'#30c878',l:'Conditioned region',d:'Locked to reference video'},{c:'#e05555',l:'Free region (mouth)',d:'Generated from audio'},{c:'#e89040',l:'Audio attention active',d:'Audio features → these patches'}].forEach((it,i)=>{
+    const iy=pt+i*50;
+    x.fillStyle=it.c+'33';roundRect(lx,iy,14,14,3,x);x.fill();
+    x.fillStyle=it.c;x.font='bold 11px DM Sans';x.fillText(it.l,lx+22,iy+11);
+    x.fillStyle='#3f5070';x.font='10px DM Sans';x.fillText(it.d,lx+22,iy+27);
+  });
+}
+$('mhR').addEventListener('input',renderMask);
+
+// S2: Signals
+function renderSignals(){
+  const{w,h,x}=dpr($('signalsC'));x.clearRect(0,0,w,h);
+  const signals=[
+    {l:'Conditioning Mask',desc:'1.0 = keep reference, 0.0 = generate freely',c1:'#30c878',c0:'#e05555',vals:[1,1,0,1,1]},
+    {l:'Audio Attention Mask',desc:'True = audio features attend here',c1:'#e89040',c0:'#172038',vals:[0,0,1,0,0]},
+    {l:'Timestep',desc:'1.0 = pure noise, 0.0 = clean latent',c1:'#28c8d8',c0:'#9078e8',vals:[0,0,1,0,0]},
+  ];
+  const parts=['Eyes/Hair','Upper Face','Mouth','Body','Background'];
+  const cw=90,ch=36,gap=4,pl=200,pt=10;
+
+  x.font='11px DM Sans';x.textAlign='right';
+  signals.forEach((s,si)=>{
+    const sy=pt+si*60;
+    x.fillStyle='#dee6f2';x.fillText(s.l,pl-16,sy+15);
+    x.fillStyle='#3f5070';x.font='9px DM Sans';x.fillText(s.desc,pl-16,sy+30);
+    x.font='11px DM Sans';
+
+    s.vals.forEach((v,vi)=>{
+      const cx=pl+vi*(cw+gap);
+      const color=v?s.c1:s.c0;
+      roundRect(cx,sy,cw,ch,4,x);x.fillStyle=color+'22';x.fill();x.strokeStyle=color+'55';x.lineWidth=1;x.stroke();
+      x.fillStyle=color;x.font='bold 10px DM Mono';x.textAlign='center';
+      x.fillText(si===0?(v?'1.0':'0.0'):(si===1?(v?'TRUE':'FALSE'):(v?'1.0 (noise)':'0.0 (clean)')),cx+cw/2,sy+ch/2+4);
+    });
+  });
+  // Headers
+  x.font='10px DM Sans';x.fillStyle='#8e9fb8';x.textAlign='center';
+  parts.forEach((p,i)=>x.fillText(p,pl+i*(cw+gap)+cw/2,pt-4));
+}
+
+// S3: Audio flow
+function renderAudio(){
+  const{w,h,x}=dpr($('audioC'));x.clearRect(0,0,w,h);
+
+  // Audio waveform
+  box(x,30,20,160,60,'rgba(232,144,64,.08)','rgba(232,144,64,.3)','Audio Waveform\n🔊 Speech signal','#e8b070',10);
+
+  arrow(x,200,50,250,50,'#e89040');
+
+  // Feature extraction
+  box(x,255,20,140,60,'rgba(232,144,64,.08)','rgba(232,144,64,.25)','Feature Extraction\n(Wav2Vec2 / 50Hz)','#e89040',9);
+
+  arrow(x,405,50,445,50,'#e89040');
+
+  // Audio projection
+  box(x,450,20,120,60,'rgba(232,144,64,.08)','rgba(232,144,64,.25)','Audio Projection\n→ visual space','#e89040',9);
+
+  arrow(x,575,50,575,100,'#e89040');
+
+  // Per-frame features
+  const fy=110,fw=80,gap=8;
+  x.font='10px DM Sans';x.fillStyle='#e89040';x.textAlign='center';x.fillText('Per-frame audio embeddings:',400,fy);
+  for(let i=0;i<7;i++){
+    const fx=140+i*(fw+gap);
+    box(x,fx,fy+10,fw,35,'rgba(232,144,64,.06)','rgba(232,144,64,.2)',`Frame ${i}`,'#e89040',9);
+    // Arrow down
+    if(i>0)arrow(x,fx+fw/2,fy+50,fx+fw/2,fy+70,'rgba(232,144,64,.3)');
+  }
+
+  // Cross attention
+  x.fillStyle='#dee6f2';x.font='bold 12px DM Sans';x.textAlign='center';
+  x.fillText('Audio Cross-Attention (inside transformer)',400,fy+82);
+
+  // Frame with mask
+  const my=fy+100;
+  for(let i=1;i<6;i++){
+    const fx=120+i*110;
+    // Frame outline
+    roundRect(fx,my,80,90,4,x);x.fillStyle='#0e1524';x.fill();x.strokeStyle='#172038';x.lineWidth=1;x.stroke();
+    // Upper (no audio)
+    x.fillStyle='rgba(74,142,230,.06)';x.fillRect(fx+5,my+5,70,35);
+    x.strokeStyle='rgba(74,142,230,.15)';x.strokeRect(fx+5,my+5,70,35);
+    // Lower (audio attends)
+    x.fillStyle='rgba(232,144,64,.12)';x.fillRect(fx+5,my+45,70,35);
+    x.strokeStyle='rgba(232,144,64,.35)';x.strokeRect(fx+5,my+45,70,35);
+    // Audio arrow
+    x.strokeStyle='rgba(232,144,64,.4)';x.lineWidth=1;x.setLineDash([3,3]);
+    x.beginPath();x.moveTo(fx+40,my-2);x.lineTo(fx+40,my+45);x.stroke();x.setLineDash([]);
+    x.fillStyle='#3f5070';x.font='9px DM Sans';x.textAlign='center';x.fillText(`F${i}`,fx+40,my+100);
+  }
+
+  // Labels
+  x.font='9px DM Sans';x.textAlign='left';
+  x.fillStyle='rgba(74,142,230,.5)';x.fillText('← ignores audio',740,my+22);
+  x.fillStyle='rgba(232,144,64,.7)';x.fillText('← hears audio',740,my+62);
+}
+
+function renderAlign(){
+  const{w,h,x}=dpr($('alignC'));x.clearRect(0,0,w,h);
+  // Waveform
+  x.strokeStyle='rgba(232,144,64,.4)';x.lineWidth=1.5;x.beginPath();
+  for(let i=0;i<800;i++){const a=Math.sin(i*.05)*20+Math.sin(i*.13)*10+Math.sin(i*.02)*15;x.lineTo(110+i,40+a);}x.stroke();
+  x.fillStyle='#e89040';x.font='10px DM Sans';x.textAlign='left';x.fillText('Audio waveform',20,45);
+
+  // Frame markers
+  const phonemes=['silence','H','EH','L','OW','M','AY'];
+  for(let i=0;i<7;i++){
+    const fx=140+i*100;
+    x.strokeStyle='rgba(74,142,230,.3)';x.setLineDash([2,2]);x.beginPath();x.moveTo(fx,15);x.lineTo(fx,90);x.stroke();x.setLineDash([]);
+    x.fillStyle='#4a8ee6';x.font='9px DM Mono';x.textAlign='center';x.fillText(`F${i}`,fx,105);
+    x.fillStyle=i===0?'#3f5070':'#e89040';x.font='9px DM Sans';x.fillText(phonemes[i],fx,120);
+    // Mini mouth
+    if(i>0){
+      const mw=[8,16,12,18,14,10][i-1];
+      x.strokeStyle='#e89040';x.lineWidth=1.5;x.beginPath();x.ellipse(fx,80,mw,mw*.5,0,0,Math.PI*2);x.stroke();
+    }
+  }
+  x.fillStyle='#3f5070';x.font='9px DM Sans';x.textAlign='center';x.fillText('Each frame gets the audio features from the corresponding time window → mouth shape matches the phoneme',450,145);
+}
+
+// S4: Sliding Window
+function renderSlide(){
+  const{w,h,x}=dpr($('slideC'));x.clearRect(0,0,w,h);
+  const ts=+$('tsR').value;$('tsV').textContent=['t=1.0 (noise)','t=0.75','t=0.5','t=0.25','t=0.025 (done)'][ts];
+  const TF=24,bw=6,ol=2,stride=bw-ol;
+  const numBlocks=Math.ceil((TF-ol)/stride);
+  const pl=40,pr=20,pt=50,cellW=(w-pl-pr)/TF,cellH=30;
+
+  // Draw noise level background
+  const noiseAlpha=[.35,.28,.2,.12,.04][ts];
+
+  // Frame cells
+  for(let f=0;f<TF;f++){
+    const cx=pl+f*cellW;
+    // Determine which block(s) this frame belongs to
+    let inBlock=-1;
+    for(let b=0;b<numBlocks;b++){const s=b*stride;if(f>=s&&f<s+bw&&f<TF)inBlock=b;}
+    const isOl=inBlock>0&&f<inBlock*stride+ol;
+
+    roundRect(cx+1,pt,cellW-2,cellH,3,x);
+    x.fillStyle=`rgba(74,142,230,${noiseAlpha})`;x.fill();
+    x.strokeStyle='rgba(74,142,230,.15)';x.lineWidth=.5;x.stroke();
+
+    // Noise dots
+    for(let d=0;d<Math.floor(noiseAlpha*15);d++){
+      x.fillStyle=`rgba(255,255,255,${Math.random()*.15})`;
+      x.fillRect(cx+3+Math.random()*(cellW-6),pt+3+Math.random()*(cellH-6),1.5,1.5);
+    }
+
+    x.fillStyle='#8e9fb8';x.font='8px DM Mono';x.textAlign='center';x.fillText(f,cx+cellW/2,pt+cellH+12);
+  }
+
+  // Block brackets
+  x.font='9px DM Sans';x.textAlign='center';
+  for(let b=0;b<numBlocks;b++){
+    const s=Math.min(b*stride,TF-bw);
+    const bx0=pl+s*cellW,bx1=pl+(s+bw)*cellW;
+    const by=pt-8-b*3;
+    const colors=['#4a8ee6','#30c878','#e89040','#9078e8','#d868a0','#28c8d8'];
+    const c=colors[b%colors.length];
+    x.strokeStyle=c+'88';x.lineWidth=1.5;x.beginPath();x.moveTo(bx0,by);x.lineTo(bx0,by-6);x.lineTo(bx1,by-6);x.lineTo(bx1,by);x.stroke();
+  }
+
+  // Timeline label
+  x.fillStyle='#3f5070';x.font='10px DM Sans';x.textAlign='center';
+  x.fillText('Latent frames →',w/2,pt+cellH+28);
+
+  // Denoising progress
+  x.fillStyle='#dee6f2';x.font='12px DM Sans';x.textAlign='left';
+  x.fillText(`Denoising progress: t = ${['1.0','0.75','0.5','0.25','0.025'][ts]}`,pl,pt+cellH+52);
+  // Progress bar
+  roundRect(pl+200,pt+cellH+42,200,12,4,x);x.fillStyle='#172038';x.fill();
+  roundRect(pl+200,pt+cellH+42,200*((ts+1)/5),12,4,x);x.fillStyle='#4a8ee6';x.fill();
+
+  // Explanation
+  x.fillStyle='#8e9fb8';x.font='11px DM Sans';x.textAlign='left';
+  const expl=['t=1.0: All frames are pure noise. Blocks begin denoising different sections.','t=0.75: Noise is partially removed. Overlap regions get blended.','t=0.5: Structure emerging. Blocks shift position to avoid seams.','t=0.25: Details forming. Audio drives mouth shape more precisely.','t=0.025: Stop here — LTX VAE decodes slightly noisy latents directly.'][ts];
+  x.fillText(expl,pl,pt+cellH+78);
+
+  // Block legend
+  x.fillStyle='#3f5070';x.font='9px DM Sans';x.textAlign='center';
+  x.fillText(`${numBlocks} blocks × ${bw} frames each, overlap=${ol}, stride=${stride}`,w/2,pt+cellH+100);
+}
+$('tsR').addEventListener('input',renderSlide);
+
+// S4: Tricks
+function renderTricks(){
+  const{w,h,x}=dpr($('tricksC'));x.clearRect(0,0,w,h);
+  const tricks=[
+    {title:'① Overlap & Blend',desc:'Neighboring blocks share\na few frames. The shared\nframes are denoised twice\nand averaged — creating\nsmooth transitions.',color:'#4a8ee6'},
+    {title:'② Block Shifting',desc:'Each denoising step starts\nblocks at slightly different\npositions. This prevents the\nsame frames from always\nbeing at boundaries.',color:'#9078e8'},
+    {title:'③ Noise Level Tracking',desc:'Each frame remembers its\ncurrent noise level. When\na frame appears in a new\nblock, it keeps the lower\nnoise — no re-noising.',color:'#30c878'},
+  ];
+
+  tricks.forEach((t,i)=>{
+    const bx=20+i*340,by=15,bw=310,bh=185;
+    roundRect(bx,by,bw,bh,8,x);x.fillStyle=t.color+'0a';x.fill();x.strokeStyle=t.color+'33';x.lineWidth=1;x.stroke();
+    x.fillStyle=t.color;x.font='bold 13px DM Sans';x.textAlign='left';x.fillText(t.title,bx+16,by+28);
+    x.fillStyle='#8e9fb8';x.font='11px DM Sans';
+    t.desc.split('\n').forEach((l,li)=>x.fillText(l,bx+16,by+52+li*18));
+  });
+}
+
+// S5: Position
+function renderPos(){
+  const{w,h,x}=dpr($('posC'));x.clearRect(0,0,w,h);
+  
+  // 3D grid illustration
+  const ox=120,oy=60,sx=50,sy=40,sz=30;
+  const F=3,H=4,W=4;
+  const colors=['#4a8ee6','#30c878','#e89040'];
+
+  x.font='11px DM Sans';x.fillStyle='#dee6f2';x.textAlign='center';
+  x.fillText('Each patch in the video has a 3D position:',300,25);
+
+  // Draw grid with perspective
+  for(let f=F-1;f>=0;f--){
+    for(let r=H-1;r>=0;r--){
+      for(let c=0;c<W;c++){
+        const px=ox+c*sx-f*sz*.6;
+        const py=oy+r*sy*.7+f*sz*.4;
+        const alpha=0.06+f*0.04;
+        roundRect(px,py,sx-4,sy*.7-4,2,x);
+        x.fillStyle=`rgba(74,142,230,${alpha})`;x.fill();
+        x.strokeStyle=`rgba(74,142,230,${alpha+.1})`;x.lineWidth=.5;x.stroke();
+      }
+    }
+  }
+
+  // Axis labels
+  arrow(x,ox-20,oy-10,ox-20-40,oy-10+30,'#e89040');
+  x.fillStyle='#e89040';x.font='11px DM Sans';x.textAlign='center';x.fillText('Time (t)',ox-55,oy+30);
+
+  arrow(x,ox-10,oy+H*sy*.7+10,ox+W*sx,oy+H*sy*.7+10,'#28c8d8');
+  x.fillStyle='#28c8d8';x.fillText('Width (w)',ox+W*sx/2,oy+H*sy*.7+28);
+
+  arrow(x,ox+W*sx+10,oy,ox+W*sx+10,oy+H*sy*.7,'#9078e8');
+  x.fillStyle='#9078e8';x.textAlign='left';x.fillText('Height (h)',ox+W*sx+18,oy+H*sy*.35);
+
+  // Right side: how RoPE uses it
+  const rx=500,ry=30;
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='left';x.fillText('3D RoPE splits dimensions:',rx,ry);
+
+  const bars=[
+    {l:'Time pairs',c:'#e89040',w:100,desc:'Rotated by timestamp'},
+    {l:'Height pairs',c:'#9078e8',w:100,desc:'Rotated by row position'},
+    {l:'Width pairs',c:'#28c8d8',w:100,desc:'Rotated by column position'},
+  ];
+  bars.forEach((b,i)=>{
+    const by=ry+20+i*55;
+    roundRect(rx,by,b.w*2.5,30,4,x);x.fillStyle=b.c+'22';x.fill();x.strokeStyle=b.c+'55';x.lineWidth=1;x.stroke();
+    x.fillStyle=b.c;x.font='bold 10px DM Sans';x.textAlign='center';x.fillText(b.l,rx+b.w*1.25,by+13);
+    x.fillStyle='#8e9fb8';x.font='10px DM Sans';x.textAlign='left';x.fillText(b.desc,rx+b.w*2.5+12,by+19);
+  });
+
+  // Attention = distance
+  const ay=ry+200;
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='left';x.fillText('Attention naturally encodes 3D distance:',rx,ay);
+  x.fillStyle='#8e9fb8';x.font='11px DM Sans';
+  const notes=['Same frame, adjacent patch → HIGH attention','Same position, next frame → HIGH attention','Different frame, far away patch → LOW attention'];
+  notes.forEach((n,i)=>{
+    const nc=['#30c878','#4a8ee6','#e05555'][i];
+    x.fillStyle=nc;x.beginPath();x.arc(rx+6,ay+22+i*22,4,0,Math.PI*2);x.fill();
+    x.fillStyle='#8e9fb8';x.fillText(n,rx+16,ay+26+i*22);
+  });
+}
+
+function renderWhyTs(){
+  const{w,h,x}=dpr($('whyTsC'));x.clearRect(0,0,w,h);
+
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='left';
+
+  // Scenario A: bad (integers)
+  x.fillText('❌ Integer indices (breaks with sliding window):',30,25);
+  const ba=[{l:'Block A',frames:[0,1,2,3,4],times:[0,1,2,3,4],c:'#e05555'},{l:'Block B',frames:[3,4,5,6,7],times:[0,1,2,3,4],c:'#e05555'}];
+  ba.forEach((b,bi)=>{
+    const by=40+bi*34;
+    x.fillStyle='#3f5070';x.font='10px DM Sans';x.textAlign='right';x.fillText(b.l,110,by+16);
+    b.frames.forEach((f,fi)=>{
+      const fx=120+fi*100;
+      roundRect(fx,by,90,28,3,x);x.fillStyle='rgba(224,85,85,.1)';x.fill();x.strokeStyle='rgba(224,85,85,.25)';x.lineWidth=1;x.stroke();
+      x.fillStyle='#e05555';x.font='9px DM Mono';x.textAlign='center';x.fillText(`f${f} → pos ${b.times[fi]}`,fx+45,by+17);
+    });
+  });
+  x.fillStyle='#e05555';x.font='10px DM Sans';x.textAlign='left';x.fillText('Frame 3 has pos=3 in Block A but pos=0 in Block B — inconsistent!',120,120);
+
+  // Scenario B: good (timestamps)
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.fillText('✅ Real timestamps (consistent across blocks):',30,150);
+  const bg=[{l:'Block A',frames:[0,1,2,3,4],times:[0.0,0.32,0.64,0.96,1.28],c:'#30c878'},{l:'Block B',frames:[3,4,5,6,7],times:[0.96,1.28,1.60,1.92,2.24],c:'#30c878'}];
+  bg.forEach((b,bi)=>{
+    const by=165+bi*34;
+    x.fillStyle='#3f5070';x.font='10px DM Sans';x.textAlign='right';x.fillText(b.l,110,by+16);
+    b.frames.forEach((f,fi)=>{
+      const fx=120+fi*100;
+      roundRect(fx,by,90,28,3,x);x.fillStyle='rgba(48,200,120,.08)';x.fill();x.strokeStyle='rgba(48,200,120,.25)';x.lineWidth=1;x.stroke();
+      x.fillStyle='#30c878';x.font='9px DM Mono';x.textAlign='center';x.fillText(`f${f} → ${b.times[fi].toFixed(2)}`,fx+45,by+17);
+    });
+  });
+  x.fillStyle='#30c878';x.font='10px DM Sans';x.textAlign='left';x.fillText('Frame 3 is always t=0.96 regardless of which block processes it ✓',120,245);
+}
+
+// S6: Identity
+function renderId(){
+  const{w,h,x}=dpr($('idC'));x.clearRect(0,0,w,h);
+  const nr=+$('nrR').value;$('nrV').textContent=nr+' refs';
+  
+  const pl=60,pr=30,lineY=100;const minT=-nr-1,maxT=4;
+  const tX=t=>pl+((t-minT)/(maxT-minT))*(w-pl-pr);
+
+  // Timeline
+  x.strokeStyle='#172038';x.lineWidth=1;x.beginPath();x.moveTo(pl,lineY);x.lineTo(w-pr,lineY);x.stroke();
+
+  // Zero line
+  x.strokeStyle='#243055';x.setLineDash([3,3]);x.beginPath();x.moveTo(tX(0),25);x.lineTo(tX(0),175);x.stroke();x.setLineDash([]);
+  x.fillStyle='#3f5070';x.font='9px DM Mono';x.textAlign='center';x.fillText('t = 0',tX(0),190);
+
+  // Ref region
+  if(nr>0){
+    x.fillStyle='rgba(232,144,64,.04)';x.fillRect(tX(-nr-.5),30,tX(-.3)-tX(-nr-.5),140);
+    x.fillStyle='#e89040';x.font='bold 10px DM Sans';x.textAlign='center';x.fillText('IDENTITY REFERENCES',tX(-nr/2-.25),24);
+    x.fillStyle='#3f5070';x.font='9px DM Sans';x.fillText('Clean • Face only • Negative time',tX(-nr/2-.25),185);
+  }
+
+  // Block region
+  x.fillStyle='rgba(74,142,230,.04)';x.fillRect(tX(.8),30,tX(3.2)-tX(.8),140);
+  x.fillStyle='#4a8ee6';x.font='bold 10px DM Sans';x.textAlign='center';x.fillText('CURRENT BLOCK',tX(2),24);
+  x.fillStyle='#3f5070';x.font='9px DM Sans';x.fillText('Noisy • Full frame • Real timestamps',tX(2),185);
+
+  // Ref points
+  for(let i=0;i<nr;i++){
+    const t=-nr+i;const px=tX(t);
+    x.fillStyle='#e89040';x.shadowColor='#e89040';x.shadowBlur=8;x.beginPath();x.arc(px,lineY,6,0,Math.PI*2);x.fill();x.shadowBlur=0;
+    x.font='9px DM Mono';x.textAlign='center';x.fillText(`t=${t}`,px,lineY+20);
+    x.fillStyle='#e89040';x.font='9px DM Sans';x.fillText(`ref ${i}`,px,lineY-16);
+    // Face icon
+    x.font='16px serif';x.fillText('👤',px,lineY-32);
+  }
+
+  // Block points
+  const blockFrames=[{l:'f5',t:1.6},{l:'f6',t:1.92},{l:'f7',t:2.24},{l:'f8',t:2.56}];
+  blockFrames.forEach(f=>{
+    const px=tX(f.t);
+    x.fillStyle='#4a8ee6';x.shadowColor='#4a8ee6';x.shadowBlur=8;x.beginPath();x.arc(px,lineY,5,0,Math.PI*2);x.fill();x.shadowBlur=0;
+    x.font='9px DM Mono';x.textAlign='center';x.fillStyle='#8e9fb8';x.fillText(`t=${f.t}`,px,lineY+20);
+    x.fillStyle='#4a8ee6';x.font='9px DM Sans';x.fillText(f.l,px,lineY-14);
+  });
+
+  // Gap
+  x.strokeStyle='#3f5070';x.setLineDash([4,4]);x.lineWidth=1;
+  x.beginPath();x.moveTo(tX(-.3),lineY);x.lineTo(tX(.8),lineY);x.stroke();x.setLineDash([]);
+}
+$('nrR').addEventListener('input',renderId);
+
+function renderRefProps(){
+  const{w,h,x}=dpr($('refPropsC'));x.clearRect(0,0,w,h);
+  const props=[
+    {icon:'🕐',title:'Negative Time',desc:'Placed at t=-1, -2, -3... so RoPE sees clear temporal distance from current frames',c:'#e89040'},
+    {icon:'✨',title:'Zero Noise',desc:'Fully clean (t=0.0) — the model trusts these as ground truth for face structure',c:'#30c878'},
+    {icon:'👤',title:'Face Only',desc:'Only lower-face tokens extracted — minimal sequence, focused on identity features',c:'#9078e8'},
+    {icon:'🔄',title:'Rolling Window',desc:'Reference set updates as the video progresses, using the most recent real frames',c:'#4a8ee6'},
+  ];
+  props.forEach((p,i)=>{
+    const bx=10+i*250,by=10,bw=238,bh=155;
+    roundRect(bx,by,bw,bh,8,x);x.fillStyle=p.c+'0a';x.fill();x.strokeStyle=p.c+'28';x.lineWidth=1;x.stroke();
+    x.font='22px serif';x.textAlign='center';x.fillText(p.icon,bx+bw/2,by+30);
+    x.fillStyle=p.c;x.font='bold 11px DM Sans';x.fillText(p.title,bx+bw/2,by+52);
+    x.fillStyle='#8e9fb8';x.font='10px DM Sans';x.textAlign='left';
+    wrapText(x,p.desc,bx+14,by+72,bw-28,14);
+  });
+}
+
+function wrapText(ctx,text,x,y,maxW,lineH){
+  const words=text.split(' ');let line='';
+  for(const w of words){const test=line+w+' ';if(ctx.measureText(test).width>maxW&&line){ctx.fillText(line.trim(),x,y);y+=lineH;line=w+' ';}else{line=test;}}
+  ctx.fillText(line.trim(),x,y);
+}
+
+// S7: Guidance
+function renderGuid(){
+  const{w,h,x}=dpr($('guidC'));x.clearRect(0,0,w,h);
+  
+  const cy=30;
+  x.fillStyle='#dee6f2';x.font='bold 14px Fraunces';x.textAlign='center';
+  x.fillText('Three transformer passes per denoising step:',w/2,cy);
+
+  const passes=[
+    {l:'Pass 1: Unconditional',desc:'No text prompt\nNo audio guidance\n→ "What would the model\n   generate with no direction?"',c:'#e05555',icon:'🚫'},
+    {l:'Pass 2: Conditional',desc:'Full text prompt\nFull audio features\n→ "What should this look like\n   given all the guidance?"',c:'#30c878',icon:'✅'},
+    {l:'Pass 3: STG (perturbed)',desc:'Full prompts but...\nSome layers skipped\n→ "What happens when key\n   layers are removed?"',c:'#9078e8',icon:'🔧'},
+  ];
+
+  passes.forEach((p,i)=>{
+    const bx=20+i*340,by=cy+20,bw=310,bh=130;
+    roundRect(bx,by,bw,bh,8,x);x.fillStyle=p.c+'0a';x.fill();x.strokeStyle=p.c+'33';x.lineWidth=1;x.stroke();
+    x.font='20px serif';x.textAlign='center';x.fillText(p.icon,bx+bw/2,by+24);
+    x.fillStyle=p.c;x.font='bold 11px DM Sans';x.fillText(p.l,bx+bw/2,by+42);
+    x.fillStyle='#8e9fb8';x.font='10px DM Sans';x.textAlign='left';
+    p.desc.split('\n').forEach((l,li)=>x.fillText(l,bx+20,by+62+li*14));
+  });
+
+  // Combination
+  const gy=cy+170;
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='center';
+  x.fillText('How they combine:',w/2,gy);
+
+  // CFG equation
+  const eq1y=gy+25;
+  box(x,60,eq1y,900,40,'rgba(74,142,230,.06)','rgba(74,142,230,.2)','CFG:   final = unconditional + guidance_scale × (conditional − unconditional)','#8eb8e8',11);
+
+  x.fillStyle='#8e9fb8';x.font='10px DM Sans';x.textAlign='center';
+  x.fillText('"Amplify the effect of text and audio guidance"',w/2,eq1y+55);
+
+  // STG equation
+  const eq2y=eq1y+70;
+  box(x,60,eq2y,900,40,'rgba(144,120,232,.06)','rgba(144,120,232,.2)','STG:   final += stg_scale × (conditional − perturbed)','#b898e8',11);
+
+  x.fillStyle='#8e9fb8';x.font='10px DM Sans';x.textAlign='center';
+  x.fillText('"Amplify the contribution of specific attention layers (spatial/temporal coherence)"',w/2,eq2y+55);
+}
+
+function renderCfgStar(){
+  const{w,h,x}=dpr($('cfgStarC'));x.clearRect(0,0,w,h);
+  x.fillStyle='#dee6f2';x.font='bold 12px Fraunces';x.textAlign='left';x.fillText('CFG* (Star Rescale) — optional improvement:',30,25);
+  x.fillStyle='#8e9fb8';x.font='11px DM Sans';
+  const lines=[
+    'Problem: Sometimes the unconditional prediction points in the wrong direction,',
+    'causing artifacts when amplified by CFG.',
+    '',
+    'Solution: Project the unconditional prediction onto the conditional direction first.',
+    'This ensures the "contrast" between them is meaningful, not random noise.'
+  ];
+  lines.forEach((l,i)=>x.fillText(l,30,48+i*17));
+}
+
+// S8: Multi-Scale
+function renderMS(){
+  const{w,h,x}=dpr($('msC'));x.clearRect(0,0,w,h);
+
+  const steps=[
+    {l:'Input Video',sub:'e.g. 720p',c:'#4a8ee6',w:110},
+    {l:'Pass 1: Half Res',sub:'360p — mouth gets\n12+ tokens',c:'#30c878',w:140},
+    {l:'Latent Upsampler',sub:'Learned 2× upscale\nin latent space',c:'#e89040',w:140},
+    {l:'Style Match',sub:'AdaIN: match color\nstats from pass 1',c:'#9078e8',w:130},
+    {l:'Pass 2: Full Res',sub:'720p — refine\nspatial details',c:'#d868a0',w:140},
+    {l:'Output',sub:'High-res video with\ndetailed lip-sync',c:'#dcc030',w:120},
+  ];
+
+  let cx=15;const by=50,bh=100;
+  steps.forEach((s,i)=>{
+    roundRect(cx,by,s.w,bh,8,x);x.fillStyle=s.c+'0c';x.fill();x.strokeStyle=s.c+'40';x.lineWidth=1;x.stroke();
+    x.fillStyle=s.c;x.font='bold 11px DM Sans';x.textAlign='center';x.fillText(s.l,cx+s.w/2,by+20);
+    x.fillStyle='#8e9fb8';x.font='9px DM Sans';
+    s.sub.split('\n').forEach((l,li)=>x.fillText(l,cx+s.w/2,by+38+li*13));
+    if(i<steps.length-1){arrow(x,cx+s.w+4,by+bh/2,cx+s.w+20,by+bh/2,'#3f5070');cx+=s.w+24;}
+  });
+
+  // Why annotation
+  x.fillStyle='#dee6f2';x.font='bold 12px Fraunces';x.textAlign='center';
+  x.fillText('Why? At 720p the mouth is ~4 tokens. At 360p it\'s ~16 tokens — enough for detailed lip shapes.',w/2,by+bh+30);
+
+  // Mouth size comparison
+  const my=by+bh+50;
+  box(x,250,my,80,40,'rgba(224,85,85,.1)','rgba(224,85,85,.3)','720p: 4 tokens\n(too few!)','#e05555',9);
+  x.fillStyle='#3f5070';x.font='16px serif';x.textAlign='center';x.fillText('→',360,my+20);
+  box(x,390,my,100,40,'rgba(48,200,120,.1)','rgba(48,200,120,.3)','360p: 16 tokens\n(enough detail!)','#30c878',9);
+}
+
+// S9: Summary
+function renderSum(){
+  const{w,h,x}=dpr($('sumC'));x.clearRect(0,0,w,h);
+
+  const sections=[
+    {y:10,h:90,l:'INPUTS',items:['Reference Video → VAE → Latents','Audio → Feature Extract → Projection','Text → T5 Encoder → Embeddings','Face Detection → Bounding Box Coords'],c:'#4a8ee6'},
+    {y:112,h:210,l:'DENOISING LOOP',items:['For each timestep (t = 1.0 → 0.025):','  For each sliding window block:','    ① Select frames + reference frames','    ② Apply face mask → free mouth region','    ③ Audio attends to mouth patches only','    ④ 3D RoPE with real timestamps','    ⑤ Identity refs at negative time','    ⑥ Transformer forward pass','    ⑦ CFG + STG guidance','    ⑧ Scheduler step → reduce noise','    ⑨ Blend overlapping regions'],c:'#e89040'},
+    {y:334,h:60,l:'DECODE',items:['Stop at t=0.025 (not 0) — LTX VAE decodes slightly noisy latents','Tone Map → VAE Decode(t=0.025) → Post-process → Final Video'],c:'#30c878'},
+  ];
+
+  sections.forEach(s=>{
+    roundRect(20,s.y,w-40,s.h,8,x);x.fillStyle=s.c+'06';x.fill();x.strokeStyle=s.c+'22';x.lineWidth=1;x.stroke();
+    x.fillStyle=s.c;x.font='bold 11px DM Mono';x.textAlign='left';x.fillText(s.l,36,s.y+18);
+    x.fillStyle='#8e9fb8';x.font='11px DM Sans';
+    s.items.forEach((item,i)=>{
+      const isHeader=item.startsWith('For');const isSub=item.startsWith('    ');
+      x.fillStyle=isHeader?'#dee6f2':'#8e9fb8';
+      x.font=isHeader?'bold 11px DM Sans':'11px DM Sans';
+      x.fillText(item,isSub?60:36,s.y+36+i*16);
+    });
+  });
+
+  // Arrows between sections
+  arrow(x,w/2,102,w/2,112,'#3f5070');
+  arrow(x,w/2,324,w/2,334,'#3f5070');
+
+  // Key insight
+  const ky=408;
+  roundRect(20,ky,w-40,70,8,x);x.fillStyle='rgba(216,104,160,.06)';x.fill();x.strokeStyle='rgba(216,104,160,.22)';x.lineWidth=1;x.stroke();
+  x.fillStyle='#d868a0';x.font='bold 12px Fraunces';x.textAlign='center';
+  x.fillText('The Core Insight',w/2,ky+22);
+  x.fillStyle='#dee6f2';x.font='12px DM Sans';
+  x.fillText('EditYourself treats lip-sync as a regional inpainting problem: mask the mouth,',w/2,ky+42);
+  x.fillText('condition it on audio instead of reference video, and let the diffusion transformer fill it in.',w/2,ky+58);
+
+  // Arrow to insight
+  arrow(x,w/2,396,w/2,408,'#3f5070');
+
+  // Bottom
+  x.fillStyle='#3f5070';x.font='italic 11px DM Sans';x.textAlign='center';
+  x.fillText('Optional: Multi-scale pipeline wraps the above in two passes (low-res → upsample → high-res)',w/2,ky+90);
+}
+
+// Init
+render();
+// Lazy render remaining canvases on step change
+function renderAll(){
+  if(cur===0)renderProblem();
+  if(cur===1)renderArch();
+  if(cur===2){renderMask();renderSignals();}
+  if(cur===3){renderAudio();renderAlign();}
+  if(cur===4){renderSlide();renderTricks();}
+  if(cur===5){renderPos();renderWhyTs();}
+  if(cur===6){renderId();renderRefProps();}
+  if(cur===7){renderGuid();renderCfgStar();}
+  if(cur===8)renderMS();
+  if(cur===9)renderSum();
+}
+const origGoTo=goTo;
+goTo=function(n){origGoTo(n);setTimeout(renderAll,50)};
+setTimeout(renderAll,100);
+
+// Resize handler — re-render current step on window resize
+var resizeTimer;
+window.addEventListener('resize',function(){clearTimeout(resizeTimer);resizeTimer=setTimeout(renderAll,200);});
+</script>
+</body>
+</html>
