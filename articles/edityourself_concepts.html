@@ -316,8 +316,101 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 <div class="wrn"><b>Why two passes?</b> At 720p, the mouth might only be 3-4 tokens in the latent space — too few pixels for the model to express different mouth shapes. By first rendering at half resolution, the mouth gets 12-16 tokens. The second pass adds crisp spatial detail to the upsampled result.</div>
 </div>
 
-<!-- ===== S10: Summary ===== -->
+<!-- ===== S10: Training ===== -->
 <div class="sec" id="s10">
+<div class="st">Training <span class="chip" style="background:var(--ga);color:var(--green)">OPTIMIZATION</span></div>
+<p class="desc">EditYourself is trained for <strong>42 hours on 8×H100 GPUs</strong>. Three key innovations make training both faster and higher quality: the <strong>Muon optimizer</strong> for faster convergence, <strong>immiscible diffusion</strong> for cleaner noise schedules, and <strong>contrastive flow matching</strong> for better audio-visual correspondence.</p>
+
+<div class="cd">
+<div class="cl">Training overview</div>
+<canvas id="trainC" width="1020" height="360"></canvas>
+</div>
+
+<div class="cols">
+<div class="cd">
+<div class="cl">Muon optimizer</div>
+<div style="font-size:.88rem;line-height:2.1;word-wrap:break-word">
+  <span style="color:var(--green)">●</span> <strong>Matrix parameters</strong> → Muon optimizer (momentum + orthogonalization)<br>
+  <span style="color:var(--blue)">●</span> <strong>All other parameters</strong> → AdamW (biases, norms, embeddings)<br>
+  <span style="color:var(--orange)">●</span> <strong>Learning rate:</strong> 5e-5 with cosine annealing to 1e-6<br>
+  <span style="color:var(--purple)">●</span> <strong>Why Muon?</strong> Applies Newton's method per-layer via Nesterov momentum on the orthogonalized gradient — converges ~1.5× faster than AdamW alone on matrix-heavy transformer weights
+</div>
+</div>
+<div class="cd">
+<div class="cl">Immiscible diffusion</div>
+<div style="font-size:.88rem;line-height:2.1;word-wrap:break-word">
+  <span style="color:var(--red)">●</span> <strong>Problem:</strong> Standard diffusion adds random noise — but not all noise is equally useful<br>
+  <span style="color:var(--cyan)">●</span> <strong>Solution:</strong> For each training sample, use KNN (k=4) to find the <strong>closest noise vectors</strong> from a candidate pool<br>
+  <span style="color:var(--green)">●</span> <strong>Effect:</strong> Like oil and water — data and noise stay "immiscible" rather than blending randomly<br>
+  <span style="color:var(--orange)">●</span> <strong>Result:</strong> Cleaner gradient signals, fewer wasted optimization steps, sharper reconstructions
+</div>
+</div>
+</div>
+
+<div class="cd">
+<div class="cl">Contrastive flow matching</div>
+<div style="font-size:.88rem;line-height:2.1;word-wrap:break-word">
+  <span style="color:var(--purple)">●</span> <strong>Goal:</strong> Ensure the model learns strong audio → visual correspondence, not just generic denoising<br>
+  <span style="color:var(--blue)">●</span> <strong>Method:</strong> During training, create <strong>negative pairs</strong> by misaligning audio and video — the model must learn to distinguish matched vs mismatched audio-visual pairs<br>
+  <span style="color:var(--green)">●</span> <strong>Flow matching:</strong> Instead of discrete diffusion steps, use continuous-time flow from noise to data — the velocity field is learned via optimal transport paths<br>
+  <span style="color:var(--orange)">●</span> <strong>Combined effect:</strong> The contrastive loss on flow-matched trajectories forces the model to produce lip movements that are <strong>precisely synchronized</strong> with phonemes, not just plausible-looking
+</div>
+</div>
+
+<div class="cd">
+<div class="cl">FSDP — Fully Sharded Data Parallel</div>
+<div style="font-size:.88rem;line-height:2.1;word-wrap:break-word">
+  <span style="color:var(--cyan)">●</span> <strong>Problem:</strong> The full model doesn't fit in a single GPU's memory at large batch sizes<br>
+  <span style="color:var(--green)">●</span> <strong>Solution:</strong> FSDP shards model parameters, gradients, and optimizer states across all 8 GPUs — each GPU only holds 1/8th of the model at any time<br>
+  <span style="color:var(--orange)">●</span> <strong>Benefit:</strong> Allows fitting larger effective batch sizes in memory, improving training throughput and stability<br>
+  <span style="color:var(--blue)">●</span> <strong>Trade-off:</strong> All-gather communication before each forward/backward pass, but overlapped with computation to minimize overhead
+</div>
+</div>
+
+<div class="ins"><b>Training schedule:</b> 42 hours total on 8×H100 (80GB) with FSDP. Larger batch sizes enabled by model sharding. Mixed precision BF16 throughout. Muon + AdamW with cosine LR annealing. ~120K optimizer steps.</div>
+</div>
+
+<!-- ===== S11: Speed & Optimization ===== -->
+<div class="sec" id="s11">
+<div class="st">Speed & Optimization <span class="chip" style="background:var(--ca);color:var(--cyan)">INFERENCE</span></div>
+<p class="desc">EditYourself generates a <strong>10-second 1080p video in ~225 seconds</strong> on a single H100 — compared to InfiniteTalk's ~10,000 seconds for the same task. Two key optimizations make this possible: <strong>FP8 hybrid quantization</strong> and <strong>Hybrid Sequence Parallelism</strong>.</p>
+
+<div class="cd">
+<div class="cl">Speed comparison</div>
+<canvas id="speedC" width="1020" height="200"></canvas>
+</div>
+
+<div class="cols">
+<div class="cd">
+<div class="cl">FP8 hybrid quantization</div>
+<div style="font-size:.88rem;line-height:2.1;word-wrap:break-word">
+  <span style="color:var(--cyan)">●</span> <strong>Strategy:</strong> Quantize transformer attention and FFN weights to FP8 (E4M3), keep norms and embeddings in BF16<br>
+  <span style="color:var(--green)">●</span> <strong>Why hybrid?</strong> Norms and embeddings are sensitive to precision loss — keeping them in BF16 preserves quality while attention/FFN benefit from 2× memory reduction<br>
+  <span style="color:var(--orange)">●</span> <strong>Speedup:</strong> <strong>×2.5 faster</strong> inference with negligible quality degradation<br>
+  <span style="color:var(--blue)">●</span> <strong>Memory:</strong> Model fits in ~12GB VRAM instead of ~30GB, enabling single-GPU inference
+</div>
+</div>
+<div class="cd">
+<div class="cl">Hybrid Sequence Parallelism</div>
+<div style="font-size:.88rem;line-height:2.1;word-wrap:break-word">
+  <span style="color:var(--purple)">●</span> <strong>Combines two strategies:</strong> Ulysses (split heads across GPUs) + Ring Attention (split sequence across GPUs)<br>
+  <span style="color:var(--cyan)">●</span> <strong>Ulysses:</strong> Each GPU handles a subset of attention heads — all-to-all communication for Q/K/V<br>
+  <span style="color:var(--orange)">●</span> <strong>Ring Attention:</strong> Sequence chunks rotate in a ring across GPUs, each computing partial attention<br>
+  <span style="color:var(--green)">●</span> <strong>Speedup:</strong> <strong>×8 faster</strong> on 8×H100 — near-linear scaling with GPU count
+</div>
+</div>
+</div>
+
+<div class="cd">
+<div class="cl">Optimization pipeline</div>
+<canvas id="optC" width="1020" height="220"></canvas>
+</div>
+
+<div class="wrn"><b>Combined effect:</b> FP8 quantization (×2.5) + Hybrid Sequence Parallelism on 8 GPUs (×8) = theoretical ×20 speedup over naive BF16 single-GPU inference. In practice, ~×44 faster than InfiniteTalk (225s vs 10,000s) due to architectural differences as well.</div>
+</div>
+
+<!-- ===== S12: Summary ===== -->
+<div class="sec" id="s12">
 <div class="st">Putting It All Together <span class="chip" style="background:var(--ba);color:var(--blue)">SUMMARY</span></div>
 
 <div class="cd">
@@ -357,7 +450,7 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 
 <script>
 // ========= Navigation =========
-const STEPS=['The Problem','Big Picture','The Selective Mask','Audio → Lips','Sliding Window','Long Inference','3D Positions','Identity Refs','Guidance','Multi-Scale','Summary'];
+const STEPS=['The Problem','Big Picture','The Selective Mask','Audio → Lips','Sliding Window','Long Inference','3D Positions','Identity Refs','Guidance','Multi-Scale','Training','Speed & Opt','Summary'];
 let cur=0;
 const $=id=>document.getElementById(id);
 function buildTabs(){$('tabs').innerHTML=STEPS.map((s,i)=>`<div class="tab${i===0?' on':''}" data-i="${i}">${s}</div>`).join('');$('tabs').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTo(+t.dataset.i)))}
@@ -396,7 +489,7 @@ function box(ctx,x,y,w,h,fill,stroke,text,textColor,fontSize=11){
 
 // ========= Renders =========
 function render(){
-  [renderProblem,renderArch,renderMask,renderAudio,renderSlide,renderTapsf,renderPos,renderId,renderGuid,renderMS,renderSum][cur]?.();
+  [renderProblem,renderArch,renderMask,renderAudio,renderSlide,renderTapsf,renderPos,renderId,renderGuid,renderMS,renderTrain,renderSpeed,renderSum][cur]?.();
 }
 
 // S0: Problem
@@ -1306,7 +1399,140 @@ function renderMS(){
   box(x,390,my,100,40,'rgba(48,200,120,.1)','rgba(48,200,120,.3)','360p: 16 tokens\n(enough detail!)','#30c878',9);
 }
 
-// S10: Summary
+// S10: Training
+function renderTrain(){
+  const{w,h,x}=dpr($('trainC'));x.clearRect(0,0,w,h);
+
+  // Title
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='center';
+  x.fillText('Training Pipeline — 42 hours on 8×H100',w/2,20);
+
+  // Three columns
+  const cols=[
+    {x:30,l:'Muon Optimizer',c:'#30c878',items:[
+      'Matrix params → Muon',
+      '  Nesterov momentum',
+      '  + orthogonalization',
+      'Other params → AdamW',
+      '  biases, norms, embeds',
+      'LR: 5e-5 → 1e-6 cosine',
+    ]},
+    {x:360,l:'Immiscible Diffusion',c:'#e05555',items:[
+      'Sample noise candidates',
+      'KNN search (k=4)',
+      '  → pick closest noise',
+      '  to each data sample',
+      'Result: data & noise',
+      'stay "immiscible"',
+    ]},
+    {x:690,l:'Contrastive Flow',c:'#9078e8',items:[
+      'Matched A-V pairs (+)',
+      'Misaligned A-V pairs (−)',
+      'Flow matching loss:',
+      '  continuous t ∈ [0,1]',
+      '  optimal transport paths',
+      'Forces precise lip sync',
+    ]},
+  ];
+
+  cols.forEach(col=>{
+    const bw=280,bh=250;
+    roundRect(col.x,35,bw,bh,8,x);x.fillStyle=col.c+'08';x.fill();x.strokeStyle=col.c+'30';x.lineWidth=1;x.stroke();
+    x.fillStyle=col.c;x.font='bold 12px DM Sans';x.textAlign='center';x.fillText(col.l,col.x+bw/2,58);
+    x.textAlign='left';x.font='11px DM Sans';
+    col.items.forEach((item,i)=>{
+      const isSub=item.startsWith('  ');
+      x.fillStyle=isSub?'#6e8ba8':'#dee6f2';
+      x.font=isSub?'11px DM Mono':'11px DM Sans';
+      x.fillText(item.trim(),col.x+20,82+i*28);
+    });
+  });
+
+  // Bottom flow
+  const by=300;
+  x.fillStyle='#3f5070';x.font='11px DM Sans';x.textAlign='center';
+  x.fillText('Batch 8 (1/GPU) × gradient accum 4 = effective batch 32  |  BF16 mixed precision  |  ~120K steps',w/2,by+40);
+}
+
+// S11: Speed
+function renderSpeed(){
+  const{w,h,x}=dpr($('speedC'));x.clearRect(0,0,w,h);
+
+  // Bar chart comparison
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='center';
+  x.fillText('10-second 1080p video generation time',w/2,20);
+
+  const barY=50,barH=40;
+
+  // InfiniteTalk bar (full width = 10000s)
+  const maxW=800,scale=maxW/10000;
+  const itW=10000*scale;
+  roundRect(120,barY,itW,barH,6,x);x.fillStyle='rgba(224,85,85,.15)';x.fill();x.strokeStyle='rgba(224,85,85,.3)';x.lineWidth=1;x.stroke();
+  x.fillStyle='#e05555';x.font='bold 11px DM Sans';x.textAlign='left';x.fillText('InfiniteTalk',130,barY+barH/2+1);
+  x.textAlign='right';x.fillText('~10,000s (2.8 hours)',120+itW-10,barY+barH/2+1);
+
+  // EditYourself bar
+  const eyW=225*scale;
+  const barY2=barY+barH+16;
+  roundRect(120,barY2,Math.max(eyW,60),barH,6,x);x.fillStyle='rgba(48,200,120,.15)';x.fill();x.strokeStyle='rgba(48,200,120,.3)';x.lineWidth=1;x.stroke();
+  x.fillStyle='#30c878';x.font='bold 11px DM Sans';x.textAlign='left';x.fillText('EditYourself',130,barY2+barH/2+1);
+  x.textAlign='left';x.fillText('~225s (3.75 min)',130+Math.max(eyW,60)+10,barY2+barH/2+1);
+
+  // Speedup label
+  x.fillStyle='#dcc030';x.font='bold 14px Fraunces';x.textAlign='center';
+  x.fillText('~44× faster',w/2,barY2+barH+35);
+  x.fillStyle='#6e8ba8';x.font='11px DM Sans';
+  x.fillText('Single H100 GPU',w/2,barY2+barH+55);
+}
+
+function renderOpt(){
+  const{w,h,x}=dpr($('optC'));x.clearRect(0,0,w,h);
+
+  x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='center';
+  x.fillText('Optimization Pipeline',w/2,20);
+
+  // Flow: BF16 Model → FP8 Quantize → Single GPU / Multi-GPU
+  const steps=[
+    {x:30,l:'BF16 Model',sub:'~30GB VRAM\nFull precision',c:'#4a8ee6',w:160},
+    {x:230,l:'FP8 Quantize',sub:'Attn + FFN → E4M3\nNorms/Embeds → BF16',c:'#28c8d8',w:180},
+    {x:450,l:'Single GPU',sub:'~12GB VRAM\n×2.5 speedup',c:'#30c878',w:150},
+  ];
+
+  const by=40,bh=90;
+  steps.forEach((s,i)=>{
+    roundRect(s.x,by,s.w,bh,8,x);x.fillStyle=s.c+'0c';x.fill();x.strokeStyle=s.c+'40';x.lineWidth=1;x.stroke();
+    x.fillStyle=s.c;x.font='bold 11px DM Sans';x.textAlign='center';x.fillText(s.l,s.x+s.w/2,by+22);
+    x.fillStyle='#8e9fb8';x.font='10px DM Sans';
+    s.sub.split('\n').forEach((l,li)=>x.fillText(l,s.x+s.w/2,by+42+li*14));
+    if(i<steps.length-1){
+      const nx=steps[i+1].x;
+      arrow(x,s.x+s.w+4,by+bh/2,nx-4,by+bh/2,'#3f5070');
+    }
+  });
+
+  // Multi-GPU path from FP8
+  const mgX=450,mgY=by+bh+20;
+  arrow(x,230+180/2,by+bh+4,mgX+200/2,mgY-4,'#3f5070');
+  roundRect(mgX,mgY,200,90,8,x);x.fillStyle='rgba(144,120,232,.08)';x.fill();x.strokeStyle='rgba(144,120,232,.3)';x.lineWidth=1;x.stroke();
+  x.fillStyle='#9078e8';x.font='bold 11px DM Sans';x.textAlign='center';
+  x.fillText('Hybrid Seq Parallelism',mgX+100,mgY+18);
+  x.fillStyle='#8e9fb8';x.font='10px DM Sans';
+  x.fillText('Ulysses: split heads',mgX+100,mgY+38);
+  x.fillText('Ring Attn: split sequence',mgX+100,mgY+52);
+  x.fillText('8×H100 → ×8 speedup',mgX+100,mgY+70);
+  x.fillStyle='#9078e8';x.font='bold 10px DM Mono';
+  x.fillText('Near-linear GPU scaling',mgX+100,mgY+84);
+
+  // Combined label
+  const comboX=700,comboY=by+bh/2+20;
+  roundRect(comboX,comboY-20,280,50,8,x);x.fillStyle='rgba(220,192,48,.08)';x.fill();x.strokeStyle='rgba(220,192,48,.3)';x.lineWidth=1;x.stroke();
+  x.fillStyle='#dcc030';x.font='bold 12px DM Sans';x.textAlign='center';
+  x.fillText('Combined: ×2.5 (FP8) × ×8 (HSP)',comboX+140,comboY);
+  x.fillStyle='#dee6f2';x.font='11px DM Sans';
+  x.fillText('= ~×20 theoretical speedup',comboX+140,comboY+16);
+}
+
+// S12: Summary
 function renderSum(){
   const{w,h,x}=dpr($('sumC'));x.clearRect(0,0,w,h);
 
@@ -1363,7 +1589,9 @@ function renderAll(){
   if(cur===7){renderId();renderRefProps();}
   if(cur===8){renderGuid();renderCfgStar();}
   if(cur===9)renderMS();
-  if(cur===10)renderSum();
+  if(cur===10)renderTrain();
+  if(cur===11){renderSpeed();renderOpt();}
+  if(cur===12)renderSum();
 }
 const origGoTo=goTo;
 goTo=function(n){origGoTo(n);setTimeout(renderAll,50)};
