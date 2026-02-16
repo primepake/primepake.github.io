@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mirage — Seeing Voices: How It Works</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#06050e;--s1:#0c0b18;--s2:#121024;--s3:#1a1632;
+  --bd:#201c3a;--bd2:#302a55;
+  --t:#9e94b8;--td:#554a70;--tb:#e6e0f2;
+  --acc:#c874e8;--acc2:#9860d8;--blue:#5888e8;--green:#40c88a;--orange:#e8a040;--red:#e06060;
+  --cyan:#48c8d8;--pink:#e068a8;--yellow:#d8c840;--warm:#e8c098;
+  --aa:rgba(200,116,232,.1);--ba:rgba(88,136,232,.1);--ga:rgba(64,200,138,.08);
+  --oa:rgba(232,160,64,.08);--ra:rgba(224,96,96,.08);--ca:rgba(72,200,216,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+.pg{max-width:1080px;margin:0 auto;padding:36px 20px 100px}
+.hd{margin-bottom:32px;text-align:center}
+.hd h1{font-family:'Fraunces',serif;font-size:2rem;font-weight:800;color:var(--tb);letter-spacing:-.5px}
+.hd .paper{font-size:.88rem;color:var(--acc);margin:6px 0 4px;font-style:italic;font-weight:500}
+.hd .sub{font-size:.85rem;color:var(--td);font-weight:300}
+.tabs{display:flex;gap:0;border:1px solid var(--bd);border-radius:12px;overflow-x:auto;background:var(--s1);margin-bottom:30px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:88px;padding:12px 6px;text-align:center;font-size:.66rem;color:var(--td);cursor:pointer;border-right:1px solid var(--bd);position:relative;transition:all .2s;font-weight:500}
+.tab:last-child{border-right:none}
+.tab:hover{background:rgba(200,116,232,.04)}
+.tab.on{background:var(--aa);color:var(--acc)}
+.tab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;background:var(--acc);border-radius:2px 2px 0 0}
+.sec{display:none;animation:fu .35s ease}.sec.on{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.st{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--tb);margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chip{font-size:.6rem;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:16px;font-weight:500}
+.desc{font-size:.9rem;color:var(--t);max-width:780px;margin-bottom:22px;line-height:1.9;word-wrap:break-word;overflow-wrap:break-word}
+.desc strong{color:var(--tb);font-weight:600}
+.cd{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:26px;margin-bottom:16px;position:relative;overflow:hidden}
+.cd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent);opacity:.12}
+.cl{font-size:.64rem;font-family:'DM Mono',monospace;color:var(--td);text-transform:uppercase;letter-spacing:1.6px;margin-bottom:14px}
+.ins{background:var(--ga);border-left:3px solid var(--green);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.ins b{color:var(--green);font-weight:600}
+.wrn{background:var(--oa);border-left:3px solid var(--orange);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.wrn b{color:var(--orange);font-weight:600}
+.key{background:var(--aa);border-left:3px solid var(--acc);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.key b{color:var(--acc);font-weight:600}
+.an{background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:18px 20px;margin:16px 0}
+.an .e{font-size:1.3rem;margin-bottom:4px}.an .at{font-size:.84rem;font-weight:600;color:var(--tb);margin-bottom:5px}
+.an p{font-size:.84rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+canvas{display:block;border-radius:8px;max-width:100%;height:auto}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){
+  .cols{grid-template-columns:1fr}
+  .tab{flex:none;min-width:72px;font-size:.56rem;padding:10px 6px}
+  .pg{padding:20px 10px 60px}
+  .hd h1{font-size:1.5rem}
+  .hd .paper{font-size:.8rem}
+  .st{font-size:1.1rem}
+  .desc{font-size:.82rem}
+  .cd{padding:14px}
+  .cl{font-size:.58rem;letter-spacing:1.2px;margin-bottom:10px}
+  .ins,.wrn,.key{padding:10px 14px;font-size:.8rem}
+  .an{padding:14px 16px}
+  .an .at{font-size:.8rem}
+  .an p{font-size:.78rem}
+  .ctrl{gap:10px;padding:8px 10px}
+  .ctrl input[type=range]{width:100px}
+  .ctrl label{font-size:.66rem}
+  .nav{margin-top:20px}
+  .nb{padding:8px 16px;font-size:.78rem}
+}
+@media(max-width:400px){
+  .pg{padding:14px 6px 40px}
+  .hd h1{font-size:1.2rem}
+  .hd .paper{font-size:.74rem}
+  .st{font-size:.95rem;gap:8px}
+  .chip{font-size:.52rem;padding:2px 7px}
+  .cd{padding:8px}
+  .cl{font-size:.52rem}
+  .tab{min-width:56px;font-size:.48rem;padding:8px 4px}
+  .ins,.wrn,.key{padding:8px 10px;font-size:.76rem}
+  .an{padding:10px 12px}
+  .ctrl{flex-direction:column;align-items:flex-start}
+  .ctrl input[type=range]{width:100%}
+}
+.ctrl{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:10px 14px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)}
+.ctrl label{font-size:.72rem;color:var(--td);font-weight:500}
+.ctrl input[type=range]{width:160px;height:3px;-webkit-appearance:none;background:var(--s3);border-radius:2px}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--acc);border-radius:50%;cursor:pointer}
+.ctrl .v{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--acc);min-width:50px}
+.nav{display:flex;justify-content:space-between;margin-top:28px}
+.nb{padding:9px 22px;border-radius:9px;font-size:.84rem;cursor:pointer;border:1px solid var(--bd);background:var(--s1);color:var(--t);font-family:'DM Sans';font-weight:500;transition:all .2s}
+.nb:hover{border-color:var(--acc);color:var(--acc)}.nb.pr{background:var(--aa);border-color:rgba(200,116,232,.25);color:var(--acc)}
+.nb:disabled{opacity:.2;cursor:not-allowed}
+.sc{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--td);letter-spacing:1px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="pg">
+<div class="hd">
+<h1>Mirage — Seeing Voices</h1>
+<div class="paper">Generating A-Roll Video from Audio with Mirage</div>
+<div class="sub">Interactive visual guide — concepts</div>
+</div>
+<div class="tabs" id="tabs"></div>
+
+<!-- S0: The Problem -->
+<div class="sec on" id="s0">
+<div class="sc">THE VISION</div>
+<div class="st">What does Mirage do? <span class="chip" style="background:var(--aa);color:var(--acc)">OVERVIEW</span></div>
+<div class="desc">Mirage generates <strong>complete video from audio</strong>. Given someone's voice, it creates a realistic video of a person delivering that speech — including lip sync, facial expressions, body gestures, and even the background scene. Unlike re-dubbing systems, Mirage generates <strong>from scratch</strong>.</div>
+<div class="cd"><div class="cl">Input → Output</div><canvas id="c0a" width="960" height="200"></canvas></div>
+<div class="cd" style="text-align:center;padding:28px">
+<div style="font-family:'Fraunces',serif;font-size:1.15rem;color:var(--tb);line-height:1.8">
+"Films are 50 percent visual and 50 percent sound."<br>
+<span style="color:var(--td);font-size:.9rem">— David Lynch</span><br><br>
+Mirage's key insight: <strong style="color:var(--acc)">use only self-attention</strong> to mix audio and video.<br>
+No specialized cross-attention. No domain-specific components.<br>
+Just concatenate all modalities and let attention figure it out.
+</div></div>
+<div class="an"><div class="e">🎬</div><div class="at">A-Roll: the main footage</div><p>In filmmaking, "A-roll" is the primary footage — actors delivering lines, speakers addressing the camera. It's where audio and video must work in lockstep. Mirage is designed specifically for generating this type of content: realistic people speaking, gesturing, and performing in sync with audio.</p></div>
+</div>
+
+<!-- S1: Architecture -->
+<div class="sec" id="s1">
+<div class="sc">ARCHITECTURE</div>
+<div class="st">The Mirage Model <span class="chip" style="background:var(--ba);color:var(--blue)">10B PARAMS</span></div>
+<div class="desc">Mirage is built on <strong>Mochi</strong> (an open-source DiT for text-to-video). It extends Mochi's architecture to handle audio as a first-class modality — using the same attention mechanism for everything.</div>
+<div class="cd"><div class="cl">System overview</div><canvas id="c1a" width="960" height="360"></canvas></div>
+<div class="cols">
+<div class="cd"><div class="cl">From Mochi (inherited)</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--blue)">●</span> 3D Spatiotemporal VAE<br>
+<span style="color:var(--blue)">●</span> Diffusion Transformer (48 blocks)<br>
+<span style="color:var(--blue)">●</span> Asymmetric self-attention<br>
+<span style="color:var(--blue)">●</span> Learned 3D RoPE<br>
+<span style="color:var(--blue)">●</span> T5-XXL text encoder<br>
+<span style="color:var(--blue)">●</span> Flow matching training
+</div></div>
+<div class="cd"><div class="cl">Added by Mirage</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--acc)">●</span> wav2vec audio encoder + projection<br>
+<span style="color:var(--acc)">●</span> Audio tokens in self-attention<br>
+<span style="color:var(--acc)">●</span> Modality-specific learned RoPE<br>
+<span style="color:var(--acc)">●</span> Reference image conditioning<br>
+<span style="color:var(--acc)">●</span> Warm-up + stitching training recipe<br>
+<span style="color:var(--acc)">●</span> A-roll data pipeline & filtering
+</div></div></div>
+</div>
+
+<!-- S2: Asymmetric Self-Attention -->
+<div class="sec" id="s2">
+<div class="sc">CORE IDEA</div>
+<div class="st">Asymmetric Self-Attention <span class="chip" style="background:var(--aa);color:var(--acc)">THE KEY</span></div>
+<div class="desc">The central design choice: <strong>all modalities share one attention mechanism</strong>. Text, audio, video, and reference image tokens are concatenated into a single sequence. Every token can attend to every other token. But each modality gets its own MLP and normalization — hence "asymmetric."</div>
+<div class="cd"><div class="cl">How tokens flow through a single transformer block</div><canvas id="c2a" width="960" height="340"></canvas></div>
+<div class="an"><div class="e">🍽️</div><div class="at">Like a dinner party conversation</div><p>Imagine a dinner table where a filmmaker (video), a musician (audio), a writer (text), and a photographer (reference image) all sit together. They share one conversation (self-attention) — everyone hears everyone. But when they go home, each processes what they heard through their own expertise (modality-specific MLPs). No translator needed between them.</p></div>
+<div class="cd"><div class="cl">Why this matters — extensibility</div><canvas id="c2b" width="960" height="160"></canvas></div>
+<div class="key"><b>The philosophical choice:</b> Rather than designing specialized audio-video cross-attention modules (like EditYourself does), Mirage bets that with enough scale (10B params, 48 layers), standard self-attention can learn all the cross-modal correspondences implicitly. Adding a new modality is just concatenating more tokens.</div>
+</div>
+
+<!-- S3: Encoding -->
+<div class="sec" id="s3">
+<div class="sc">ENCODERS</div>
+<div class="st">How each modality becomes tokens <span class="chip" style="background:var(--ga);color:var(--green)">ENCODING</span></div>
+<div class="desc">Each input modality goes through its own encoder to become a sequence of tokens. These token sequences are then concatenated along the sequence dimension before entering the transformer.</div>
+<div class="cd"><div class="cl">The four modality encoders</div><canvas id="c3a" width="960" height="380"></canvas></div>
+<div class="cd"><div class="cl">Final token sequence</div><canvas id="c3b" width="960" height="120"></canvas></div>
+<div class="wrn"><b>Scale of the sequence:</b> For a 4-second 720p video, the video tokens alone are 72,000 elements. Adding text (256), audio (~100), and optionally a reference image makes the full sequence enormous — requiring context parallelism across multiple GPUs.</div>
+</div>
+
+<!-- S4: Learned RoPE -->
+<div class="sec" id="s4">
+<div class="sc">POSITIONS</div>
+<div class="st">Learned 3D RoPE — per-modality positions <span class="chip" style="background:var(--ca);color:var(--cyan)">SPATIAL</span></div>
+<div class="desc">Each modality gets its own <strong>learned</strong> Rotary Position Embedding. Unlike fixed RoPE (as in EditYourself/LTX-Video), Mochi/Mirage learns the frequency schedule during training. Each modality has separate RoPE parameters — video gets 3D (time, height, width), audio gets 1D (time), text gets 1D (sequence position).</div>
+<div class="cd"><div class="cl">Per-modality position encoding</div><canvas id="c4a" width="960" height="280"></canvas></div>
+<div class="cd"><div class="cl">Interactive: How different modalities are positioned</div>
+<div class="ctrl"><label>Modality</label>
+<select id="modSel" style="background:var(--s3);border:1px solid var(--bd);color:var(--tb);padding:4px 8px;border-radius:4px;font-size:.8rem">
+<option value="0">Video</option><option value="1">Audio</option><option value="2">Text</option><option value="3">Reference Image</option>
+</select>
+</div>
+<canvas id="c4b" width="960" height="200"></canvas></div>
+<div class="ins"><b>Reference image positioning:</b> The reference image is encoded through the same VAE as video (repeated 7 frames for minimum input size). Its RoPE time coordinate is set as the relative position of the reference frame to the video — so if the reference comes from 2 seconds before the generated clip, RoPE encodes that temporal offset.</div>
+</div>
+
+<!-- S5: Flow Matching -->
+<div class="sec" id="s5">
+<div class="sc">TRAINING</div>
+<div class="st">Flow Matching — learning to generate <span class="chip" style="background:var(--oa);color:var(--orange)">DIFFUSION</span></div>
+<div class="desc">Mirage uses <strong>flow matching</strong> (not DDPM). Instead of learning to predict noise, it learns to predict the <strong>velocity</strong> that flows from pure noise to the target video. This is mathematically cleaner and typically gives straighter sampling trajectories.</div>
+<div class="cd"><div class="cl">Flow matching intuition</div><canvas id="c5a" width="960" height="260"></canvas></div>
+<div class="an"><div class="e">🚀</div><div class="at">Like navigating from random to meaningful</div><p>Imagine you're in a fog (Gaussian noise) and need to reach a destination (the target video). Flow matching learns the exact velocity vector at every point along the path. At inference, you follow these velocity vectors step by step from the fog to a clear destination. The path is a straight line in latent space — no meandering.</p></div>
+<div class="cd"><div class="cl">Modality dropout for classifier-free guidance</div>
+<div style="font-size:.86rem;line-height:2">
+During training, each conditioning modality is randomly dropped out:<br>
+<span style="color:var(--acc)">●</span> Sometimes no text → model learns unconditional generation<br>
+<span style="color:var(--orange)">●</span> Sometimes no audio → model learns text-only generation<br>
+<span style="color:var(--blue)">●</span> Sometimes no reference image → model generates appearance from scratch<br><br>
+At inference, this enables <strong>classifier-free guidance (CFG)</strong>: run the model with and without conditioning, amplify the difference. Plus <strong>STG</strong> and <strong>negative prompting</strong> for further quality.
+</div></div>
+</div>
+
+<!-- S6: Reference Image -->
+<div class="sec" id="s6">
+<div class="sc">CONDITIONING</div>
+<div class="st">Reference Image — controlling appearance <span class="chip" style="background:var(--ba);color:var(--blue)">IDENTITY</span></div>
+<div class="desc">Mirage can optionally take a reference image to control the person's appearance. The image is encoded through the same VAE as video, then concatenated as extra tokens. No separate encoder, no face detection — just more tokens in the sequence.</div>
+<div class="cd"><div class="cl">How reference images enter the model</div><canvas id="c6a" width="960" height="240"></canvas></div>
+<div class="cols">
+<div class="cd"><div class="cl">Mirage's approach</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--acc)">●</span> Same VAE encoder as video<br>
+<span style="color:var(--acc)">●</span> Repeat image 7× temporally (VAE minimum)<br>
+<span style="color:var(--acc)">●</span> Same parameters as video tokens<br>
+<span style="color:var(--acc)">●</span> Only difference: RoPE time = relative offset<br>
+<span style="color:var(--acc)">●</span> No face detection needed<br>
+<span style="color:var(--acc)">●</span> No explicit masking
+</div></div>
+<div class="cd"><div class="cl">vs. EditYourself's approach</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--blue)">●</span> Separate identity reference tokens<br>
+<span style="color:var(--blue)">●</span> Face detection → extract face patches<br>
+<span style="color:var(--blue)">●</span> Negative time coordinates<br>
+<span style="color:var(--blue)">●</span> Explicit conditioning mask per token<br>
+<span style="color:var(--blue)">●</span> Lower-face mask zeroing<br>
+<span style="color:var(--blue)">●</span> Precise spatial control
+</div></div></div>
+<div class="an"><div class="e">📸</div><div class="at">Headshot vs. surgery</div><p>EditYourself is like a surgeon: it knows exactly where the mouth is, carefully masks it, and replaces just that region. Mirage is like giving an actor a headshot: "Look like this person" — and trusting the model to figure out the details. Both work, but for different tasks: EditYourself edits existing video precisely; Mirage generates entirely new video.</p></div>
+</div>
+
+<!-- S7: Data Pipeline -->
+<div class="sec" id="s7">
+<div class="sc">DATA</div>
+<div class="st">Training Data Pipeline <span class="chip" style="background:var(--ra);color:var(--red)">CURATION</span></div>
+<div class="desc">Mirage's quality depends heavily on its training data. The paper describes a comprehensive filtering pipeline to extract high-quality single-speaker A-roll clips from raw video data.</div>
+<div class="cd"><div class="cl">Data filtering funnel</div><canvas id="c7a" width="960" height="300"></canvas></div>
+<div class="cd"><div class="cl">Video captioning — structured descriptions</div>
+<div style="font-size:.86rem;line-height:2">
+Each video gets a 4-part structured caption via VLMs (GPT-4o + Qwen):<br><br>
+<span style="color:var(--warm)">●</span> <strong>Appearance</strong> — physical description, hair, clothing, accessories<br>
+<span style="color:var(--acc)">●</span> <strong>Bearing</strong> — facial expression, gestures, engagement style<br>
+<span style="color:var(--cyan)">●</span> <strong>Background</strong> — setting, objects, atmosphere<br>
+<span style="color:var(--blue)">●</span> <strong>Shot</strong> — camera angle, framing, lighting<br><br>
+A two-pass process: first extract static attributes from keyframes, then temporal dynamics from dense frame sampling. Finally an LLM synthesizes both into a single paragraph.
+</div></div>
+</div>
+
+<!-- S8: Inference -->
+<div class="sec" id="s8">
+<div class="sc">INFERENCE</div>
+<div class="st">Fast Generation — scaling to production <span class="chip" style="background:var(--oa);color:var(--orange)">SPEED</span></div>
+<div class="desc">A 10B parameter model processing 72,000+ tokens needs serious optimization. Mirage uses distributed inference, quantization, and temporal caching to make generation practical.</div>
+<div class="cd"><div class="cl">Inference optimization stack</div><canvas id="c8a" width="960" height="260"></canvas></div>
+<div class="cd"><div class="cl">Time caching — the biggest win (40% speedup)</div>
+<div style="font-size:.86rem;line-height:2">
+<strong>Key observation:</strong> In later denoising steps, attention outputs barely change between consecutive steps. And the conditional vs unconditional CFG outputs become very similar.<br><br>
+<span style="color:var(--green)">●</span> <strong>FasterCache</strong>: Cache and reuse attention outputs from previous steps<br>
+<span style="color:var(--green)">●</span> Skip redundant CFG computations when conditional ≈ unconditional<br>
+<span style="color:var(--green)">●</span> No perceptual quality loss — the cached values are nearly identical anyway<br>
+<span style="color:var(--green)">●</span> Result: <strong>40% reduction</strong> in inference time
+</div></div>
+</div>
+
+<!-- S9: Emergent Behaviors -->
+<div class="sec" id="s9">
+<div class="sc">RESULTS</div>
+<div class="st">What Mirage Learns — emergent behaviors <span class="chip" style="background:var(--ga);color:var(--green)">MAGIC</span></div>
+<div class="desc">Without any explicit supervision for these behaviors, Mirage learns to generate remarkably detailed and synchronized audio-visual outputs. Here are the emergent capabilities the paper demonstrates.</div>
+<div class="cd"><div class="cl">Emergent capabilities</div><canvas id="c9a" width="960" height="380"></canvas></div>
+<div class="cd"><div class="cl">Audio-only generation — what the model infers</div><canvas id="c9b" width="960" height="180"></canvas></div>
+<div class="ins"><b>The most surprising finding:</b> When given only audio (no text, no reference image), Mirage generates a visually appropriate person and environment. A deep male voice produces a different-looking person than a high female voice. Studio-quality audio produces indoor settings; noisy audio produces outdoor scenes. The model has learned latent correlations between acoustic properties and visual appearance.</div>
+</div>
+
+<!-- S10: Summary -->
+<div class="sec" id="s10">
+<div class="sc">PUTTING IT ALL TOGETHER</div>
+<div class="st">The Complete Mirage Pipeline</div>
+<div class="cd"><div class="cl">End-to-end summary</div><canvas id="c10a" width="960" height="450"></canvas></div>
+<div class="cd" style="text-align:center;padding:28px">
+<div style="font-family:'Fraunces',serif;font-size:1.1rem;color:var(--tb);line-height:1.9;max-width:640px;margin:0 auto">
+"Concatenate all modalities into one sequence.<br>
+Let self-attention learn all cross-modal correspondences.<br>
+Use learned RoPE per modality for position.<br>
+Train with flow matching and modality dropout.<br>
+Generate entire A-roll video from just audio."
+</div></div>
+</div>
+
+<div class="nav"><button class="nb" id="pB" disabled onclick="go(-1)">← Previous</button><button class="nb pr" id="nB" onclick="go(1)">Next →</button></div>
+</div>
+
+<script>
+const S=['The Vision','Architecture','Asymmetric Attention','Encoders','Learned RoPE','Flow Matching','Reference Image','Data Pipeline','Inference','Emergent Results','Summary'];
+let cur=0;const $=id=>document.getElementById(id);
+$('tabs').innerHTML=S.map((s,i)=>`<div class="tab${i?'':' on'}" data-i="${i}">${s}</div>`).join('');
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTo(+t.dataset.i)));
+function goTo(n){cur=n;document.querySelectorAll('.sec').forEach((e,i)=>e.classList.toggle('on',i===n));document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('on',i===n));$('pB').disabled=n===0;const b=$('nB');b.disabled=n===S.length-1;b.textContent=n===S.length-1?'Done ✓':'Next →';draw()}
+function go(d){if(cur+d>=0&&cur+d<S.length)goTo(cur+d)}
+function draw(){renders[cur]?.()}
+
+// Helpers
+function rr(c,x,y,w,h,r=8){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath()}
+function bx(c,x,y,w,h,f,s,t,tc,fs=11){rr(c,x,y,w,h);c.fillStyle=f;c.fill();if(s){c.strokeStyle=s;c.lineWidth=1;c.stroke()}if(t){c.fillStyle=tc||'#e6e0f2';c.font=`500 ${fs}px DM Sans`;c.textAlign='center';c.textBaseline='middle';t.split('\n').forEach((l,i,a)=>c.fillText(l,x+w/2,y+h/2+(i-(a.length-1)/2)*15))}}
+function ar(c,x1,y1,x2,y2,col='#554a70'){c.strokeStyle=col;c.lineWidth=1.5;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();const a=Math.atan2(y2-y1,x2-x1);c.fillStyle=col;c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-7*Math.cos(a-.4),y2-7*Math.sin(a-.4));c.lineTo(x2-7*Math.cos(a+.4),y2-7*Math.sin(a+.4));c.fill()}
+const DESIGN_W=960;
+function dpr(el){
+  var d=window.devicePixelRatio||1;
+  if(!el._origH)el._origH=parseInt(el.getAttribute('height'));
+  var parent=el.parentElement;
+  var padL=parent?parseFloat(getComputedStyle(parent).paddingLeft)||0:0;
+  var padR=parent?parseFloat(getComputedStyle(parent).paddingRight)||0:0;
+  var availW=parent?(parent.clientWidth-padL-padR):DESIGN_W;
+  var logicW=Math.min(DESIGN_W,Math.max(280,availW));
+  var s=logicW/DESIGN_W;
+  var logicH=Math.round(el._origH*s);
+  el.width=logicW*d;el.height=logicH*d;
+  el.style.width=logicW+'px';el.style.height=logicH+'px';
+  var x=el.getContext('2d');x.setTransform(1,0,0,1,0,0);x.scale(d*s,d*s);
+  return{w:DESIGN_W,h:el._origH,x:x,s:s};
+}
+
+const renders={};
+
+// S0
+renders[0]=()=>{
+  const c=$('c0a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);x.font='500 12px DM Sans';
+  bx(x,30,30,140,60,'#e8a04011','#e8a04033','🎙️ Audio\n"Hello, welcome..."','#e8a040');
+  bx(x,30,110,140,50,'#c874e811','#c874e833','📝 Text prompt\n(optional)','#c874e8');
+  bx(x,30,175,140,20,'#5888e811','#5888e833','📸 Ref image (optional)','#5888e8',9);
+  ar(x,180,60,300,90,'#e8a04066');ar(x,180,135,300,100,'#c874e866');ar(x,180,185,300,110,'#5888e866');
+  bx(x,300,60,200,90,'#c874e80a','#c874e820','✨ Mirage\n10B DiT\n48 Transformer Blocks','#e6e0f2');
+  ar(x,510,105,580,105);
+  bx(x,580,50,340,110,'#40c88a0a','#40c88a20','','');
+  x.font='600 13px DM Sans';x.fillStyle='#40c88a';x.textAlign='center';x.fillText('🎬 Generated A-Roll Video',750,80);
+  x.font='10px DM Sans';x.fillStyle='#9e94b8';
+  x.fillText('Lip sync • Facial expressions • Body gestures',750,100);
+  x.fillText('Background scene • Camera framing • Lighting',750,118);
+  x.fillText('All from scratch — no input video needed',750,140);
+};
+
+// S1
+renders[1]=()=>{
+  const c=$('c1a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);x.font='500 11px DM Sans';
+  // Encoders
+  const encs=[
+    {l:'🎥 Video\nVAE',y:20,c:'#5888e8',out:'72,000 tokens'},
+    {l:'🎙️ Audio\nwav2vec + proj',y:100,c:'#e8a040',out:'~100 tokens'},
+    {l:'📝 Text\nT5-XXL',y:180,c:'#c874e8',out:'256 tokens'},
+    {l:'📸 Ref Image\nVAE (shared)',y:260,c:'#48c8d8',out:'optional'},
+  ];
+  encs.forEach(e=>{
+    bx(x,30,e.y,130,60,e.c+'11',e.c+'33',e.l,e.c);
+    ar(x,170,e.y+30,220,e.y+30,e.c+'55');
+    bx(x,220,e.y+5,110,50,e.c+'08',e.c+'18',e.out,'#9e94b8',10);
+    ar(x,340,e.y+30,410,170,e.c+'33');
+  });
+  // Transformer
+  bx(x,410,60,260,220,'#c874e806','#c874e818','','');
+  x.font='700 14px Fraunces';x.fillStyle='#e6e0f2';x.textAlign='center';x.fillText('Mirage DiT',540,90);
+  x.font='500 11px DM Sans';x.fillStyle='#9e94b8';
+  x.fillText('48 × Asymmetric Self-Attention Blocks',540,115);
+  x.fillText('[text, audio, ref_image, video] → concat',540,140);
+  x.fillText('→ joint self-attention (all see all)',540,158);
+  x.fillText('→ modality-specific MLPs',540,176);
+  x.fillText('→ adaLN-Zero (timestep modulation)',540,194);
+  x.font='10px DM Sans';x.fillStyle='#554a70';
+  x.fillText('Learned RoPE per modality',540,220);
+  x.fillText('Flow matching velocity prediction',540,238);
+  ar(x,680,170,740,170);
+  bx(x,740,130,110,60,'#40c88a08','#40c88a20','VAE\nDecode','#40c88a');
+  ar(x,860,160,910,160);
+  bx(x,910,140,40,40,'#d8c84011','#d8c84033','🎬','#d8c840');
+};
+
+// S2
+renders[2]=()=>{
+  const c=$('c2a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Token streams
+  const mods=[
+    {l:'Text tokens',c:'#c874e8',y:30,n:8},
+    {l:'Audio tokens',c:'#e8a040',y:100,n:5},
+    {l:'Ref image tokens',c:'#48c8d8',y:170,n:6},
+    {l:'Video tokens',c:'#5888e8',y:240,n:12},
+  ];
+  const tw=24,tg=3,sx=30;
+  mods.forEach(m=>{
+    x.font='10px DM Mono';x.fillStyle=m.c;x.textAlign='left';x.fillText(m.l,sx,m.y-4);
+    for(let i=0;i<m.n;i++){rr(x,sx+i*(tw+tg),m.y,tw,30,3);x.fillStyle=m.c+'22';x.fill();x.strokeStyle=m.c+'44';x.lineWidth=1;x.stroke()}
+    if(m.n===12){x.fillStyle='#554a70';x.font='9px DM Sans';x.fillText('... (72,000)',sx+m.n*(tw+tg)+4,m.y+18)}
+  });
+  // Concat arrow
+  ar(x,210,150,270,150,'#554a70');
+  x.font='10px DM Sans';x.fillStyle='#554a70';x.textAlign='center';x.fillText('concat',240,140);
+  // Joint sequence
+  let cx2=280;
+  mods.forEach(m=>{for(let i=0;i<Math.min(m.n,4);i++){rr(x,cx2,120,tw,30,3);x.fillStyle=m.c+'22';x.fill();x.strokeStyle=m.c+'44';x.lineWidth=1;x.stroke();cx2+=tw+2}});
+  x.fillStyle='#554a70';x.font='9px DM Sans';x.textAlign='left';x.fillText('...',cx2+2,138);
+  // Arrow to attention
+  ar(x,cx2+20,135,510,135,'#c874e844');
+  // Attention box
+  bx(x,510,80,200,110,'#c874e808','#c874e820','','');
+  x.font='600 12px DM Sans';x.fillStyle='#e6e0f2';x.textAlign='center';x.fillText('Self-Attention',610,100);
+  x.font='10px DM Sans';x.fillStyle='#c874e8';x.fillText('Every token attends',610,120);
+  x.fillText('to every other token',610,135);
+  x.fillStyle='#9e94b8';x.fillText('(with learned RoPE per modality)',610,155);
+  x.fillText('+ adaLN-Zero timestep modulation',610,172);
+  // Split to MLPs
+  ar(x,720,135,780,70,'#c874e844');ar(x,720,135,780,115,'#e8a04044');ar(x,720,135,780,160,'#48c8d844');ar(x,720,135,780,205,'#5888e844');
+  const mlps=[{l:'Text\nMLP',c:'#c874e8',y:50},{l:'Audio\nMLP',c:'#e8a040',y:95},{l:'Ref\nMLP',c:'#48c8d8',y:140},{l:'Video\nMLP',c:'#5888e8',y:185}];
+  mlps.forEach(m=>{bx(x,780,m.y,80,35,m.c+'11',m.c+'33',m.l,m.c,9)});
+  x.font='600 11px DM Sans';x.fillStyle='#e6e0f2';x.textAlign='center';x.fillText('"Asymmetric"',820,240);
+  x.font='10px DM Sans';x.fillStyle='#554a70';x.fillText('Shared attention, separate MLPs',820,258);
+  // S2b
+  const c2=$('c2b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  x2.font='500 11px DM Sans';
+  [{l:'Cross-Attention\n(EditYourself)',d:'Separate attention layers\nfor each modality pair.\nN modalities → O(N²) modules.',c:'#5888e8',x:30},{l:'Asymmetric Self-Attention\n(Mirage)',d:'One attention layer.\nAll modalities concatenated.\nN modalities → just concat more tokens.',c:'#c874e8',x:350},{l:'Adding new modality',d:'Cross-attn: design new module,\ntrain from scratch.\nSelf-attn: just concat tokens,\nfine-tune.',c:'#40c88a',x:670}].forEach(b=>{
+    bx(x2,b.x,15,280,110,b.c+'08',b.c+'20',b.l+'\n\n'+b.d,b.c,10);
+  });
+};
+
+// S3
+renders[3]=()=>{
+  const c=$('c3a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  const encs=[
+    {l:'Video',icon:'🎥',input:'100 frames\n720p, 25fps',enc:'Mochi 3D\nSpatioTemporal VAE',comp:'6× time\n8× spatial',out:'12×20×160×90\n→ flatten+patch\n→ 72,000 tokens',c:'#5888e8',y:10},
+    {l:'Audio',icon:'🎙️',input:'16kHz\nmono audio',enc:'wav2vec\n(pretrained)',comp:'Interpolate\nto 25fps',out:'~100 tokens\n× 1024 dims\n→ projection',c:'#e8a040',y:110},
+    {l:'Text',icon:'📝',input:'VLM caption\n(4-part structured)',enc:'T5-XXL\n(pretrained)',comp:'Max 256\ntokens',out:'256 tokens\n× 4096 dims',c:'#c874e8',y:210},
+    {l:'Ref Image',icon:'📸',input:'Single frame\nfrom video',enc:'Same VAE\nas video',comp:'Repeat 7×\n(min input)',out:'Same shape\nas video chunk',c:'#48c8d8',y:310},
+  ];
+  encs.forEach(e=>{
+    const row=e.y;
+    bx(x,20,row,100,70,e.c+'0a',e.c+'22',e.icon+' '+e.l+'\n'+e.input,e.c,10);
+    ar(x,130,row+35,160,row+35,e.c+'55');
+    bx(x,160,row,130,70,e.c+'08',e.c+'18',e.enc,e.c,10);
+    ar(x,300,row+35,330,row+35,e.c+'55');
+    bx(x,330,row,110,70,'#12102408','#201c3a',e.comp,'#9e94b8',10);
+    ar(x,450,row+35,480,row+35,e.c+'55');
+    bx(x,480,row,180,70,e.c+'08',e.c+'18',e.out,'#9e94b8',9);
+  });
+  // Arrow to concat
+  for(let i=0;i<4;i++)ar(x,670,encs[i].y+35,720,190,encs[i].c+'33');
+  bx(x,720,155,220,70,'#c874e808','#c874e820','Concatenate along\nsequence dimension\n→ single token stream','#e6e0f2',10);
+  // S3b
+  const c2=$('c3b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  const segs=[{l:'text (256)',w:80,c:'#c874e8'},{l:'audio (~100)',w:70,c:'#e8a040'},{l:'ref_img',w:70,c:'#48c8d8'},{l:'video (72,000)',w:700,c:'#5888e8'}];
+  let sx2=20;
+  segs.forEach(s=>{rr(x2,sx2,15,s.w,40,4);x2.fillStyle=s.c+'22';x2.fill();x2.strokeStyle=s.c+'44';x2.lineWidth=1;x2.stroke();
+  x2.fillStyle=s.c;x2.font='9px DM Mono';x2.textAlign='center';x2.fillText(s.l,sx2+s.w/2,68);sx2+=s.w+4});
+  x2.font='10px DM Sans';x2.fillStyle='#554a70';x2.textAlign='center';x2.fillText('→ All processed by 48 transformer blocks with shared self-attention',480,100);
+};
+
+// S4
+renders[4]=()=>{
+  const c=$('c4a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  [{l:'Video',dims:'3D RoPE\n(time, height, width)',note:'Learned frequency schedule\n(not fixed like LTX-Video)',c:'#5888e8',y:20},
+  {l:'Audio',dims:'1D RoPE\n(time)',note:'Aligned to video frame rate\nvia interpolation',c:'#e8a040',y:100},
+  {l:'Text',dims:'1D RoPE\n(sequence position)',note:'Standard sequence\nposition encoding',c:'#c874e8',y:180},
+  {l:'Ref Image',dims:'3D RoPE\n(relative time, h, w)',note:'Time = offset from video\nSame spatial as video',c:'#48c8d8',y:220}
+  ].forEach(m=>{
+    bx(x,30,m.y,120,60,m.c+'0a',m.c+'22',m.l+'\n'+m.dims,m.c,10);
+    ar(x,160,m.y+30,200,m.y+30,m.c+'44');
+    bx(x,200,m.y,200,60,'#12102408','#201c3a',m.note,'#9e94b8',10);
+  });
+  bx(x,500,40,420,200,'#c874e806','#c874e815','','');
+  x.font='600 13px Fraunces';x.fillStyle='#e6e0f2';x.textAlign='center';x.fillText('Learned vs Fixed RoPE',710,65);
+  x.font='11px DM Sans';x.fillStyle='#9e94b8';
+  ['Fixed (LTX-Video): θᵢ = 10000^(-2i/d)','→ Frequency schedule is a formula','→ Same for all models','','Learned (Mochi/Mirage): θᵢ = trained params','→ Network learns optimal frequencies','→ Can adapt per modality','→ Separate RoPE params for each modality'].forEach((l,i)=>{
+    x.fillStyle=i<3?'#5888e8':i===3?'transparent':'#c874e8';x.fillText(l,710,90+i*18)});
+  // S4b
+  const c2=$('c4b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  const mod=+$('modSel').value;
+  const configs=[
+    {l:'Video: 3D grid',draw:x2=>{
+      for(let t=0;t<3;t++)for(let h=0;h<4;h++)for(let w=0;w<6;w++){
+        const px=80+w*28-t*16,py=30+h*22+t*14;
+        rr(x2,px,py,24,18,3);x2.fillStyle=`rgba(88,136,232,${.08+t*.06})`;x2.fill();x2.strokeStyle='rgba(88,136,232,.2)';x2.lineWidth=.5;x2.stroke()}
+      x2.fillStyle='#5888e8';x2.font='10px DM Sans';x2.textAlign='center';x2.fillText('time →',40,100);x2.fillText('height ↓   width →',160,170)}},
+    {l:'Audio: 1D timeline',draw:x2=>{
+      for(let i=0;i<20;i++){rr(x2,40+i*38,60,34,30,3);x2.fillStyle=`rgba(232,160,64,${.1+Math.sin(i*.5)*.08})`;x2.fill();x2.strokeStyle='rgba(232,160,64,.25)';x2.lineWidth=.5;x2.stroke();
+      x2.fillStyle='#e8a040';x2.font='8px DM Mono';x2.textAlign='center';x2.fillText('t='+i,57+i*38,82)}
+      x2.fillStyle='#e8a040';x2.font='11px DM Sans';x2.textAlign='center';x2.fillText('Audio: only temporal position (aligned to video fps)',400,140)}},
+    {l:'Text: 1D sequence',draw:x2=>{
+      const words=['A','young','woman','with','dark','hair','speaks','calmly','in','a','well-lit','studio'];
+      words.forEach((w,i)=>{rr(x2,30+i*68,60,64,30,3);x2.fillStyle='rgba(200,116,232,.1)';x2.fill();x2.strokeStyle='rgba(200,116,232,.25)';x2.lineWidth=.5;x2.stroke();
+      x2.fillStyle='#c874e8';x2.font='9px DM Sans';x2.textAlign='center';x2.fillText(w,62+i*68,78)});
+      x2.fillStyle='#c874e8';x2.font='11px DM Sans';x2.textAlign='center';x2.fillText('Text: standard sequence position (1D)',400,140)}},
+    {l:'Ref Image: offset 3D',draw:x2=>{
+      bx(x2,40,30,140,100,'#48c8d810','#48c8d825','Reference\nImage\n(from 2s before)','#48c8d8',10);
+      ar(x2,190,80,260,80,'#48c8d855');
+      bx(x2,260,40,200,80,'#48c8d808','#48c8d818','VAE encode\n→ same tokens as video\nRoPE time = -2.0s offset','#9e94b8',10);
+      ar(x2,470,80,530,80,'#48c8d855');
+      bx(x2,530,40,200,80,'#5888e808','#5888e818','Video tokens\nRoPE time = 0.0s onward\nSame spatial RoPE','#9e94b8',10);
+      x2.fillStyle='#48c8d8';x2.font='11px DM Sans';x2.textAlign='center';x2.fillText('Reference gets negative temporal offset — same idea as EditYourself!',400,160)}}
+  ];
+  configs[mod].draw(x2);
+};
+$('modSel').addEventListener('change',()=>renders[4]());
+
+// S5
+renders[5]=()=>{
+  const c=$('c5a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Noise to data trajectory
+  const pl=80,pr=80,py=130;const pw=W-pl-pr;
+  // Noise cloud
+  bx(x,20,70,100,80,'rgba(150,140,170,.06)','rgba(150,140,170,.15)','☁️ Gaussian\nNoise','#9e94b8',10);
+  // Target
+  bx(x,W-130,70,110,80,'rgba(64,200,138,.06)','rgba(64,200,138,.2)','🎬 Target\nVideo','#40c88a',10);
+  // Flow path
+  x.strokeStyle='#c874e8';x.lineWidth=2;x.setLineDash([]);x.beginPath();x.moveTo(130,110);
+  for(let t=0;t<=1;t+=.02){const px2=130+t*(W-270);const py2=110+Math.sin(t*Math.PI)* -30;t===0?x.moveTo(px2,py2):x.lineTo(px2,py2)}
+  x.stroke();
+  // Velocity vectors
+  for(let t=0.1;t<1;t+=.15){
+    const px2=130+t*(W-270);const py2=110+Math.sin(t*Math.PI)*-30;
+    const dx=40;const dy=-Math.cos(t*Math.PI)*12;
+    x.strokeStyle='#e8a04088';x.lineWidth=1.5;x.beginPath();x.moveTo(px2,py2);x.lineTo(px2+dx,py2+dy);x.stroke();
+    x.fillStyle='#e8a040';x.beginPath();const a=Math.atan2(dy,dx);x.moveTo(px2+dx,py2+dy);x.lineTo(px2+dx-6*Math.cos(a-.4),py2+dy-6*Math.sin(a-.4));x.lineTo(px2+dx-6*Math.cos(a+.4),py2+dy-6*Math.sin(a+.4));x.fill();
+  }
+  x.font='10px DM Sans';x.fillStyle='#e8a040';x.textAlign='center';x.fillText('velocity vectors (learned)',W/2,70);
+  x.fillStyle='#c874e8';x.fillText('flow trajectory',W/2,175);
+  // Timestep bar
+  x.fillStyle='#554a70';x.font='10px DM Mono';x.textAlign='left';x.fillText('t=0 (noise)',130,200);x.textAlign='right';x.fillText('t=1 (data)',W-130,200);
+  // Loss equation
+  x.font='500 11px DM Sans';x.fillStyle='#e6e0f2';x.textAlign='center';
+  x.fillText('Loss = ‖ v_θ(z_t, t, audio, text) − (data − noise) ‖²',W/2,230);
+  x.font='10px DM Sans';x.fillStyle='#554a70';x.fillText('Model predicts velocity (data − noise), not noise itself',W/2,250);
+};
+
+// S6
+renders[6]=()=>{
+  const c=$('c6a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Reference image path
+  bx(x,20,30,110,80,'#48c8d80a','#48c8d822','📸 Reference\nImage','#48c8d8',11);
+  ar(x,140,70,180,70,'#48c8d855');
+  bx(x,180,30,130,80,'#48c8d808','#48c8d818','Repeat 7× in\ntemporal dim\n(VAE minimum)','#9e94b8',10);
+  ar(x,320,70,360,70,'#48c8d855');
+  bx(x,360,30,120,80,'#5888e808','#5888e818','VAE\nEncode\n(same as video)','#5888e8',10);
+  ar(x,490,70,530,70,'#5888e855');
+  bx(x,530,30,160,80,'#c874e808','#c874e818','Ref image tokens\n+ RoPE with\nrelative time offset','#c874e8',10);
+  ar(x,700,70,740,70,'#c874e855');
+  bx(x,740,10,200,120,'#c874e806','#c874e815','','');
+  x.font='600 11px DM Sans';x.fillStyle='#e6e0f2';x.textAlign='center';x.fillText('Concat with other tokens',840,40);
+  x.font='10px DM Sans';x.fillStyle='#9e94b8';
+  x.fillText('[text, audio, ref_image, video]',840,60);x.fillText('Self-attention handles the rest',840,78);x.fillText('No special face detection needed',840,96);x.fillText('No explicit masking',840,114);
+  // Training note
+  x.font='11px DM Sans';x.fillStyle='#e8a040';x.textAlign='center';
+  x.fillText('Training: reference frame sampled from outside the training clip range',480,180);
+  x.fillStyle='#554a70';x.font='10px DM Sans';
+  x.fillText('→ Model learns: "make the generated person look like this reference"',480,200);
+};
+
+// S7
+renders[7]=()=>{
+  const c=$('c7a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  const steps=[
+    {l:'Raw Videos',c:'#9e94b8',w:800},
+    {l:'Single-Speaker Detection (MediaPipe)',c:'#c874e8',w:650},
+    {l:'Scene Boundary Detection (PySceneDetect)',c:'#e8a040',w:560},
+    {l:'Static Frame Filter (motion vectors)',c:'#e06060',w:480},
+    {l:'Screen-Split Detection (Canny edges)',c:'#5888e8',w:420},
+    {l:'Text Overlay Filter (CRAFT/EasyOCR, >1%)',c:'#48c8d8',w:370},
+    {l:'Lip Sync Quality (SyncNet offset + confidence)',c:'#d868a0',w:310},
+    {l:'Graphic Overlay Detection (YOLOX)',c:'#40c88a',w:260},
+    {l:'Final A-Roll Training Clips',c:'#d8c840',w:220},
+  ];
+  steps.forEach((s,i)=>{
+    const y=10+i*30;
+    rr(x,80,y,s.w,24,4);x.fillStyle=s.c+'15';x.fill();x.strokeStyle=s.c+'33';x.lineWidth=1;x.stroke();
+    x.fillStyle=s.c;x.font='500 10px DM Sans';x.textAlign='left';x.fillText(s.l,90,y+16);
+  });
+  x.font='10px DM Sans';x.fillStyle='#554a70';x.textAlign='center';
+  x.fillText('Each stage progressively narrows the dataset to high-quality A-roll',480,285);
+};
+
+// S8
+renders[8]=()=>{
+  const c=$('c8a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  const opts=[
+    {l:'FSDP\nWeight Sharding',d:'Model weights split\nacross GPUs',speed:'—',c:'#5888e8'},
+    {l:'Context\nParallelism',d:'72K sequence split\nvia Ulysses',speed:'Near-linear\nscaling',c:'#c874e8'},
+    {l:'FP8\nQuantization',d:'All matmul ops\nin FP8 precision',speed:'5%\nfaster',c:'#e8a040'},
+    {l:'FasterCache\nTime Caching',d:'Cache attention\noutputs across steps',speed:'40%\nfaster',c:'#40c88a'},
+    {l:'torch.compile\n+ FlashAttn3',d:'Kernel fusion +\nefficient attention',speed:'~65%\nfaster',c:'#e06060'},
+  ];
+  opts.forEach((o,i)=>{
+    const ox=15+i*188;
+    bx(x,ox,20,178,90,o.c+'0a',o.c+'22',o.l+'\n\n'+o.d,o.c,10);
+    if(o.speed!=='—'){bx(x,ox+50,120,78,30,o.c+'15',o.c+'33',o.speed,o.c,10)}
+  });
+  x.font='11px DM Sans';x.fillStyle='#e6e0f2';x.textAlign='center';
+  x.fillText('64 sampling steps per video — each optimization compounds',480,180);
+  x.font='10px DM Sans';x.fillStyle='#554a70';
+  x.fillText('Plus: CFG similarity → skip redundant unconditional passes in later steps',480,200);
+};
+
+// S9
+renders[9]=()=>{
+  const c=$('c9a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  const caps=[
+    {l:'🗣️ Plosive Precision',d:'Bilabial /p/b/, alveolar /t/d/,\nvelar /k/g/ — accurate tongue\nand lip closure per sound',c:'#c874e8'},
+    {l:'👁️ Natural Eye Motion',d:'Blinks at realistic intervals,\nsaccades, gaze shifts tied to\nspeech context (recall vs assertion)',c:'#5888e8'},
+    {l:'😊 Emotional Affect',d:'Facial expressions match\nemotional content of speech\nand text prompt control',c:'#e8a040'},
+    {l:'👅 Co-Articulation',d:'Smooth phoneme transitions,\ntongue movements learned\nfrom data (no explicit model)',c:'#40c88a'},
+    {l:'😂 Paralinguistics',d:'Laughter, coughing, sneezing,\nsniffling — non-speech sounds\nproduce appropriate reactions',c:'#e06060'},
+    {l:'🤝 Gesture-Semantic',d:'Head nods for agreement,\nhand movements for explanation.\nNo explicit gesture supervision.',c:'#48c8d8'},
+  ];
+  caps.forEach((cap,i)=>{
+    const col=i%3,row=Math.floor(i/3);
+    const cx2=15+col*320,cy=15+row*180;
+    bx(x,cx2,cy,300,160,cap.c+'08',cap.c+'18','','');
+    x.font='600 12px DM Sans';x.fillStyle=cap.c;x.textAlign='left';x.fillText(cap.l,cx2+14,cy+24);
+    x.font='10px DM Sans';x.fillStyle='#9e94b8';
+    cap.d.split('\n').forEach((l,li)=>x.fillText(l,cx2+14,cy+48+li*16));
+    x.fillStyle='#554a70';x.font='9px DM Sans';x.fillText('Learned implicitly — no supervision',cx2+14,cy+145);
+  });
+  // S9b
+  const c2=$('c9b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  const infers=[
+    {audio:'Deep male voice\n+ studio reverb',visual:'Male-presenting person\nIndoor, well-lit studio',c:'#5888e8'},
+    {audio:'High female voice\n+ outdoor noise',visual:'Female-presenting person\nOutdoor, natural lighting',c:'#c874e8'},
+    {audio:'Child\'s voice\n+ echo/large room',visual:'Young person\nLarge indoor space',c:'#40c88a'},
+  ];
+  infers.forEach((inf,i)=>{
+    const ix=15+i*320;
+    bx(x2,ix,10,145,65,'#e8a04008','#e8a04018','🎙️ '+inf.audio,'#e8a040',9);
+    ar(x2,ix+155,42,ix+175,42,'#554a70');
+    bx(x2,ix+175,10,130,65,'#5888e808','#5888e818','🎬 '+inf.visual,'#5888e8',9);
+  });
+  x2.font='10px DM Sans';x2.fillStyle='#554a70';x2.textAlign='center';x2.fillText('Audio-only mode: model infers appearance and environment from acoustic properties alone',480,100);
+};
+
+// S10
+renders[10]=()=>{
+  const c=$('c10a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  const sections=[
+    {l:'1. ENCODE',items:['Audio → wav2vec → projection → tokens','Text → T5-XXL → 256 tokens','Video → Mochi VAE → 72,000 tokens','Ref Image → same VAE → tokens (optional)'],c:'#c874e8',y:10},
+    {l:'2. CONCAT + POSITION',items:['All token streams concatenated along sequence dim','Per-modality learned 3D RoPE','Ref image gets temporal offset relative to video'],c:'#48c8d8',y:125},
+    {l:'3. TRANSFORM (×48 blocks, ×64 steps)',items:['Joint self-attention: all modalities see all','Modality-specific MLPs (asymmetric)','adaLN-Zero timestep modulation','Flow matching: predict velocity toward data'],c:'#5888e8',y:225},
+    {l:'4. GUIDE + DECODE',items:['CFG + STG + negative prompting','FasterCache for 40% speedup','VAE decode → pixel video','Merge with input audio → final output'],c:'#40c88a',y:340},
+  ];
+  sections.forEach(s=>{
+    const bh=s.items.length*17+30;
+    bx(x,30,s.y,900,bh,s.c+'06',s.c+'18','','');
+    x.font='600 12px DM Sans';x.fillStyle=s.c;x.textAlign='left';x.fillText(s.l,50,s.y+20);
+    x.font='10px DM Sans';x.fillStyle='#9e94b8';
+    s.items.forEach((it,i)=>x.fillText('•  '+it,70,s.y+40+i*17));
+  });
+  [115,213,330].forEach(y=>{x.fillStyle='#554a70';x.textAlign='center';x.font='12px DM Sans';x.fillText('↓',480,y)});
+};
+
+// Resize handler
+var _rTimer;
+window.addEventListener('resize',function(){clearTimeout(_rTimer);_rTimer=setTimeout(draw,200);});
+
+// Init
+draw();
+</script>
+</body>
+</html>
