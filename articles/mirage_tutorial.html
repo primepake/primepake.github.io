@@ -454,20 +454,20 @@ renders[3]=()=>{
 // S4
 renders[4]=()=>{
   const c=$('c4a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
-  [{l:'Video',dims:'3D RoPE\n(time, height, width)',note:'Learned frequency schedule\n(not fixed like LTX-Video)',c:'#5888e8',y:20},
-  {l:'Audio',dims:'1D RoPE\n(time)',note:'Aligned to video frame rate\nvia interpolation',c:'#e8a040',y:100},
-  {l:'Text',dims:'1D RoPE\n(sequence position)',note:'Standard sequence\nposition encoding',c:'#c874e8',y:180},
+  [{l:'Video',dims:'3D RoPE\n(time, height, width)',note:'Learned frequency schedule\n(not fixed like LTX-Video)',c:'#5888e8',y:10},
+  {l:'Audio',dims:'1D RoPE\n(time)',note:'Aligned to video frame rate\nvia interpolation',c:'#e8a040',y:80},
+  {l:'Text',dims:'1D RoPE\n(sequence position)',note:'Standard sequence\nposition encoding',c:'#c874e8',y:150},
   {l:'Ref Image',dims:'3D RoPE\n(relative time, h, w)',note:'Time = offset from video\nSame spatial as video',c:'#48c8d8',y:220}
   ].forEach(m=>{
     bx(x,30,m.y,120,60,m.c+'0a',m.c+'22',m.l+'\n'+m.dims,m.c,10);
     ar(x,160,m.y+30,200,m.y+30,m.c+'44');
     bx(x,200,m.y,200,60,'#12102408','#201c3a',m.note,'#9e94b8',10);
   });
-  bx(x,500,40,420,200,'#c874e806','#c874e815','','');
-  x.font='600 13px Fraunces';x.fillStyle='#e6e0f2';x.textAlign='center';x.fillText('Learned vs Fixed RoPE',710,65);
+  bx(x,500,20,420,240,'#c874e806','#c874e815','','');
+  x.font='600 13px Fraunces';x.fillStyle='#e6e0f2';x.textAlign='center';x.fillText('Learned vs Fixed RoPE',710,48);
   x.font='11px DM Sans';x.fillStyle='#9e94b8';
   ['Fixed (LTX-Video): θᵢ = 10000^(-2i/d)','→ Frequency schedule is a formula','→ Same for all models','','Learned (Mochi/Mirage): θᵢ = trained params','→ Network learns optimal frequencies','→ Can adapt per modality','→ Separate RoPE params for each modality'].forEach((l,i)=>{
-    x.fillStyle=i<3?'#5888e8':i===3?'transparent':'#c874e8';x.fillText(l,710,90+i*18)});
+    x.fillStyle=i<3?'#5888e8':i===3?'transparent':'#c874e8';x.fillText(l,710,75+i*18)});
   // S4b
   const c2=$('c4b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
   const mod=+$('modSel').value;
