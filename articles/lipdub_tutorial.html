@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LipDub — How It Works</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#0e0806;--s1:#181210;--s2:#241c18;--s3:#322820;
+  --bd:#3a2e24;--bd2:#55443a;
+  --t:#b89888;--td:#70584a;--tb:#f2e6e0;
+  --acc:#e87468;--acc2:#d85848;--blue:#5888e8;--green:#40c88a;--orange:#e8a040;--red:#e06060;
+  --cyan:#48c8d8;--pink:#e068a8;--yellow:#d8c840;--warm:#e8c098;
+  --aa:rgba(232,116,104,.1);--ba:rgba(88,136,232,.1);--ga:rgba(64,200,138,.08);
+  --oa:rgba(232,160,64,.08);--ra:rgba(224,96,96,.08);--ca:rgba(72,200,216,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.pg{max-width:1080px;margin:0 auto;padding:36px 20px 100px}
+.hd{margin-bottom:32px;text-align:center}
+.hd h1{font-family:'Fraunces',serif;font-size:2rem;font-weight:800;color:var(--tb);letter-spacing:-.5px}
+.hd .paper{font-size:.88rem;color:var(--acc);margin:6px 0 4px;font-style:italic;font-weight:500}
+.hd .sub{font-size:.85rem;color:var(--td);font-weight:300}
+.tabs{display:flex;gap:0;border:1px solid var(--bd);border-radius:12px;overflow-x:auto;background:var(--s1);margin-bottom:30px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:88px;padding:12px 6px;text-align:center;font-size:.66rem;color:var(--td);cursor:pointer;border-right:1px solid var(--bd);position:relative;transition:all .2s;font-weight:500}
+.tab:last-child{border-right:none}
+.tab:hover{background:rgba(232,116,104,.04)}
+.tab.on{background:var(--aa);color:var(--acc)}
+.tab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;background:var(--acc);border-radius:2px 2px 0 0}
+.sec{display:none;animation:fu .35s ease}.sec.on{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.st{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--tb);margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chip{font-size:.6rem;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:16px;font-weight:500}
+.desc{font-size:.9rem;color:var(--t);max-width:780px;margin-bottom:22px;line-height:1.9;word-wrap:break-word;overflow-wrap:break-word}
+.desc strong{color:var(--tb);font-weight:600}
+.cd{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:26px;margin-bottom:16px;position:relative;overflow:hidden}
+.cd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent);opacity:.12}
+.cl{font-size:.64rem;font-family:'DM Mono',monospace;color:var(--td);text-transform:uppercase;letter-spacing:1.6px;margin-bottom:14px}
+.ins{background:var(--ga);border-left:3px solid var(--green);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.ins b{color:var(--green);font-weight:600}
+.wrn{background:var(--oa);border-left:3px solid var(--orange);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.wrn b{color:var(--orange);font-weight:600}
+.key{background:var(--aa);border-left:3px solid var(--acc);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.key b{color:var(--acc);font-weight:600}
+.an{background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:18px 20px;margin:16px 0}
+.an .e{font-size:1.3rem;margin-bottom:4px}.an .at{font-size:.84rem;font-weight:600;color:var(--tb);margin-bottom:5px}
+.an p{font-size:.84rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+canvas{display:block;border-radius:8px;max-width:100%;height:auto}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){
+  .cols{grid-template-columns:1fr}
+  .tab{flex:none;min-width:72px;font-size:.56rem;padding:10px 6px}
+  .pg{padding:20px 10px 60px}
+  .hd h1{font-size:1.5rem}
+  .hd .paper{font-size:.8rem}
+  .st{font-size:1.1rem}
+  .desc{font-size:.82rem}
+  .cd{padding:14px}
+  .cl{font-size:.58rem;letter-spacing:1.2px;margin-bottom:10px}
+  .ins,.wrn,.key{padding:10px 14px;font-size:.8rem}
+  .an{padding:14px 16px}
+  .an .at{font-size:.8rem}
+  .an p{font-size:.78rem}
+  .ctrl{gap:10px;padding:8px 10px}
+  .ctrl input[type=range]{width:100px}
+  .ctrl label{font-size:.66rem}
+  .nav{margin-top:20px}
+  .nb{padding:8px 16px;font-size:.78rem}
+}
+@media(max-width:400px){
+  .pg{padding:14px 6px 40px}
+  .hd h1{font-size:1.2rem}
+  .hd .paper{font-size:.74rem}
+  .st{font-size:.95rem;gap:8px}
+  .chip{font-size:.52rem;padding:2px 7px}
+  .cd{padding:8px}
+  .cl{font-size:.52rem}
+  .tab{min-width:56px;font-size:.48rem;padding:8px 4px}
+  .ins,.wrn,.key{padding:8px 10px;font-size:.76rem}
+  .an{padding:10px 12px}
+  .ctrl{flex-direction:column;align-items:flex-start}
+  .ctrl input[type=range]{width:100%}
+}
+.ctrl{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:10px 14px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)}
+.ctrl label{font-size:.72rem;color:var(--td);font-weight:500}
+.ctrl input[type=range]{width:160px;height:3px;-webkit-appearance:none;background:var(--s3);border-radius:2px}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--acc);border-radius:50%;cursor:pointer}
+.ctrl select{background:var(--s3);border:1px solid var(--bd);color:var(--tb);padding:4px 8px;border-radius:4px;font-size:.8rem;font-family:'DM Sans'}
+.ctrl .v{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--acc);min-width:50px}
+.nav{display:flex;justify-content:space-between;margin-top:28px}
+.nb{padding:9px 22px;border-radius:9px;font-size:.84rem;cursor:pointer;border:1px solid var(--bd);background:var(--s1);color:var(--t);font-family:'DM Sans';font-weight:500;transition:all .2s}
+.nb:hover{border-color:var(--acc);color:var(--acc)}.nb.pr{background:var(--aa);border-color:rgba(232,116,104,.25);color:var(--acc)}
+.nb:disabled{opacity:.2;cursor:not-allowed}
+.sc{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--td);letter-spacing:1px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="pg">
+<div class="hd">
+<h1>LipDub — How It Works</h1>
+<div class="paper">Two-stage audio-driven talking face generation</div>
+<div class="sub">Interactive visual guide — concepts &amp; architecture</div>
+</div>
+<div class="tabs" id="tabs"></div>
+
+<!-- S0: The Vision -->
+<div class="sec on" id="s0">
+<div class="sc">THE VISION</div>
+<div class="st">What does LipDub do? <span class="chip" style="background:var(--aa);color:var(--acc)">OVERVIEW</span></div>
+<div class="desc">LipDub generates <strong>realistic talking face videos</strong> driven by audio. Given a source face and an audio clip, it produces a video where the person speaks with accurate lip sync, natural expressions, and <strong>preserved identity</strong>. The key insight: split the problem into two stages — first predict <strong>facial landmarks</strong> from audio using a Diffusion Transformer with flow matching, then render photo-realistic frames conditioned on those landmarks.</div>
+<div class="cd"><div class="cl">Input → Output flow</div><canvas id="c0a" width="960" height="200"></canvas></div>
+<div class="cd"><div class="cl">"Why landmarks?" — direct vs. landmark-guided</div><canvas id="c0b" width="960" height="200"></canvas></div>
+<div class="an"><div class="e">🎯</div><div class="at">Two stages, one goal</div><p><strong>Stage 1</strong> converts audio into a sequence of facial landmarks using a Diffusion Transformer trained with flow matching — landmarks are encoded/decoded through a learned <strong>Landmark VAE</strong>, and the DiT generates in that latent space. <strong>Stage 2</strong> takes those landmarks plus reference images and renders photo-realistic video frames. By decoupling motion prediction from appearance rendering, each stage can focus on what it does best.</p></div>
+<div class="key"><b>The core challenge:</b> Talking face generation must simultaneously handle lip synchronization (matching visemes to phonemes), identity preservation (the face must look like the source person), and temporal coherence (no jitter between frames). LipDub addresses all three through its two-stage landmark-guided approach.</div>
+</div>
+
+<!-- S1: Architecture -->
+<div class="sec" id="s1">
+<div class="sc">ARCHITECTURE</div>
+<div class="st">The Two-Stage Pipeline <span class="chip" style="background:var(--ba);color:var(--blue)">PIPELINE</span></div>
+<div class="desc">LipDub decomposes talking face generation into <strong>landmark prediction</strong> (Stage 1) and <strong>video rendering</strong> (Stage 2). Stage 1 encodes landmarks into a latent space via a trained <strong>Landmark VAE</strong>, then uses a <strong>Diffusion Transformer (DiT)</strong> with flow matching to generate landmark sequences conditioned on audio. Stage 2 uses an alignment-then-translation architecture with SPADE normalization to render photo-realistic frames.</div>
+<div class="cd"><div class="cl">Complete pipeline flowchart</div><canvas id="c1a" width="960" height="420"></canvas></div>
+<div class="cols">
+<div class="cd"><div class="cl">Stage 1 — Landmark prediction</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--acc)">●</span> Landmark VAE (encode/decode landmarks)<br>
+<span style="color:var(--acc)">●</span> DCA-VAE audio encoder<br>
+<span style="color:var(--acc)">●</span> Reference landmarks via VAE encoder<br>
+<span style="color:var(--acc)">●</span> Pose reference via VAE encoder<br>
+<span style="color:var(--acc)">●</span> Diffusion Transformer + flow matching
+</div></div>
+<div class="cd"><div class="cl">Stage 2 — Video rendering</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--blue)">●</span> Alignment module (SPADE + motion fields)<br>
+<span style="color:var(--blue)">●</span> Weighted aggregation of warped references<br>
+<span style="color:var(--blue)">●</span> Translation module (AdaIN audio injection)<br>
+<span style="color:var(--blue)">●</span> Multi-component loss (perceptual, GAN, style)<br>
+<span style="color:var(--blue)">●</span> Gaussian mask compositing
+</div></div></div>
+</div>
+
+<!-- S2: Audio Encoding -->
+<div class="sec" id="s2">
+<div class="sc">AUDIO ENCODING</div>
+<div class="st">DCA-VAE Audio Encoder <span class="chip" style="background:var(--oa);color:var(--orange)">AUDIO</span></div>
+<div class="desc">The audio encoder uses a <strong>DCA-VAE</strong> (Disentangled Contrastive Audio VAE) to convert raw speech audio into per-frame latent vectors. First, audio is transformed into <strong>mel-spectrograms</strong>. The DCA-VAE then encodes these into a structured latent space that disentangles speech content from speaker identity and prosody, producing rich audio embeddings for the DiT.</div>
+<div class="cd"><div class="cl">Waveform → Mel-Spectrogram → DCA-VAE → Latent Embeddings</div><canvas id="c2a" width="960" height="240"></canvas></div>
+<div class="an"><div class="e">🔊</div><div class="at">Why DCA-VAE over a simple CNN?</div><p>A standard CNN encoder produces entangled features — content, identity, and prosody are mixed together. The DCA-VAE learns to <strong>disentangle</strong> these factors via contrastive learning, producing a latent space where speech content (what phoneme) is separated from speaker characteristics (voice timbre). This gives the DiT cleaner conditioning signals and better control over lip sync.</p></div>
+<div class="ins"><b>Per-frame alignment:</b> The mel-spectrogram is windowed so that each video frame at 25fps gets its own audio context window. The DCA-VAE encodes each window into a latent vector z<sub>a</sub> ∈ ℝ<sup>d</sup> for every frame. These latent embeddings become the audio conditioning tokens for the Diffusion Transformer in Stage 1.</div>
+</div>
+
+<!-- S3: Landmark Priors -->
+<div class="sec" id="s3">
+<div class="sc">LANDMARK PRIORS</div>
+<div class="st">Landmark VAE + DCA-VAE <span class="chip" style="background:var(--ga);color:var(--green)">ENCODING</span></div>
+<div class="desc">Stage 1 needs three types of information: <strong>what is being said</strong> (DCA-VAE audio latents), <strong>who is speaking</strong> (reference landmarks encoded through the Landmark VAE), and <strong>head orientation</strong> (pose landmarks also encoded through the Landmark VAE). Both VAEs map their inputs into compact latent spaces where the DiT operates.</div>
+<div class="cd"><div class="cl">Three encoders side-by-side</div><canvas id="c3a" width="960" height="280"></canvas></div>
+<div class="cd"><div class="cl">Interactive: landmark regions</div>
+<div class="ctrl"><label>Region</label>
+<select id="lmkSel">
+<option value="0">All 131 landmarks</option><option value="1">Pose — upper face (74)</option><option value="2">Content — mouth (40)</option><option value="3">Content — jaw (17)</option>
+</select>
+</div>
+<canvas id="c3b" width="960" height="320"></canvas></div>
+<div class="key"><b>Identity-aware lip shapes:</b> The Landmark VAE learns that different people form the same phoneme differently — thin lips vs. full lips, wide jaw vs. narrow jaw. By encoding reference landmarks into the same latent space where generation happens, the DiT can produce landmarks that match both the audio content AND the person's unique facial structure.</div>
+</div>
+
+<!-- S4: Diffusion Transformer -->
+<div class="sec" id="s4">
+<div class="sc">DIFFUSION TRANSFORMER</div>
+<div class="st">Generating Landmarks via Flow Matching <span class="chip" style="background:var(--aa);color:var(--acc)">STAGE 1</span></div>
+<div class="desc">Instead of directly regressing landmarks, Stage 1 uses a <strong>Diffusion Transformer (DiT)</strong> trained with <strong>flow matching</strong>. The DiT operates in the Landmark VAE's latent space — it learns to denoise landmark latents conditioned on audio, reference, and pose. At inference, it flows from Gaussian noise to clean landmark latents, which the VAE decoder maps back to 131 (x, y) coordinates.</div>
+<div class="cd"><div class="cl">Diffusion Transformer architecture</div><canvas id="c4a" width="960" height="360"></canvas></div>
+<div class="cd"><div class="cl">Flow matching: noise → landmark latents</div><canvas id="c4b" width="960" height="200"></canvas></div>
+<div class="ins"><b>Why flow matching over direct regression?</b> Direct regression (e.g., L1 loss) produces averaged, blurry landmark trajectories — the model hedges between multiple plausible motions. Flow matching learns the full distribution of possible landmark sequences, producing sharper, more natural motions. The DiT can capture the multimodal nature of speech-to-motion mapping (the same audio can produce slightly different but equally valid lip movements).</div>
+</div>
+
+<!-- S5: Stage 1 Training -->
+<div class="sec" id="s5">
+<div class="sc">STAGE 1 TRAINING</div>
+<div class="st">Flow Matching + Landmark VAE <span class="chip" style="background:var(--ra);color:var(--red)">TRAINING</span></div>
+<div class="desc">Stage 1 training has two phases. <strong>Phase A:</strong> Train the Landmark VAE to encode/decode 131-point landmarks into a compact latent space (reconstruction + KL loss). <strong>Phase B:</strong> Freeze the VAE and train the DiT with flow matching — the model learns to predict the velocity field that flows from noise to ground-truth landmark latents, conditioned on audio.</div>
+<div class="cd"><div class="cl">Training formulation</div><canvas id="c5a" width="960" height="280"></canvas></div>
+<div class="cols">
+<div class="cd"><div class="cl">Phase A — Landmark VAE</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--blue)">●</span> Input: 131 × 2 landmark coordinates<br>
+<span style="color:var(--blue)">●</span> Encoder → latent z ∈ ℝ<sup>d</sup><br>
+<span style="color:var(--blue)">●</span> Decoder → reconstructed landmarks<br>
+<span style="color:var(--blue)">●</span> Loss: L<sub>recon</sub> + β · L<sub>KL</sub>
+</div></div>
+<div class="cd"><div class="cl">Phase B — DiT flow matching</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--acc)">●</span> VAE frozen — DiT operates in latent space<br>
+<span style="color:var(--acc)">●</span> Sample t ∈ [0,1], interpolate z<sub>t</sub> = (1−t)·noise + t·z<br>
+<span style="color:var(--acc)">●</span> DiT predicts velocity v<sub>θ</sub>(z<sub>t</sub>, t, audio, ref, pose)<br>
+<span style="color:var(--acc)">●</span> Loss: ‖v<sub>θ</sub> − (z − noise)‖²
+</div></div></div>
+<div class="an"><div class="e">🎞️</div><div class="at">Why a latent space?</div><p>Raw landmarks are 131 × 2 = 262 dimensions — high-dimensional and sparse. The VAE compresses them into a smooth, dense latent space where nearby points correspond to similar facial configurations. The DiT can then generate in this well-structured space, producing smoother and more coherent landmark sequences than direct regression in coordinate space.</p></div>
+</div>
+
+<!-- S6: Alignment Module -->
+<div class="sec" id="s6">
+<div class="sc">ALIGNMENT MODULE</div>
+<div class="st">Warping References to Target Pose <span class="chip" style="background:var(--ba);color:var(--blue)">STAGE 2</span></div>
+<div class="desc">The alignment module takes N reference images and warps each one to match the target landmark pose. It uses <strong>SPADE normalization</strong> to inject landmark structure, predicts <strong>dense motion fields</strong>, and applies <strong>weighted aggregation</strong> across all warped references.</div>
+<div class="cd"><div class="cl">Warping pipeline</div><canvas id="c6a" width="960" height="300"></canvas></div>
+<div class="cd"><div class="cl">Interactive: reference count</div>
+<div class="ctrl"><label>Number of references (N)</label>
+<input type="range" id="refSlider" min="1" max="25" value="25" step="1">
+<span class="v" id="refVal">N = 25</span>
+</div>
+<canvas id="c6b" width="960" height="220"></canvas></div>
+<div class="ins"><b>Why multiple references?</b> A single reference image may not contain all the appearance information needed (e.g., the person's profile, or their mouth wide open). Using N references from different angles and expressions gives the alignment module more appearance data to draw from. The weighted aggregation learns which reference is most useful for each spatial region.</div>
+</div>
+
+<!-- S7: Translation Module -->
+<div class="sec" id="s7">
+<div class="sc">TRANSLATION MODULE</div>
+<div class="st">From Aligned Features to Pixels <span class="chip" style="background:var(--ca);color:var(--cyan)">RENDERING</span></div>
+<div class="desc">The translation module takes the aggregated warped features and refines them into the final face image. It uses <strong>AdaIN (Adaptive Instance Normalization)</strong> to inject audio features — encoded through the same <strong>DCA-VAE</strong> — at multiple scales, ensuring lip shapes match the speech. This is where audio directly influences pixel-level rendering.</div>
+<div class="cd"><div class="cl">Translation module architecture</div><canvas id="c7a" width="960" height="300"></canvas></div>
+<div class="an"><div class="e">🎨</div><div class="at">AdaIN: painting with audio</div><p>AdaIN works like a style transfer mechanism. The DCA-VAE audio latents modulate the statistics (mean and variance) of intermediate feature maps. Where SPADE injects spatial structure from landmarks, AdaIN injects temporal speech information from the DCA-VAE's disentangled audio representation. Together, they ensure the mouth shape matches both the landmark pose AND the audio content.</p></div>
+<div class="key"><b>Multi-source fusion:</b> The translation module doesn't just refine a single warped image. It fuses information from all N reference images (via the alignment module's aggregated features), the target landmarks (via SPADE), and the audio (via AdaIN) — producing a face that combines the best appearance data from all sources.</div>
+</div>
+
+<!-- S8: Rendering Losses -->
+<div class="sec" id="s8">
+<div class="sc">RENDERING LOSSES</div>
+<div class="st">Five-Component Training Signal <span class="chip" style="background:var(--oa);color:var(--orange)">LOSSES</span></div>
+<div class="desc">Stage 2 is trained with five complementary losses that balance realism, identity, and stability. Each loss targets a different aspect of image quality — from pixel accuracy to high-level perceptual similarity to adversarial realism.</div>
+<div class="cd"><div class="cl">Loss breakdown with weights</div><canvas id="c8a" width="960" height="320"></canvas></div>
+<div class="wrn"><b>Balancing act:</b> The weights of these five losses are carefully tuned. Too much GAN loss → artifacts and instability. Too much L1 → blurry outputs. Too much perceptual → color shifts. The paper's default weights represent a stable equilibrium found through ablation studies.</div>
+</div>
+
+<!-- S9: Identity & Post-processing -->
+<div class="sec" id="s9">
+<div class="sc">IDENTITY &amp; COMPOSITING</div>
+<div class="st">Preserving Identity, Blending Seamlessly <span class="chip" style="background:var(--ga);color:var(--green)">OUTPUT</span></div>
+<div class="desc">The final output is composited back onto the original video frame using a <strong>Gaussian mask</strong> centered on the face region. This ensures seamless blending between the generated face and the original background/hair. Multiple reference images help preserve identity across varied poses.</div>
+<div class="cd"><div class="cl">Identity pipeline — multiple references</div><canvas id="c9a" width="960" height="220"></canvas></div>
+<div class="cd"><div class="cl">Interactive: Gaussian mask feather</div>
+<div class="ctrl"><label>Feather radius (σ)</label>
+<input type="range" id="sigSlider" min="5" max="40" value="20" step="1">
+<span class="v" id="sigVal">σ = 20</span>
+</div>
+<canvas id="c9b" width="960" height="220"></canvas></div>
+<div class="ins"><b>Soft blending:</b> The Gaussian mask has a smooth falloff — fully opaque at the face center, gradually transparent toward the edges. This avoids hard seams between the generated face and the original frame. The feather radius σ controls how gradual the transition is.</div>
+</div>
+
+<!-- S10: Summary -->
+<div class="sec" id="s10">
+<div class="sc">PUTTING IT ALL TOGETHER</div>
+<div class="st">End-to-End Recap</div>
+<div class="cd"><div class="cl">Full pipeline summary</div><canvas id="c10a" width="960" height="420"></canvas></div>
+<div class="cd"><div class="cl">Key quality metrics</div>
+<div style="font-size:.86rem;line-height:2.2">
+<span style="color:var(--acc)">●</span> <strong>Image quality:</strong> High PSNR and SSIM — sharp, accurate face reconstruction<br>
+<span style="color:var(--acc)">●</span> <strong>Realism:</strong> Low FID — generated faces are perceptually close to real ones<br>
+<span style="color:var(--acc)">●</span> <strong>Landmark accuracy:</strong> Low LMD — the two-stage approach produces structurally precise faces<br>
+<span style="color:var(--acc)">●</span> <strong>Lip sync:</strong> Strong sync confidence score — competitive with dedicated lip-sync methods
+</div></div>
+<div class="cd" style="text-align:center;padding:28px">
+<div style="font-family:'Fraunces',serif;font-size:1.1rem;color:var(--tb);line-height:1.9;max-width:640px;margin:0 auto">
+"Encode landmarks into a learned latent space.<br>
+Generate landmark latents with a Diffusion Transformer.<br>
+Render photo-realistic faces from predicted landmarks.<br>
+Use multiple references for identity.<br>
+Two stages, one realistic talking face."
+</div></div>
+<div class="an"><div class="e">📊</div><div class="at">Key takeaways</div><p><strong>Strong quality:</strong> LipDub achieves high image fidelity and realism across standard metrics. <strong>Accurate lip sync:</strong> The two-stage approach delivers competitive synchronization. <strong>Landmark precision:</strong> Decoupling structure from appearance yields structurally accurate faces. <strong>Identity preservation:</strong> Multiple reference images enable consistent identity across poses and expressions.</p></div>
+</div>
+
+<div class="nav"><button class="nb" id="pB" disabled onclick="go(-1)">← Previous</button><button class="nb pr" id="nB" onclick="go(1)">Next →</button></div>
+</div>
+
+<script>
+const S=['The Vision','Architecture','Audio Encoding','Landmark VAE','Diffusion Transformer','Flow Matching','Alignment Module','Translation Module','Rendering Losses','Identity','Summary'];
+let cur=0;const $=id=>document.getElementById(id);
+$('tabs').innerHTML=S.map((s,i)=>`<div class="tab${i?'':' on'}" data-i="${i}">${s}</div>`).join('');
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTo(+t.dataset.i)));
+function goTo(n){cur=n;document.querySelectorAll('.sec').forEach((e,i)=>e.classList.toggle('on',i===n));document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('on',i===n));$('pB').disabled=n===0;const b=$('nB');b.disabled=n===S.length-1;b.textContent=n===S.length-1?'Done ✓':'Next →';draw()}
+function go(d){if(cur+d>=0&&cur+d<S.length)goTo(cur+d)}
+function draw(){renders[cur]?.()}
+
+// Helpers
+function rr(c,x,y,w,h,r=8){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath()}
+function bx(c,x,y,w,h,f,s,t,tc,fs=11){rr(c,x,y,w,h);c.fillStyle=f;c.fill();if(s){c.strokeStyle=s;c.lineWidth=1;c.stroke()}if(t){c.fillStyle=tc||'#f2e6e0';c.font=`500 ${fs}px DM Sans`;c.textAlign='center';c.textBaseline='middle';t.split('\n').forEach((l,i,a)=>c.fillText(l,x+w/2,y+h/2+(i-(a.length-1)/2)*15))}}
+function ar(c,x1,y1,x2,y2,col='#70584a'){c.strokeStyle=col;c.lineWidth=1.5;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();const a=Math.atan2(y2-y1,x2-x1);c.fillStyle=col;c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-7*Math.cos(a-.4),y2-7*Math.sin(a-.4));c.lineTo(x2-7*Math.cos(a+.4),y2-7*Math.sin(a+.4));c.fill()}
+const DESIGN_W=960;
+function dpr(el){
+  var d=window.devicePixelRatio||1;
+  if(!el._origH)el._origH=parseInt(el.getAttribute('height'));
+  var parent=el.parentElement;
+  var padL=parent?parseFloat(getComputedStyle(parent).paddingLeft)||0:0;
+  var padR=parent?parseFloat(getComputedStyle(parent).paddingRight)||0:0;
+  var availW=parent?(parent.clientWidth-padL-padR):DESIGN_W;
+  var logicW=Math.min(DESIGN_W,Math.max(280,availW));
+  var s=logicW/DESIGN_W;
+  var logicH=Math.round(el._origH*s);
+  el.width=logicW*d;el.height=logicH*d;
+  el.style.width=logicW+'px';el.style.height=logicH+'px';
+  var x=el.getContext('2d');x.setTransform(1,0,0,1,0,0);x.scale(d*s,d*s);
+  return{w:DESIGN_W,h:el._origH,x:x,s:s};
+}
+
+const renders={};
+
+// S0: The Vision
+renders[0]=()=>{
+  // Input → Output flow
+  const c=$('c0a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  bx(x,30,30,130,60,'#e8a04011','#e8a04033','🎙️ Audio\n"Hello world..."','#e8a040');
+  bx(x,30,110,130,60,'#5888e811','#5888e833','🖼️ Source Face\n(identity)','#5888e8');
+  ar(x,170,60,280,90,'#e8a04066');ar(x,170,140,280,100,'#5888e866');
+  bx(x,280,55,200,90,'#e8746808','#e8746820','🔄 LipDub\nStage 1: DiT + VAE\nStage 2: Rendering','#f2e6e0');
+  ar(x,490,100,580,100);
+  bx(x,580,40,340,120,'#40c88a0a','#40c88a20','','');
+  x.font='600 13px DM Sans';x.fillStyle='#40c88a';x.textAlign='center';x.fillText('🎬 Talking Face Video',750,70);
+  x.font='10px DM Sans';x.fillStyle='#b89888';
+  x.fillText('Accurate lip sync from audio',750,92);
+  x.fillText('Identity preserved from source',750,110);
+  x.fillText('Smooth temporal coherence',750,128);
+  x.fillText('Seamless background blending',750,146);
+
+  // Why landmarks?
+  const c2=$('c0b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  // Direct approach
+  bx(x2,30,20,280,160,'#e0606008','#e0606020','','');
+  x2.font='600 12px DM Sans';x2.fillStyle='#e06060';x2.textAlign='center';x2.fillText('Direct: Audio → Pixels',170,45);
+  x2.font='10px DM Sans';x2.fillStyle='#b89888';
+  x2.fillText('Audio encoder → decoder → image',170,72);
+  x2.fillText('Must learn structure + appearance',170,90);
+  x2.fillText('simultaneously from audio alone',170,108);
+  x2.fillStyle='#e06060';x2.fillText('✗ Blurry outputs',170,135);x2.fillText('✗ Identity drift',170,152);x2.fillText('✗ Poor lip detail',170,169);
+  // Landmark approach
+  bx(x2,360,20,570,160,'#40c88a08','#40c88a20','','');
+  x2.font='600 12px DM Sans';x2.fillStyle='#40c88a';x2.textAlign='center';x2.fillText('LipDub: Audio → Landmarks → Pixels',645,45);
+  x2.font='10px DM Sans';x2.fillStyle='#b89888';
+  x2.fillText('Stage 1 focuses only on structure (131 landmarks)',645,72);
+  x2.fillText('Stage 2 focuses only on appearance (rendering)',645,90);
+  x2.fillText('Each stage has a simpler learning problem',645,108);
+  x2.fillStyle='#40c88a';x2.fillText('✓ Sharp, detailed faces',645,135);x2.fillText('✓ Identity preserved via references',645,152);x2.fillText('✓ Precise lip shapes',645,169);
+};
+
+// S1: Architecture
+renders[1]=()=>{
+  const c=$('c1a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Stage 1 region
+  bx(x,15,10,460,190,'#e8746806','#e8746815','','');
+  x.font='700 13px Fraunces';x.fillStyle='#e87468';x.textAlign='left';x.fillText('Stage 1: Audio → Landmarks (DiT + VAE)',30,32);
+  // Encoders
+  bx(x,30,50,100,45,'#e8a04010','#e8a04025','🎙️ DCA-VAE','#e8a040',9);
+  bx(x,30,105,100,45,'#40c88a10','#40c88a25','🖼️ Ref (VAE)','#40c88a',9);
+  bx(x,30,160,100,30,'#48c8d810','#48c8d825','🔄 Pose (VAE)','#48c8d8',9);
+  // Arrows to DiT
+  ar(x,140,72,200,100,'#e8a04044');ar(x,140,127,200,110,'#40c88a44');ar(x,140,175,200,120,'#48c8d844');
+  // DiT
+  bx(x,200,55,140,100,'#e8746808','#e8746818','','');
+  x.font='600 11px DM Sans';x.fillStyle='#f2e6e0';x.textAlign='center';x.fillText('Diffusion',270,75);x.fillText('Transformer',270,90);
+  x.font='10px DM Sans';x.fillStyle='#b89888';x.fillText('Flow Matching',270,110);x.fillText('in VAE latent space',270,125);
+  // Arrow to VAE decode
+  ar(x,350,105,390,105,'#e8746844');
+  bx(x,390,78,75,55,'#d8c84010','#d8c84025','VAE\nDecode\n→ 131×2','#d8c840',9);
+
+  // Stage 2 region
+  bx(x,15,220,930,190,'#5888e806','#5888e815','','');
+  x.font='700 13px Fraunces';x.fillStyle='#5888e8';x.textAlign='left';x.fillText('Stage 2: Landmarks + References → Video',30,242);
+  // Inputs to stage 2
+  bx(x,30,260,90,55,'#d8c84010','#d8c84025','📐 Target\nLandmarks','#d8c840',9);
+  bx(x,30,325,90,55,'#5888e810','#5888e825','🖼️ Ref\nImages ×N','#5888e8',9);
+  // Alignment module
+  ar(x,130,287,190,290,'#d8c84044');ar(x,130,352,190,310,'#5888e844');
+  bx(x,190,260,150,90,'#5888e808','#5888e818','','');
+  x.font='600 10px DM Sans';x.fillStyle='#f2e6e0';x.textAlign='center';x.fillText('Alignment Module',265,280);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('SPADE norm',265,298);x.fillText('Motion fields',265,312);x.fillText('Weighted aggregation',265,326);
+  // Translation module
+  ar(x,350,305,420,305,'#5888e844');
+  bx(x,420,265,150,80,'#48c8d808','#48c8d818','','');
+  x.font='600 10px DM Sans';x.fillStyle='#f2e6e0';x.textAlign='center';x.fillText('Translation Module',495,283);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('AdaIN audio inject',495,300);x.fillText('Multi-scale refine',495,314);x.fillText('Pixel synthesis',495,328);
+  // Audio injection arrow
+  bx(x,430,220,60,30,'#e8a04010','#e8a04025','Audio','#e8a040',9);
+  ar(x,460,255,480,270,'#e8a04044');
+  // Output
+  ar(x,580,305,640,305);
+  bx(x,640,268,100,55,'#40c88a08','#40c88a18','','');
+  x.font='600 10px DM Sans';x.fillStyle='#f2e6e0';x.textAlign='center';x.fillText('Gaussian',690,288);x.fillText('Compositing',690,302);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('Face + BG',690,318);
+  ar(x,750,295,810,295);
+  bx(x,810,270,110,50,'#40c88a0a','#40c88a25','🎬 Output\nFrame','#40c88a',10);
+
+  // Stage connection arrow
+  ar(x,430,105,430,220,'#e8746833');
+  x.font='9px DM Mono';x.fillStyle='#70584a';x.textAlign='left';x.fillText('predicted landmarks',440,170);
+};
+
+// S2: Audio Encoding
+renders[2]=()=>{
+  const c=$('c2a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Waveform
+  bx(x,20,30,120,80,'#e8a04008','#e8a04020','','');
+  x.font='10px DM Sans';x.fillStyle='#e8a040';x.textAlign='center';x.fillText('Raw Audio',80,42);
+  // Draw waveform
+  x.strokeStyle='#e8a04066';x.lineWidth=1;x.beginPath();
+  for(let i=0;i<100;i++){const px=30+i;const py=80+Math.sin(i*.3)*15*Math.exp(-((i-50)*(i-50))/800);i===0?x.moveTo(px,py):x.lineTo(px,py)}
+  x.stroke();
+  x.fillStyle='#70584a';x.font='9px DM Mono';x.fillText('16kHz mono',80,105);
+
+  ar(x,150,70,200,70,'#e8a04055');
+
+  // Mel spectrogram
+  bx(x,200,20,180,100,'#e8a04008','#e8a04020','','');
+  x.font='10px DM Sans';x.fillStyle='#e8a040';x.textAlign='center';x.fillText('Mel-Spectrogram',290,36);
+  // Draw mel grid
+  for(let f=0;f<6;f++)for(let t=0;t<14;t++){
+    const v=Math.random()*.3+Math.exp(-((f-2)*(f-2))/4)*Math.exp(-((t-7)*(t-7))/20)*.5;
+    x.fillStyle=`rgba(232,160,64,${v})`;x.fillRect(215+t*11,48+f*10,9,8);
+  }
+  x.fillStyle='#70584a';x.font='8px DM Mono';x.textAlign='center';
+  x.fillText('time →',290,108);x.textAlign='right';x.fillText('freq ↑',212,75);
+
+  ar(x,390,70,440,70,'#e8a04055');
+
+  // Sliding window
+  bx(x,440,20,180,100,'#e8746808','#e8746820','','');
+  x.font='10px DM Sans';x.fillStyle='#e87468';x.textAlign='center';x.fillText('Sliding Window',530,36);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('~5 mel frames per',530,56);x.fillText('video frame (25fps)',530,70);
+  // Show overlapping windows
+  for(let i=0;i<5;i++){rr(x,455+i*30,82,35,20,3);x.fillStyle=`rgba(232,116,104,${.1+i*.04})`;x.fill();x.strokeStyle='#e8746833';x.lineWidth=.5;x.stroke()}
+  x.fillStyle='#70584a';x.font='8px DM Mono';x.textAlign='center';x.fillText('overlapping',530,115);
+
+  ar(x,630,70,680,70,'#e8746855');
+
+  // DCA-VAE encoder
+  bx(x,680,20,130,100,'#e8746808','#e8746818','','');
+  x.font='10px DM Sans';x.fillStyle='#e87468';x.textAlign='center';x.fillText('DCA-VAE',745,36);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('Disentangled',745,55);x.fillText('Contrastive Audio',745,69);x.fillText('VAE → latent za',745,83);
+  x.fillStyle='#70584a';x.font='8px DM Mono';x.fillText('per frame',745,105);
+
+  ar(x,820,70,860,70,'#e8746855');
+
+  // Output embeddings
+  bx(x,860,35,80,70,'#40c88a08','#40c88a20','','');
+  x.font='10px DM Sans';x.fillStyle='#40c88a';x.textAlign='center';x.fillText('za',900,60);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('∈ ℝ^d',900,78);x.fillText('per frame',900,93);
+
+  // Bottom summary
+  x.font='11px DM Sans';x.fillStyle='#f2e6e0';x.textAlign='center';
+  x.fillText('Audio (16kHz) → Mel (80 bins) → Window (per frame) → DCA-VAE → Latent za',480,180);
+  x.font='10px DM Sans';x.fillStyle='#70584a';
+  x.fillText('Each video frame gets one disentangled audio latent — content separated from identity',480,200);
+};
+
+// S3: Landmark Priors
+renders[3]=()=>{
+  // Three encoders
+  const c=$('c3a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  const encs=[
+    {l:'DCA-VAE Audio',icon:'🎙️',input:'Mel-spectrogram\nwindow',proc:'DCA-VAE\nEncoder',out:'za ∈ ℝ^d\n(what is said)',c:'#e8a040',y:10},
+    {l:'Reference (VAE)',icon:'🖼️',input:'Identity landmarks\n(from ref frames)',proc:'Landmark VAE\nEncoder',out:'zr ∈ ℝ^d\n(who is speaking)',c:'#40c88a',y:105},
+    {l:'Pose (VAE)',icon:'🔄',input:'Pose landmarks\n(head orientation)',proc:'Landmark VAE\nEncoder',out:'zp ∈ ℝ^d\n(head orientation)',c:'#48c8d8',y:200},
+  ];
+  encs.forEach(e=>{
+    bx(x,20,e.y,130,75,e.c+'0a',e.c+'22',e.icon+' '+e.l,e.c,10);
+    ar(x,160,e.y+37,210,e.y+37,e.c+'55');
+    bx(x,210,e.y,130,75,e.c+'08',e.c+'18',e.input,'#b89888',10);
+    ar(x,350,e.y+37,400,e.y+37,e.c+'55');
+    bx(x,400,e.y,120,75,e.c+'08',e.c+'18',e.proc,'#b89888',10);
+    ar(x,530,e.y+37,580,e.y+37,e.c+'55');
+    bx(x,580,e.y,140,75,e.c+'08',e.c+'18',e.out,e.c,10);
+  });
+  // Arrows to concat
+  for(let i=0;i<3;i++)ar(x,730,encs[i].y+37,790,140,encs[i].c+'33');
+  bx(x,790,105,150,70,'#e8746808','#e8746820','Concatenate →\nDiT conditioning\ntokens','#f2e6e0',10);
+
+  // Landmark region viewer
+  const c2=$('c3b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  const mode=+$('lmkSel').value;
+
+  // Draw a schematic face
+  const cx=300,cy=150,fw=140,fh=180;
+
+  // Face outline
+  x2.strokeStyle='#3a2e2488';x2.lineWidth=1;x2.beginPath();x2.ellipse(cx,cy,fw/2,fh/2,0,0,Math.PI*2);x2.stroke();
+
+  // Define regions — 131 points selected from MediaPipe Face Mesh 478
+  // Split: 74 pose (upper face) + 57 content (17 jaw + 40 mouth)
+  const regions={jaw:[], lip:[], upper:[], all:[]};
+
+  // Face oval / jaw contour — 17 content points (indices 4–20 in sequence)
+  // Approximate arc-length spacing on the ellipse for even visual distribution
+  var jawAngles=[];var aN=200,aStart=Math.PI*0.15,aEnd=Math.PI*0.85;
+  var arcLens=[0];for(var ai=1;ai<=aN;ai++){var a0=aStart+(ai-1)/aN*(aEnd-aStart),a1=aStart+ai/aN*(aEnd-aStart);var dx=fw/2*(Math.cos(a1)-Math.cos(a0)),dy=fh/2*(Math.sin(a1)-Math.sin(a0));arcLens.push(arcLens[ai-1]+Math.sqrt(dx*dx+dy*dy))}
+  var totalArc=arcLens[aN];for(var ji=0;ji<17;ji++){var target=ji/(17-1)*totalArc;var si=0;while(si<aN&&arcLens[si+1]<target)si++;var frac=(target-arcLens[si])/(arcLens[si+1]-arcLens[si]||1);var ang=aStart+(si+frac)/aN*(aEnd-aStart);regions.jaw.push([cx+fw/2*Math.cos(ang),cy+fh/2*Math.sin(ang)])}
+
+  // Pose landmarks — 74 upper face points (indices 0–3, 21–90 in sequence)
+  // Right eyebrow (5 contour + 5 lower = 10 points)
+  for(let i=0;i<5;i++){const t=i/4;regions.upper.push([cx-48+t*38,cy-60-Math.sin(t*Math.PI)*9])}
+  for(let i=0;i<5;i++){const t=i/4;regions.upper.push([cx-48+t*38,cy-52-Math.sin(t*Math.PI)*6])}
+  // Left eyebrow (5 contour + 5 lower = 10 points)
+  for(let i=0;i<5;i++){const t=i/4;regions.upper.push([cx+10+t*38,cy-60-Math.sin(t*Math.PI)*9])}
+  for(let i=0;i<5;i++){const t=i/4;regions.upper.push([cx+10+t*38,cy-52-Math.sin(t*Math.PI)*6])}
+  // Nose bridge (5 points)
+  for(let i=0;i<5;i++){regions.upper.push([cx,cy-18+i*11])}
+  // Nose bottom / nostrils (9 points — bridge to wings)
+  for(let i=0;i<9;i++){const a=Math.PI+i/8*Math.PI;regions.upper.push([cx+14*Math.cos(a),cy+35+5*Math.sin(a)])}
+  // Right eye (16 points — upper + lower lid)
+  for(let i=0;i<16;i++){const a=i/16*Math.PI*2;regions.upper.push([cx-30+16*Math.cos(a),cy-28+7*Math.sin(a)])}
+  // Left eye (16 points — upper + lower lid)
+  for(let i=0;i<16;i++){const a=i/16*Math.PI*2;regions.upper.push([cx+30+16*Math.cos(a),cy-28+7*Math.sin(a)])}
+  // Upper jaw / cheekbone contour — 8 face oval points in pose set
+  // These sit ON the face ellipse: x = cx + fw/2*cos(a), y = cy + fh/2*sin(a)
+  // Right side (temple → upper jaw): angles from -0.15π to 0.15π
+  for(let i=0;i<4;i++){const a=-Math.PI*0.15+i*(Math.PI*0.3/3);regions.upper.push([cx+fw/2*Math.cos(a),cy+fh/2*Math.sin(a)])}
+  // Left side (mirror): angles from 0.85π to 1.15π
+  for(let i=0;i<4;i++){const a=Math.PI*0.85+i*(Math.PI*0.3/3);regions.upper.push([cx+fw/2*Math.cos(a),cy+fh/2*Math.sin(a)])}
+
+  // Mouth / lip — 40 content points (indices 91–130 in sequence)
+  // Helper: sample N evenly-spaced points along a polyline by arc length
+  function evenPoly(pts,n){var segs=[0];for(var pi=1;pi<pts.length;pi++){var dx2=pts[pi][0]-pts[pi-1][0],dy2=pts[pi][1]-pts[pi-1][1];segs.push(segs[pi-1]+Math.sqrt(dx2*dx2+dy2*dy2))}var tot=segs[segs.length-1],out=[];for(var ni=0;ni<n;ni++){var tgt=ni/(n-1)*tot,si2=0;while(si2<segs.length-2&&segs[si2+1]<tgt)si2++;var f2=(tgt-segs[si2])/(segs[si2+1]-segs[si2]||1);out.push([pts[si2][0]+(pts[si2+1][0]-pts[si2][0])*f2,pts[si2][1]+(pts[si2+1][1]-pts[si2][1])*f2])}return out}
+  // Define lip shapes as dense polylines, then resample evenly
+  var lw=25,lh=9,ilw=18,ilh=5,ly=cy+50;
+  // Outer lip top: cupid's bow shape (left corner → center → right corner)
+  var oTop=[];for(var li=0;li<=60;li++){var t2=li/60;var xx=cx-lw+t2*2*lw;var yy=ly-lh*Math.sin(t2*Math.PI)-2*Math.sin(t2*Math.PI*2);oTop.push([xx,yy])}
+  // Outer lip bottom: smooth curve
+  var oBot=[];for(var li=0;li<=60;li++){var t2=li/60;var xx=cx+lw-t2*2*lw;var yy=ly+lh*Math.sin(t2*Math.PI);oBot.push([xx,yy])}
+  // Inner lip top
+  var iTop=[];for(var li=0;li<=60;li++){var t2=li/60;var xx=cx-ilw+t2*2*ilw;var yy=ly-ilh*Math.sin(t2*Math.PI);iTop.push([xx,yy])}
+  // Inner lip bottom
+  var iBot=[];for(var li=0;li<=60;li++){var t2=li/60;var xx=cx+ilw-t2*2*ilw;var yy=ly+ilh*Math.sin(t2*Math.PI);iBot.push([xx,yy])}
+  // Resample each to 10 evenly-spaced points
+  evenPoly(oTop,10).forEach(function(p){regions.lip.push(p)});
+  evenPoly(oBot,10).forEach(function(p){regions.lip.push(p)});
+  evenPoly(iTop,10).forEach(function(p){regions.lip.push(p)});
+  evenPoly(iBot,10).forEach(function(p){regions.lip.push(p)})
+
+  regions.all=[...regions.upper,...regions.jaw,...regions.lip];
+
+  const colors={0:'#e87468',1:'#5888e8',2:'#e8a040',3:'#48c8d8'};
+  const labels={0:'All 131 landmarks (74 pose + 57 content)',1:'Pose: 74 (eyes, brows, nose, upper jaw)',2:'Content — mouth: 40 (predicted from audio)',3:'Content — jaw: 17 (predicted from audio)'};
+  const sets={0:regions.all,1:regions.upper,2:regions.lip,3:regions.jaw};
+
+  const pts=sets[mode];const col=colors[mode];
+  pts.forEach(p=>{
+    x2.fillStyle=col+'88';x2.beginPath();x2.arc(p[0],p[1],3,0,Math.PI*2);x2.fill();
+    x2.strokeStyle=col+'44';x2.lineWidth=.5;x2.stroke();
+  });
+
+  x2.font='600 13px DM Sans';x2.fillStyle=col;x2.textAlign='center';x2.fillText(labels[mode],cx,fh+85);
+  x2.font='10px DM Sans';x2.fillStyle='#70584a';x2.fillText(`${pts.length} points shown`,cx,fh+105);
+
+  // Legend on right side
+  var legX=580,legY=30;
+  [{l:'Pose (74)',c:'#5888e8',d:'Eyes, brows, nose, upper jaw — fixed during inference'},
+   {l:'Mouth (40)',c:'#e8a040',d:'Outer + inner lip — predicted from audio'},
+   {l:'Jaw (17)',c:'#48c8d8',d:'Face contour — predicted from audio'},
+  ].forEach((r,i)=>{
+    x2.fillStyle=r.c;x2.beginPath();x2.arc(legX,legY+i*50+8,5,0,Math.PI*2);x2.fill();
+    x2.font='600 11px DM Sans';x2.fillStyle='#f2e6e0';x2.textAlign='left';x2.fillText(r.l,legX+14,legY+i*50+12);
+    x2.font='9px DM Sans';x2.fillStyle='#70584a';x2.fillText(r.d,legX+14,legY+i*50+28);
+  });
+};
+$('lmkSel').addEventListener('change',()=>renders[3]());
+
+// S4: Diffusion Transformer
+renders[4]=()=>{
+  const c=$('c4a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Conditioning inputs
+  const conds=[
+    {l:'Audio za\n(DCA-VAE)',c:'#e8a040',y:20},
+    {l:'Ref latent zr\n(from VAE)',c:'#40c88a',y:90},
+    {l:'Pose latent zp\n(from VAE)',c:'#48c8d8',y:170},
+  ];
+  conds.forEach(t=>{
+    bx(x,20,t.y,120,55,t.c+'0a',t.c+'22',t.l,t.c,9);
+    ar(x,150,t.y+27,220,165,t.c+'33');
+  });
+  // Noisy input
+  bx(x,20,260,120,55,'#b8988822','#b8988844','☁️ Noisy z_t\n(landmark latent)','#b89888',9);
+  ar(x,150,287,220,200,'#b8988844');
+  // Timestep
+  bx(x,20,330,120,30,'#d8c84010','#d8c84025','⏱️ Timestep t','#d8c840',9);
+  ar(x,150,345,220,210,'#d8c84033');
+  // DiT
+  bx(x,220,80,280,220,'#e8746806','#e8746815','','');
+  x.font='700 14px Fraunces';x.fillStyle='#e87468';x.textAlign='center';x.fillText('Diffusion Transformer',360,110);
+  x.font='10px DM Sans';x.fillStyle='#b89888';
+  x.fillText('Self-Attention over all tokens',360,138);
+  x.fillText('adaLN-Zero timestep modulation',360,158);
+  x.fillText('Audio + Ref + Pose conditioning',360,178);
+  x.fillText('Feed-Forward + Layer Norm',360,198);
+  x.fillText('× L layers',360,225);
+  x.font='9px DM Mono';x.fillStyle='#70584a';x.fillText('Predicts velocity v_θ(z_t, t, cond)',360,260);
+  // Output velocity
+  ar(x,510,190,570,190,'#e8746844');
+  bx(x,570,150,130,80,'#e8746808','#e8746820','','');
+  x.font='600 11px DM Sans';x.fillStyle='#e87468';x.textAlign='center';x.fillText('Predicted',635,175);x.fillText('Velocity v_θ',635,195);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('→ denoise step',635,215);
+  // After N steps → clean latent
+  ar(x,710,190,760,190);
+  bx(x,760,155,80,70,'#40c88a08','#40c88a20','Clean\nLatent z','#40c88a',10);
+  ar(x,850,190,890,190,'#40c88a55');
+  bx(x,890,155,55,70,'#d8c84010','#d8c84025','VAE\nDec','#d8c840',9);
+
+  // Flow matching trajectory
+  const c2=$('c4b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  // Noise cloud
+  bx(x2,30,50,110,80,'rgba(184,152,136,.06)','rgba(184,152,136,.15)','☁️ Gaussian\nNoise z₀','#b89888',10);
+  // Target
+  bx(x2,W2-150,50,120,80,'rgba(64,200,138,.06)','rgba(64,200,138,.2)','📐 Clean\nLandmark z₁','#40c88a',10);
+  // Flow path
+  x2.strokeStyle='#e87468';x2.lineWidth=2;x2.beginPath();x2.moveTo(150,90);
+  for(let t=0;t<=1;t+=.02){const px=150+t*(W2-310);const py=90+Math.sin(t*Math.PI)*-25;t===0?x2.moveTo(px,py):x2.lineTo(px,py)}
+  x2.stroke();
+  // Velocity vectors
+  for(let t=0.1;t<1;t+=.15){
+    const px=150+t*(W2-310);const py=90+Math.sin(t*Math.PI)*-25;
+    const dx=40;const dy=-Math.cos(t*Math.PI)*10;
+    x2.strokeStyle='#e8a04088';x2.lineWidth=1.5;x2.beginPath();x2.moveTo(px,py);x2.lineTo(px+dx,py+dy);x2.stroke();
+    x2.fillStyle='#e8a040';x2.beginPath();const a=Math.atan2(dy,dx);x2.moveTo(px+dx,py+dy);x2.lineTo(px+dx-6*Math.cos(a-.4),py+dy-6*Math.sin(a-.4));x2.lineTo(px+dx-6*Math.cos(a+.4),py+dy-6*Math.sin(a+.4));x2.fill();
+  }
+  x2.font='10px DM Sans';x2.fillStyle='#e8a040';x2.textAlign='center';x2.fillText('velocity vectors v_θ (learned by DiT)',W2/2,50);
+  x2.fillStyle='#e87468';x2.fillText('flow trajectory in landmark latent space',W2/2,150);
+  x2.fillStyle='#70584a';x2.font='10px DM Mono';x2.textAlign='left';x2.fillText('t=0 (noise)',150,175);x2.textAlign='right';x2.fillText('t=1 (landmarks)',W2-150,175);
+};
+
+// S5: Stage 1 Training
+renders[5]=()=>{
+  const c=$('c5a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Phase A: VAE
+  bx(x,30,15,440,110,'#5888e806','#5888e815','','');
+  x.font='700 12px Fraunces';x.fillStyle='#5888e8';x.textAlign='left';x.fillText('Phase A: Landmark VAE Training',50,38);
+  x.font='600 11px DM Sans';x.fillStyle='#5888e8';x.fillText('L_VAE = L_recon + β · KL(q(z|l) ‖ p(z))',50,65);
+  x.font='10px DM Sans';x.fillStyle='#b89888';
+  x.fillText('Reconstruction: decoded landmarks ≈ input landmarks',50,88);
+  x.fillText('KL: regularize latent space to be smooth & continuous',50,106);
+
+  // Phase B: DiT
+  bx(x,30,145,440,110,'#e8746806','#e8746815','','');
+  x.font='700 12px Fraunces';x.fillStyle='#e87468';x.textAlign='left';x.fillText('Phase B: DiT Flow Matching (VAE frozen)',50,168);
+  x.font='600 11px DM Sans';x.fillStyle='#e87468';x.fillText('L_FM = ‖ v_θ(z_t, t, audio, ref, pose) − (z₁ − z₀) ‖²',50,195);
+  x.font='10px DM Sans';x.fillStyle='#b89888';
+  x.fillText('z₁ = VAE.encode(GT landmarks), z₀ ~ N(0,1)',50,218);
+  x.fillText('z_t = (1−t)·z₀ + t·z₁ — linear interpolation at random t',50,236);
+
+  // Summary on right
+  bx(x,500,15,430,240,'#d8c84006','#d8c84015','','');
+  x.font='600 12px DM Sans';x.fillStyle='#d8c840';x.textAlign='center';x.fillText('Two-Phase Training Pipeline',715,42);
+  x.font='10px DM Sans';x.fillStyle='#b89888';
+  x.fillText('1. Train VAE until landmarks reconstruct well',715,72);
+  x.fillText('2. Freeze VAE encoder + decoder',715,92);
+  x.fillText('3. Train DiT to predict velocity in latent space',715,112);
+  x.fillText('',715,132);
+  x.fillStyle='#40c88a';x.fillText('Advantage: DiT works in smooth latent space',715,148);
+  x.fillText('→ easier to learn than raw 262-dim coordinates',715,166);
+  x.fillText('→ natural temporal coherence from latent smoothness',715,184);
+  x.fillText('→ multimodal: can sample diverse valid motions',715,202);
+  x.fillStyle='#70584a';x.fillText('At inference: sample z₀ ~ N(0,1) → ODE solve → VAE decode',715,230);
+};
+
+// S6: Alignment Module
+renders[6]=()=>{
+  const c=$('c6a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Reference image
+  bx(x,20,30,100,70,'#5888e80a','#5888e822','🖼️ Ref Image\n(1 of N)','#5888e8',10);
+  ar(x,130,65,180,65,'#5888e855');
+  // Feature extractor
+  bx(x,180,20,120,90,'#5888e808','#5888e818','Feature\nExtractor\n(encoder)','#5888e8',10);
+  ar(x,310,65,360,65,'#5888e855');
+  // SPADE + landmarks
+  bx(x,360,10,150,110,'#e8746808','#e8746818','','');
+  x.font='600 10px DM Sans';x.fillStyle='#e87468';x.textAlign='center';x.fillText('SPADE Blocks',435,30);
+  x.font='9px DM Sans';x.fillStyle='#b89888';
+  x.fillText('Target landmarks →',435,50);x.fillText('spatially-adaptive norm',435,64);x.fillText('Injects pose structure',435,82);x.fillText('into appearance features',435,96);
+  ar(x,520,65,570,65,'#e8746855');
+  // Motion field
+  bx(x,570,15,130,100,'#48c8d808','#48c8d818','','');
+  x.font='600 10px DM Sans';x.fillStyle='#48c8d8';x.textAlign='center';x.fillText('Motion Field',635,35);
+  x.font='9px DM Sans';x.fillStyle='#b89888';
+  x.fillText('Dense 2D flow',635,55);x.fillText('(dx, dy) per pixel',635,69);x.fillText('+ occlusion mask',635,87);
+  ar(x,710,65,760,65,'#48c8d855');
+  // Warped output
+  bx(x,760,25,170,80,'#40c88a08','#40c88a20','','');
+  x.font='600 10px DM Sans';x.fillStyle='#40c88a';x.textAlign='center';x.fillText('Warp + Aggregate',845,50);
+  x.font='9px DM Sans';x.fillStyle='#b89888';
+  x.fillText('Bilinear warp by flow',845,70);x.fillText('Weighted sum across N refs',845,84);
+
+  // Bottom: process description
+  x.font='11px DM Sans';x.fillStyle='#f2e6e0';x.textAlign='center';
+  x.fillText('For each reference: extract features → SPADE with target landmarks → predict flow → warp',480,160);
+  x.font='10px DM Sans';x.fillStyle='#70584a';
+  x.fillText('Then: weighted aggregation across all N warped references → single aligned feature map',480,185);
+  x.fillText('Weights are learned per-pixel — model picks the best reference for each region',480,205);
+
+  // Interactive reference count
+  const c2=$('c6b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  const N=+$('refSlider').value;
+  // Show up to 7 boxes; if N>7, show first 3 + "..." + last 3
+  var showIdxs=[];
+  if(N<=7){for(var ri=0;ri<N;ri++)showIdxs.push(ri)}
+  else{showIdxs=[0,1,2,-1,N-3,N-2,N-1]}// -1 = ellipsis
+  var numBoxes=showIdxs.length;
+  var rw2=Math.min(120,Math.floor((W2-60)/numBoxes-8));
+  var totalW2=numBoxes*(rw2+8)-8;
+  var startX2=(W2-totalW2)/2;
+
+  var boxCenters=[];
+  showIdxs.forEach(function(idx,vi){
+    var rx2=startX2+vi*(rw2+8);
+    if(idx===-1){
+      x2.font='600 14px DM Sans';x2.fillStyle='#70584a';x2.textAlign='center';
+      x2.fillText('···',rx2+rw2/2,50);
+      x2.fillText('···',rx2+rw2/2,135);
+    }else{
+      bx(x2,rx2,15,rw2,60,'#5888e80a','#5888e822','','');
+      x2.font='600 9px DM Sans';x2.fillStyle='#5888e8';x2.textAlign='center';
+      x2.fillText('Ref '+(idx+1),rx2+rw2/2,38);
+      x2.font='8px DM Sans';x2.fillStyle='#b89888';
+      x2.fillText(['frontal','left','right','up','down'][idx%5],rx2+rw2/2,54);
+      ar(x2,rx2+rw2/2,80,rx2+rw2/2,100,'#48c8d844');
+      bx(x2,rx2,105,rw2,35,'#48c8d808','#48c8d818','w'+(idx+1)+' · warped','#48c8d8',8);
+      boxCenters.push(rx2+rw2/2);
+    }
+  });
+  // Aggregation arrows
+  boxCenters.forEach(function(bxc){ar(x2,bxc,145,W2/2,170,'#40c88a33')});
+  bx(x2,W2/2-100,170,200,28,'#40c88a08','#40c88a20','Σ weighted → aligned features','#40c88a',9);
+
+  x2.font='10px DM Sans';x2.fillStyle='#70584a';x2.textAlign='center';
+  x2.fillText(`N = ${N} reference${N>1?'s':''} — selected by lip openness for diverse appearance coverage`,W2/2,215);
+
+  $('refVal').textContent='N = '+N;
+};
+$('refSlider').addEventListener('input',()=>renders[6]());
+
+// S7: Translation Module
+renders[7]=()=>{
+  const c=$('c7a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Input: aligned features
+  bx(x,20,60,130,80,'#5888e80a','#5888e822','Aligned\nFeatures\n(from alignment)','#5888e8',10);
+  ar(x,160,100,210,100,'#5888e855');
+
+  // Encoder-Decoder
+  bx(x,210,20,350,180,'#48c8d806','#48c8d815','','');
+  x.font='700 12px Fraunces';x.fillStyle='#48c8d8';x.textAlign='center';x.fillText('Translation Network',385,45);
+
+  // Encoder blocks
+  bx(x,225,60,70,55,'#48c8d808','#48c8d818','Encode\n↓ scale','#48c8d8',9);
+  ar(x,305,87,330,87,'#48c8d844');
+  // Bottleneck + AdaIN
+  bx(x,330,55,100,65,'#e8a04008','#e8a04020','','');
+  x.font='600 10px DM Sans';x.fillStyle='#e8a040';x.textAlign='center';x.fillText('AdaIN',380,72);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('Audio → γ, β',380,88);x.fillText('Modulate features',380,102);
+  ar(x,440,87,465,87,'#e8a04044');
+  // Decoder blocks
+  bx(x,465,60,80,55,'#48c8d808','#48c8d818','Decode\n↑ scale','#48c8d8',9);
+
+  // SPADE injection (from landmarks)
+  bx(x,250,150,140,40,'#e8746808','#e8746818','SPADE ← Landmarks','#e87468',9);
+  ar(x,320,150,320,120,'#e8746833');
+
+  // Audio input to AdaIN (via DCA-VAE)
+  bx(x,310,220,140,40,'#e8a04010','#e8a04025','🎙️ DCA-VAE → za','#e8a040',9);
+  ar(x,380,220,380,125,'#e8a04044');
+
+  // Output
+  ar(x,570,100,630,100);
+  bx(x,630,50,110,100,'#40c88a08','#40c88a20','','');
+  x.font='600 11px DM Sans';x.fillStyle='#40c88a';x.textAlign='center';x.fillText('Generated',685,78);x.fillText('Face',685,96);x.fillText('Image',685,114);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('512×512',685,135);
+
+  // Summary
+  x.font='10px DM Sans';x.fillStyle='#70584a';x.textAlign='center';
+  x.fillText('SPADE provides spatial structure (where things go), AdaIN provides temporal content (what the mouth shape is)',480,280);
+};
+
+// S8: Rendering Losses
+renders[8]=()=>{
+  const c=$('c8a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  const losses=[
+    {l:'Perceptual\nLoss',d:'VGG feature\ndistance between\npred & GT',w:'λ_p',c:'#c874e8'},
+    {l:'Reconstruction\nLoss',d:'L1 pixel-level\ndifference\nbetween images',w:'λ_r',c:'#5888e8'},
+    {l:'Style\nLoss',d:'Gram matrix\ndifference for\ntexture matching',w:'λ_s',c:'#e8a040'},
+    {l:'GAN\nLoss',d:'Discriminator\nadversarial loss\nfor realism',w:'λ_g',c:'#40c88a'},
+    {l:'Feature\nMatching',d:'Discriminator\nfeature distance\nfor stability',w:'λ_f',c:'#e87468'},
+  ];
+  losses.forEach((lo,i)=>{
+    const lx=15+i*188;
+    bx(x,lx,20,178,120,lo.c+'0a',lo.c+'22','','');
+    x.font='600 11px DM Sans';x.fillStyle=lo.c;x.textAlign='center';x.fillText(lo.l.split('\n')[0],lx+89,42);x.fillText(lo.l.split('\n')[1],lx+89,58);
+    x.font='9px DM Sans';x.fillStyle='#b89888';
+    lo.d.split('\n').forEach((dl,di)=>x.fillText(dl,lx+89,80+di*14));
+    // Weight badge
+    bx(x,lx+55,125,68,28,lo.c+'15',lo.c+'33',lo.w,lo.c,10);
+  });
+  // Total loss
+  bx(x,100,170,760,50,'#d8c84006','#d8c84015','','');
+  x.font='600 12px DM Sans';x.fillStyle='#d8c840';x.textAlign='center';
+  x.fillText('L_stage2 = λ_p · L_perceptual + λ_r · L_reconstruction + λ_s · L_style + λ_g · L_GAN + λ_f · L_feature_match',480,200);
+
+  x.font='10px DM Sans';x.fillStyle='#70584a';x.textAlign='center';
+  x.fillText('Perceptual + Style ensure high-level quality; L1 ensures pixel accuracy; GAN + Feature Matching ensure realism and training stability',480,240);
+  x.fillText('Each loss prevents a specific failure mode: blur (perceptual), color shift (L1), texture artifacts (style), flatness (GAN)',480,260);
+};
+
+// S9: Identity & Post-processing
+renders[9]=()=>{
+  // Identity pipeline
+  const c=$('c9a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Multiple references
+  for(let i=0;i<3;i++){
+    bx(x,20+i*110,20,100,70,'#5888e80a','#5888e822','','');
+    x.font='10px DM Sans';x.fillStyle='#5888e8';x.textAlign='center';x.fillText(`Ref ${i+1}`,70+i*110,45);
+    x.font='9px DM Sans';x.fillStyle='#70584a';x.fillText(['frontal','profile L','smile'][i],70+i*110,65);
+    ar(x,70+i*110,95,400,110,'#5888e833');
+  }
+  // Stage 2 box
+  bx(x,370,95,180,60,'#e8746808','#e8746818','Stage 2\n(Alignment + Translation)','#e87468',10);
+  ar(x,560,125,620,125);
+  // Generated face
+  bx(x,620,95,110,60,'#40c88a08','#40c88a20','Generated\nFace','#40c88a',10);
+  ar(x,740,125,790,125);
+  // Compositing
+  bx(x,790,85,140,80,'#d8c84008','#d8c84020','','');
+  x.font='600 10px DM Sans';x.fillStyle='#d8c840';x.textAlign='center';x.fillText('Gaussian Mask',860,105);x.fillText('Compositing',860,120);
+  x.font='9px DM Sans';x.fillStyle='#b89888';x.fillText('Face ⊙ Mask + BG ⊙ (1-Mask)',860,140);
+
+  x.font='10px DM Sans';x.fillStyle='#70584a';x.textAlign='center';
+  x.fillText('Multiple references → richer identity signal → consistent face across poses and expressions',480,195);
+
+  // Gaussian mask visualization
+  const c2=$('c9b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  const sig=+$('sigSlider').value;
+
+  // Draw three layers
+  const layers=[
+    {l:'Original Frame',x:40,c:'#5888e8'},
+    {l:'Gaussian Mask',x:340,c:'#e87468'},
+    {l:'Composited Result',x:640,c:'#40c88a'},
+  ];
+  layers.forEach(lay=>{
+    bx(x2,lay.x,10,260,160,lay.c+'06',lay.c+'15','','');
+    x2.font='600 11px DM Sans';x2.fillStyle=lay.c;x2.textAlign='center';x2.fillText(lay.l,lay.x+130,28);
+  });
+
+  // Original frame
+  x2.fillStyle='#322820';x2.fillRect(55,40,230,120);
+  x2.strokeStyle='#5888e833';x2.lineWidth=.5;x2.strokeRect(55,40,230,120);
+  // Simple face shape
+  x2.fillStyle='#5888e822';x2.beginPath();x2.ellipse(170,100,30,40,0,0,Math.PI*2);x2.fill();
+  x2.font='9px DM Sans';x2.fillStyle='#70584a';x2.textAlign='center';x2.fillText('background + face',170,150);
+
+  // Gaussian mask
+  const mcx=470,mcy=100;
+  for(let r=50;r>0;r-=2){
+    const alpha=Math.exp(-(r*r)/(2*sig*sig));
+    x2.fillStyle=`rgba(232,116,104,${alpha*.5})`;x2.beginPath();x2.ellipse(mcx,mcy,r*1.1,r*1.3,0,0,Math.PI*2);x2.fill();
+  }
+  x2.font='9px DM Sans';x2.fillStyle='#b89888';x2.textAlign='center';x2.fillText(`σ = ${sig}px — ${sig<15?'sharp edge':'smooth falloff'}`,470,150);
+
+  // Composited
+  x2.fillStyle='#322820';x2.fillRect(655,40,230,120);
+  x2.fillStyle='#40c88a11';x2.beginPath();x2.ellipse(770,100,35,45,0,0,Math.PI*2);x2.fill();
+  x2.strokeStyle='#40c88a33';x2.lineWidth=1;x2.beginPath();x2.ellipse(770,100,35,45,0,0,Math.PI*2);x2.stroke();
+  // Blend ring proportional to sigma
+  const blendR=Math.min(sig*1.5,55);
+  x2.strokeStyle='#40c88a22';x2.lineWidth=blendR/5;x2.beginPath();x2.ellipse(770,100,35+blendR/2,45+blendR/2,0,0,Math.PI*2);x2.stroke();
+  x2.font='9px DM Sans';x2.fillStyle='#70584a';x2.textAlign='center';x2.fillText('seamless blend zone',770,150);
+
+  // Plus and equals signs
+  x2.font='600 20px DM Sans';x2.fillStyle='#70584a';x2.textAlign='center';
+  x2.fillText('⊙',310,100);x2.fillText('=',610,100);
+
+  $('sigVal').textContent='σ = '+sig;
+};
+$('sigSlider').addEventListener('input',()=>renders[9]());
+
+// S10: Summary
+renders[10]=()=>{
+  const c=$('c10a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  const sections=[
+    {l:'1. ENCODE INPUTS',items:['Raw audio → mel-spectrogram → DCA-VAE → per-frame latent za','Reference landmarks → Landmark VAE encoder → latent zr','Pose landmarks → Landmark VAE encoder → latent zp'],c:'#e8a040',y:10},
+    {l:'2. GENERATE LANDMARKS (Stage 1 — DiT)',items:['Diffusion Transformer conditioned on [audio, ref, pose]','Flow matching: learn velocity field from noise → landmark latents','ODE solve at inference: z₀ ~ N(0,1) → clean z₁','VAE decode z₁ → 131 × 2 landmark coordinates per frame'],c:'#e87468',y:100},
+    {l:'3. RENDER FRAMES (Stage 2)',items:['N reference images → feature extraction → SPADE with target landmarks','Dense motion fields → bilinear warping → weighted aggregation','Translation network with AdaIN audio injection','5-component loss: perceptual, L1, style, GAN, feature matching'],c:'#5888e8',y:210},
+    {l:'4. COMPOSITE & OUTPUT',items:['Gaussian mask centered on face region','Soft blending: face ⊙ mask + background ⊙ (1 − mask)','Multiple references for robust identity preservation','Final: realistic talking face video with audio sync'],c:'#40c88a',y:320},
+  ];
+  sections.forEach(s=>{
+    const bh=s.items.length*17+30;
+    bx(x,30,s.y,900,bh,s.c+'06',s.c+'18','','');
+    x.font='600 12px DM Sans';x.fillStyle=s.c;x.textAlign='left';x.fillText(s.l,50,s.y+20);
+    x.font='10px DM Sans';x.fillStyle='#b89888';
+    s.items.forEach((it,i)=>x.fillText('•  '+it,70,s.y+40+i*17));
+  });
+  [90,200,310].forEach(y=>{x.fillStyle='#70584a';x.textAlign='center';x.font='12px DM Sans';x.fillText('↓',480,y)});
+};
+
+// Resize handler
+var _rTimer;
+window.addEventListener('resize',function(){clearTimeout(_rTimer);_rTimer=setTimeout(draw,200);});
+
+// Init
+draw();
+</script>
+</body>
+</html>
