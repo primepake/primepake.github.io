@@ -1138,9 +1138,16 @@ function renderWhyTs(){
 function renderId(){
   const{w,h,x}=dpr($('idC'));x.clearRect(0,0,w,h);
   const nr=+$('nrR').value;$('nrV').textContent=nr+' refs';
-  
-  const pl=60,pr=30,lineY=100;const minT=-nr-1,maxT=4;
+
+  const pl=60,pr=30,lineY=100;
+  // Scale the timeline so both regions get adequate space
+  const minT=-nr-1,maxT=nr+2;
   const tX=t=>pl+((t-minT)/(maxT-minT))*(w-pl-pr);
+
+  // Spread block frames proportionally to available space
+  const bStart=1.2,bEnd=maxT-0.8;
+  const blockFrames=[0,1,2,3].map(i=>({l:`f${5+i}`,t:+(bStart+i*(bEnd-bStart)/3).toFixed(2)}));
+  const bMid=(bStart+bEnd)/2;
 
   // Timeline
   x.strokeStyle='#172038';x.lineWidth=1;x.beginPath();x.moveTo(pl,lineY);x.lineTo(w-pr,lineY);x.stroke();
@@ -1157,9 +1164,9 @@ function renderId(){
   }
 
   // Block region
-  x.fillStyle='rgba(74,142,230,.04)';x.fillRect(tX(.8),30,tX(3.2)-tX(.8),140);
-  x.fillStyle='#4a8ee6';x.font='bold 10px DM Sans';x.textAlign='center';x.fillText('CURRENT BLOCK',tX(2),24);
-  x.fillStyle='#3f5070';x.font='9px DM Sans';x.fillText('Noisy • Full frame • Real timestamps',tX(2),185);
+  x.fillStyle='rgba(74,142,230,.04)';x.fillRect(tX(bStart-.4),30,tX(bEnd+.4)-tX(bStart-.4),140);
+  x.fillStyle='#4a8ee6';x.font='bold 10px DM Sans';x.textAlign='center';x.fillText('CURRENT BLOCK',tX(bMid),24);
+  x.fillStyle='#3f5070';x.font='9px DM Sans';x.fillText('Noisy • Full frame • Real timestamps',tX(bMid),185);
 
   // Ref points
   for(let i=0;i<nr;i++){
@@ -1172,7 +1179,6 @@ function renderId(){
   }
 
   // Block points
-  const blockFrames=[{l:'f5',t:1.6},{l:'f6',t:1.92},{l:'f7',t:2.24},{l:'f8',t:2.56}];
   blockFrames.forEach(f=>{
     const px=tX(f.t);
     x.fillStyle='#4a8ee6';x.shadowColor='#4a8ee6';x.shadowBlur=8;x.beginPath();x.arc(px,lineY,5,0,Math.PI*2);x.fill();x.shadowBlur=0;
@@ -1182,7 +1188,7 @@ function renderId(){
 
   // Gap
   x.strokeStyle='#3f5070';x.setLineDash([4,4]);x.lineWidth=1;
-  x.beginPath();x.moveTo(tX(-.3),lineY);x.lineTo(tX(.8),lineY);x.stroke();x.setLineDash([]);
+  x.beginPath();x.moveTo(tX(-.3),lineY);x.lineTo(tX(bStart-.4),lineY);x.stroke();x.setLineDash([]);
 }
 $('nrR').addEventListener('input',renderId);
 
