@@ -761,7 +761,7 @@ function renderTapsf(){
   const{w,h,x}=dpr($('tapsC'));x.clearRect(0,0,w,h);
   const step=+$('tapsfR').value;
   // 0-2: early shifted, 3-5: middle fixed+cached, 6-7: late shifted
-  const labels=['t = T (start)','t = T−1 (shift +5)','t = T−2 (shift +5)','t = T−3 (fixed)','t = T−4 (fixed, cached)','t = T−5 (fixed, cached)','t = 2 (shift +5)','t = 1 (shift +5)'];
+  const labels=['t=1.0 (noise)','t=0.95 (shift +5)','t=0.9 (shift +5)','t=0.85 (fixed)','t=0.5 (fixed, cached)','t=0.2 (fixed, cached)','t=0.1 (shift +5)','t≈0 (shift +5)'];
   $('tapsfV').textContent=labels[step];
 
   // Layout
@@ -832,7 +832,7 @@ function renderTapsf(){
 
   // Show all rows up to current step (stacked)
   const startY=46;
-  const rowLabels=['t=T','t=T−1','t=T−2','t=T−3','t=T−4','t=T−5','t=2','t=1'];
+  const rowLabels=['t=1.0','t=0.95','t=0.9','t=0.85','t=0.5','t=0.2','t=0.1','t≈0'];
   for(let s=0;s<=step;s++){
     const ry=startY+s*(rowH+rowGap);
     const blocks=makeBlocks(cumShifts[s]);
@@ -895,8 +895,8 @@ function renderCache(){
 
   // Timeline arrow
   x.fillStyle='#3f5070';x.font='9px DM Mono';x.textAlign='center';
-  x.fillText('t = T (noise)',pl,barY-8);
-  x.fillText('t = 0 (clean)',pl+barW,barY-8);
+  x.fillText('t = 1.0 (noise)',pl,barY-8);
+  x.fillText('t = 0.0 (clean)',pl+barW,barY-8);
   arrow(x,pl,barY-12,pl+barW,barY-12,'#172038');
 
   // Three regions
