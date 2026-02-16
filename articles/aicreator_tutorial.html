@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Creator — 3D Talking Avatar</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#060e0a;--s1:#0c1810;--s2:#122018;--s3:#1a3024;
+  --bd:#243a2e;--bd2:#366050;
+  --t:#88b8a0;--td:#507860;--tb:#e0f2e8;
+  --acc:#34d399;--acc2:#20a878;--blue:#5888e8;--green:#40c88a;--orange:#e8a040;--red:#e06060;
+  --cyan:#48c8d8;--pink:#e068a8;--yellow:#d8c840;--purple:#9078e8;
+  --aa:rgba(52,211,153,.1);--ba:rgba(88,136,232,.1);--ga:rgba(64,200,138,.08);
+  --oa:rgba(232,160,64,.08);--ra:rgba(224,96,96,.08);--ca:rgba(72,200,216,.08);
+  --pa:rgba(144,120,232,.08);--ya:rgba(220,192,48,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.pg{max-width:1080px;margin:0 auto;padding:36px 20px 100px}
+.hd{margin-bottom:32px;text-align:center}
+.hd h1{font-family:'Fraunces',serif;font-size:2rem;font-weight:800;color:var(--tb);letter-spacing:-.5px}
+.hd .paper{font-size:.88rem;color:var(--acc);margin:6px 0 4px;font-style:italic;font-weight:500}
+.hd .sub{font-size:.85rem;color:var(--td);font-weight:300}
+.tabs{display:flex;gap:0;border:1px solid var(--bd);border-radius:12px;overflow-x:auto;background:var(--s1);margin-bottom:30px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:88px;padding:12px 6px;text-align:center;font-size:.66rem;color:var(--td);cursor:pointer;border-right:1px solid var(--bd);position:relative;transition:all .2s;font-weight:500}
+.tab:last-child{border-right:none}
+.tab:hover{background:rgba(52,211,153,.04)}
+.tab.on{background:var(--aa);color:var(--acc)}
+.tab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;background:var(--acc);border-radius:2px 2px 0 0}
+.sec{display:none;animation:fu .35s ease}.sec.on{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.st{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--tb);margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chip{font-size:.6rem;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:16px;font-weight:500}
+.desc{font-size:.9rem;color:var(--t);max-width:780px;margin-bottom:22px;line-height:1.9;word-wrap:break-word;overflow-wrap:break-word}
+.desc strong{color:var(--tb);font-weight:600}
+.cd{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:26px;margin-bottom:16px;position:relative;overflow:hidden}
+.cd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent);opacity:.12}
+.cl{font-size:.64rem;font-family:'DM Mono',monospace;color:var(--td);text-transform:uppercase;letter-spacing:1.6px;margin-bottom:14px}
+.ins{background:var(--ga);border-left:3px solid var(--green);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.ins b{color:var(--green);font-weight:600}
+.wrn{background:var(--oa);border-left:3px solid var(--orange);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.wrn b{color:var(--orange);font-weight:600}
+.key{background:var(--aa);border-left:3px solid var(--acc);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.key b{color:var(--acc);font-weight:600}
+.an{background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:18px 20px;margin:16px 0}
+.an .e{font-size:1.3rem;margin-bottom:4px}.an .at{font-size:.84rem;font-weight:600;color:var(--tb);margin-bottom:5px}
+.an p{font-size:.84rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+canvas{display:block;border-radius:8px;max-width:100%;height:auto}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sc{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--td);letter-spacing:1px;margin-bottom:4px}
+.ctrl{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:10px 14px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)}
+.ctrl label{font-size:.72rem;color:var(--td);font-weight:500}
+.ctrl input[type=range]{width:160px;height:3px;-webkit-appearance:none;background:var(--s3);border-radius:2px}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--acc);border-radius:50%;cursor:pointer}
+.ctrl select{background:var(--s3);border:1px solid var(--bd);color:var(--tb);padding:4px 8px;border-radius:4px;font-size:.8rem;font-family:'DM Sans'}
+.ctrl .v{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--acc);min-width:50px}
+.nav{display:flex;justify-content:space-between;margin-top:28px}
+.nb{padding:9px 22px;border-radius:9px;font-size:.84rem;cursor:pointer;border:1px solid var(--bd);background:var(--s1);color:var(--t);font-family:'DM Sans';font-weight:500;transition:all .2s}
+.nb:hover{border-color:var(--acc);color:var(--acc)}.nb.pr{background:var(--aa);border-color:rgba(52,211,153,.25);color:var(--acc)}
+.nb:disabled{opacity:.2;cursor:not-allowed}
+@media(max-width:700px){
+  .cols{grid-template-columns:1fr}
+  .tab{flex:none;min-width:72px;font-size:.56rem;padding:10px 6px}
+  .pg{padding:20px 10px 60px}
+  .hd h1{font-size:1.5rem}
+  .hd .paper{font-size:.8rem}
+  .st{font-size:1.1rem}
+  .desc{font-size:.82rem}
+  .cd{padding:14px}
+  .cl{font-size:.58rem;letter-spacing:1.2px;margin-bottom:10px}
+  .ins,.wrn,.key{padding:10px 14px;font-size:.8rem}
+  .an{padding:14px 16px}
+  .an .at{font-size:.8rem}
+  .an p{font-size:.78rem}
+  .ctrl{gap:10px;padding:8px 10px}
+  .ctrl input[type=range]{width:100px}
+  .ctrl label{font-size:.66rem}
+  .nav{margin-top:20px}
+  .nb{padding:8px 16px;font-size:.78rem}
+}
+@media(max-width:400px){
+  .pg{padding:14px 6px 40px}
+  .hd h1{font-size:1.2rem}
+  .hd .paper{font-size:.74rem}
+  .st{font-size:.95rem;gap:8px}
+  .chip{font-size:.52rem;padding:2px 7px}
+  .cd{padding:8px}
+  .cl{font-size:.52rem}
+  .tab{min-width:56px;font-size:.48rem;padding:8px 4px}
+  .ins,.wrn,.key{padding:8px 10px;font-size:.76rem}
+  .an{padding:10px 12px}
+  .ctrl{flex-direction:column;align-items:flex-start}
+  .ctrl input[type=range]{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="pg">
+<div class="hd">
+<h1>AI Creator — 3D Talking Avatar</h1>
+<div class="paper">Audio-driven 3D talking head synthesis with NeRF rendering</div>
+<div class="sub">Interactive visual guide — from audio to photorealistic avatar</div>
+</div>
+<div class="tabs" id="tabs"></div>
+
+<!-- S0: The Vision -->
+<div class="sec on" id="s0">
+<div class="sc">THE VISION</div>
+<div class="st">What Does AI Creator Do? <span class="chip" style="background:var(--aa);color:var(--acc)">OVERVIEW</span></div>
+<div class="desc">AI Creator generates <strong>photorealistic 3D talking avatars</strong> driven by audio. Given a short training video of a person and a new audio clip, it produces a video where the person speaks with accurate <strong>lip sync</strong>, natural <strong>expressions</strong>, and realistic <strong>head motion</strong>. Unlike 2D methods that paste or warp face textures, AI Creator uses a <strong>NeRF-based 3D representation</strong> that understands the full geometry of the head.</div>
+<div class="cd"><div class="cl">Input → Output flow</div><canvas id="c0a" width="960" height="200"></canvas></div>
+<div class="cd"><div class="cl">2D vs 3D talking heads — why 3D matters</div><canvas id="c0b" width="960" height="240"></canvas></div>
+<div class="an"><div class="e">🎯</div><div class="at">Three motion signals, one avatar</div><p>A convincing talking avatar requires three independent motion signals working in harmony: <strong>lip movements</strong> (driven by audio phonemes), <strong>facial expressions</strong> (eyebrow raises, squints, smiles — controlled by blendshape coefficients), and <strong>head pose</strong> (nods, tilts, turns — optimized from 3D morphable models). AI Creator handles all three through dedicated encoding streams that feed into a unified NeRF renderer.</p></div>
+<div class="key"><b>The core challenge:</b> Talking avatar generation must simultaneously handle precise lip-audio synchronization, expressive facial animation, natural head movement, and 3D-consistent rendering — all while preserving the person's identity from the training video.</div>
+</div>
+
+<!-- S1: Architecture -->
+<div class="sec" id="s1">
+<div class="sc">ARCHITECTURE</div>
+<div class="st">The Full Pipeline <span class="chip" style="background:var(--ba);color:var(--blue)">PIPELINE</span></div>
+<div class="desc">AI Creator uses <strong>four parallel encoding streams</strong> — audio, blendshapes, head pose, and appearance — that feed into a <strong>hash-grid NeRF</strong> for volumetric rendering, followed by a <strong>portrait restoration network</strong> for detail enhancement and a <strong>relighting module</strong> that can match the lighting of any user-uploaded reference image. Each stream is color-coded below.</div>
+<div class="cd"><div class="cl">Complete pipeline — 4 streams → NeRF → restoration</div><canvas id="c1a" width="960" height="480"></canvas></div>
+<div class="cols">
+<div class="cd"><div class="cl">Encoding streams</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--acc)">●</span> <strong style="color:var(--acc)">Audio encoder</strong> — lip-sync embeddings<br>
+<span style="color:var(--orange)">●</span> <strong style="color:var(--orange)">Blendshape encoder</strong> — expression coefficients<br>
+<span style="color:var(--cyan)">●</span> <strong style="color:var(--cyan)">Head pose optimizer</strong> — rotation & translation<br>
+<span style="color:var(--blue)">●</span> <strong style="color:var(--blue)">Appearance</strong> — hash-grid spatial features
+</div></div>
+<div class="cd"><div class="cl">Rendering, restoration & relighting</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--purple)">●</span> Multi-plane hash encoding (XY/YZ/XZ)<br>
+<span style="color:var(--purple)">●</span> Volume rendering (ray casting + compositing)<br>
+<span style="color:var(--pink)">●</span> Portrait restoration network<br>
+<span style="color:var(--pink)">●</span> Soft mask blending with background<br>
+<span style="color:var(--yellow)">●</span> NeRF relighting from user reference image
+</div></div></div>
+</div>
+
+<!-- S2: Audio Encoder -->
+<div class="sec" id="s2">
+<div class="sc">AUDIO ENCODER</div>
+<div class="st">Audio-Visual Encoder <span class="chip" style="background:var(--aa);color:var(--acc)">AUDIO</span></div>
+<div class="desc">The audio encoder converts speech into <strong>per-frame lip-sync embeddings</strong>. It uses a <strong>pretrained lip-reading network</strong> as its backbone — a model originally trained to predict speech content from silent video. This gives it a deep understanding of the audio-visual correspondence between sounds and mouth shapes. A <strong>cosine similarity discriminator</strong> provides feedback to ensure the embeddings faithfully represent lip movements.</div>
+<div class="cd"><div class="cl">Waveform → Mel → Encoder → Per-frame embeddings</div><canvas id="c2a" width="960" height="240"></canvas></div>
+<div class="cd"><div class="cl">Cosine similarity discriminator — interactive</div><canvas id="c2b" width="960" height="260"></canvas>
+<div class="ctrl">
+<label>Cosine similarity threshold</label>
+<input type="range" id="cosSlider" min="0" max="100" value="70">
+<span class="v" id="cosVal">0.70</span>
+</div>
+</div>
+<div class="an"><div class="e">🔊</div><div class="at">Why a lip-reading backbone?</div><p>A standard audio encoder learns speech features in isolation. But by starting from a <strong>lip-reading network</strong> pretrained on video, the encoder already understands the mapping between sounds and visual mouth shapes. The cosine similarity discriminator then fine-tunes this: it compares the audio embedding with ground-truth lip features and pushes them to align in a shared embedding space. When cosine similarity is high (close to 1.0), the audio embedding accurately predicts the lip shape.</p></div>
+</div>
+
+<!-- S3: Blendshapes -->
+<div class="sec" id="s3">
+<div class="sc">BLENDSHAPES</div>
+<div class="st">Blendshape Expression Control <span class="chip" style="background:var(--oa);color:var(--orange)">EXPRESSION</span></div>
+<div class="desc">Facial expressions beyond lip sync — <strong>eyebrow raises</strong>, <strong>squints</strong>, <strong>cheek puffs</strong>, <strong>nose wrinkles</strong> — are controlled by <strong>blendshape coefficients</strong>. These are a standard set of scalar weights that control deformation of different face regions. Crucially, blendshapes are <strong>decoupled from lip sync</strong>: the audio encoder handles the mouth, while blendshapes handle everything else.</div>
+<div class="cd"><div class="cl">Face regions controlled by blendshapes — interactive</div><canvas id="c3a" width="960" height="340"></canvas>
+<div class="ctrl">
+<label>Region</label>
+<select id="bsSel">
+<option value="0">All regions</option>
+<option value="1">Upper face (brows, forehead)</option>
+<option value="2">Mid face (eyes, nose, cheeks)</option>
+<option value="3">Lower face (jaw, chin)</option>
+</select>
+</div>
+</div>
+<div class="cd"><div class="cl">Blendshape channel sliders — conceptual</div><canvas id="c3b" width="960" height="200"></canvas></div>
+<div class="ins"><b>Key insight:</b> By separating blendshape expressions from audio-driven lip sync, the system can generate a person speaking with a smile, a frown, or raised eyebrows — independent of what they're saying. The lip region is controlled by audio; the rest of the face is controlled by blendshapes.</div>
+</div>
+
+<!-- S4: Masked Attention -->
+<div class="sec" id="s4">
+<div class="sc">MASKED ATTENTION</div>
+<div class="st">Region-Specific Attention <span class="chip" style="background:var(--pa);color:var(--purple)">ATTENTION</span></div>
+<div class="desc">To prevent audio features from leaking into the upper face (causing unnatural brow movements when speaking) and blendshape features from interfering with lip sync, AI Creator uses <strong>masked attention</strong>. The attention mechanism restricts which conditioning signals influence which face regions: <strong>audio → mouth region</strong>, <strong>blendshapes → upper face</strong>.</div>
+<div class="cd"><div class="cl">Attention mask pattern — region routing</div><canvas id="c4a" width="960" height="300"></canvas></div>
+<div class="cd"><div class="cl">Before vs after masked attention</div><canvas id="c4b" width="960" height="200"></canvas></div>
+<div class="an"><div class="e">🎭</div><div class="at">Why not let audio control the whole face?</div><p>Without masked attention, the audio signal can "bleed" into non-mouth regions — causing eyebrows to twitch with every syllable or cheeks to deform unnaturally. The mask acts as a <strong>routing table</strong>: audio features are only allowed to attend to mouth-region spatial positions, while blendshape features attend to the upper face. This gives independent, clean control over each region.</p></div>
+</div>
+
+<!-- S5: Head Pose -->
+<div class="sec" id="s5">
+<div class="sc">HEAD POSE</div>
+<div class="st">Head Pose Optimizer <span class="chip" style="background:var(--ca);color:var(--cyan)">POSE</span></div>
+<div class="desc">Realistic head motion is recovered through <strong>joint optimization</strong> of two complementary signals: <strong>3DMM sparse landmarks</strong> (a 3D morphable model that fits key facial points) and <strong>dense optical flow</strong> (pixel-level motion between frames). The optimizer iteratively refines the head rotation and translation parameters until both signals agree.</div>
+<div class="cd"><div class="cl">Two-track optimization — convergence animation</div><canvas id="c5a" width="960" height="300"></canvas>
+<div class="ctrl">
+<label>Optimization iterations</label>
+<input type="range" id="iterSlider" min="1" max="50" value="25">
+<span class="v" id="iterVal">25</span>
+</div>
+</div>
+<div class="key"><b>Joint optimization:</b> 3DMM landmarks provide <strong>coarse global pose</strong> (where is the head pointing?) while optical flow provides <strong>fine local motion</strong> (how are pixels shifting frame-to-frame?). By jointly optimizing against both, the system gets accurate, smooth head trajectories that neither signal could provide alone.</div>
+</div>
+
+<!-- S6: Hash-Grid NeRF -->
+<div class="sec" id="s6">
+<div class="sc">HASH-GRID NERF</div>
+<div class="st">Multi-Plane Hash Encoding <span class="chip" style="background:var(--ba);color:var(--blue)">NERF</span></div>
+<div class="desc">Instead of a single 3D hash grid, AI Creator projects 3D points onto <strong>three orthogonal planes</strong> (XY, YZ, XZ) and performs hash-based feature lookups on each. Features from all three planes are concatenated and fed to an MLP that predicts <strong>color (RGB)</strong> and <strong>density (σ)</strong>. Multi-resolution levels capture both coarse structure and fine detail.</div>
+<div class="cd"><div class="cl">Three-plane hash encoding — interactive resolution</div><canvas id="c6a" width="960" height="360"></canvas>
+<div class="ctrl">
+<label>Hash grid resolution</label>
+<input type="range" id="resSlider" min="4" max="16" value="8">
+<span class="v" id="resVal">8</span>
+</div>
+</div>
+<div class="an"><div class="e">🧊</div><div class="at">Why multi-plane instead of full 3D?</div><p>A full 3D hash grid with N cells per side requires N³ entries — expensive in memory and slow to query. The tri-plane decomposition reduces this to 3×N² entries while still capturing 3D structure through the intersection of orthogonal features. Each plane captures a different "view" of the scene: XY sees the frontal face, YZ sees the side profile, XZ sees the top-down structure. Their combination reconstructs the full 3D representation.</p></div>
+</div>
+
+<!-- S7: Volume Rendering -->
+<div class="sec" id="s7">
+<div class="sc">VOLUME RENDERING</div>
+<div class="st">Ray Casting & Compositing <span class="chip" style="background:var(--aa);color:var(--acc)">RENDERING</span></div>
+<div class="desc">To render an image from the NeRF, rays are cast from the camera through each pixel into the 3D scene. Along each ray, <strong>sample points</strong> query the hash-grid for color and density. These are composited using <strong>alpha compositing</strong> (front-to-back accumulation) — dense regions contribute more color, transparent regions let background through.</div>
+<div class="cd"><div class="cl">Camera → rays → sample points → pixel color</div><canvas id="c7a" width="960" height="280"></canvas></div>
+<div class="cd"><div class="cl">Single ray detail — alpha compositing</div><canvas id="c7b" width="960" height="200"></canvas></div>
+<div class="ins"><b>Volume rendering equation:</b> For each ray, the final color C = Σᵢ Tᵢ · αᵢ · cᵢ, where Tᵢ is the accumulated transmittance (how much light passes through), αᵢ = 1 − exp(−σᵢ · δᵢ) is the opacity at sample i, cᵢ is the color, and δᵢ is the distance between samples. The conditioning features (audio, blendshape, pose) modulate the MLP that predicts cᵢ and σᵢ.</div>
+</div>
+
+<!-- S8: Restoration -->
+<div class="sec" id="s8">
+<div class="sc">RESTORATION</div>
+<div class="st">Portrait Restoration Network <span class="chip" style="background:var(--pa);color:var(--pink)">RESTORE</span></div>
+<div class="desc">Raw NeRF renders can lack fine details — pores, hair strands, subtle skin textures. The <strong>portrait restoration network</strong> enhances the NeRF output to recover these details. A <strong>soft Gaussian mask</strong> then blends the restored head region with the original torso and background, creating a seamless final frame.</div>
+<div class="cd"><div class="cl">NeRF raw → restored → final composite</div><canvas id="c8a" width="960" height="220"></canvas></div>
+<div class="cd"><div class="cl">Gaussian mask feathering — interactive</div><canvas id="c8b" width="960" height="200"></canvas>
+<div class="ctrl">
+<label>Blending feather σ</label>
+<input type="range" id="sigSlider" min="5" max="40" value="20">
+<span class="v" id="sigVal">σ = 20</span>
+</div>
+</div>
+<div class="wrn"><b>Why blend, not replace?</b> Simply pasting the restored head onto the background creates visible seams at the boundary. The Gaussian mask creates a smooth falloff: full strength at the face center, gradually fading to zero at the edges. This soft transition hides any resolution or color mismatches between the NeRF-rendered head and the original background.</div>
+</div>
+
+<!-- S9: Relighting -->
+<div class="sec" id="s9">
+<div class="sc">RELIGHTING</div>
+<div class="st">NeRF Relighting <span class="chip" style="background:var(--ya);color:var(--yellow)">LIGHTING</span></div>
+<div class="desc">AI Creator goes beyond avatar animation — it can also <strong>relight the rendered face</strong> to match the lighting conditions of a <strong>reference image uploaded by the user</strong>. By decomposing the NeRF's radiance into intrinsic components (albedo, normals, shading), the system can re-render the avatar under novel illumination, making it blend naturally into any target scene.</div>
+<div class="cd"><div class="cl">Relighting pipeline — reference image → lighting transfer</div><canvas id="c9a" width="960" height="300"></canvas></div>
+<div class="cd"><div class="cl">Intrinsic decomposition — what the NeRF learns</div><canvas id="c9b" width="960" height="220"></canvas></div>
+<div class="an"><div class="e">💡</div><div class="at">How does relighting work with NeRF?</div><p>Traditional NeRF bakes lighting into the learned radiance — changing illumination means retraining. AI Creator instead trains the NeRF to decompose appearance into <strong>view-independent albedo</strong> (surface color), <strong>surface normals</strong> (geometry orientation), and <strong>shading</strong> (light interaction). At inference, a lighting estimation network extracts the illumination environment from the user's reference image (as spherical harmonics coefficients), and the shading component is re-computed under this new lighting. The result: same face, different lighting, no retraining.</p></div>
+<div class="key"><b>User workflow:</b> The user uploads a reference photo with the desired lighting (e.g., warm studio light, cool outdoor light, dramatic side lighting). The system estimates the lighting environment from this image and applies it to the avatar's NeRF rendering — the face appears as if it were physically present in that lighting condition.</div>
+</div>
+
+<!-- S10: Training -->
+<div class="sec" id="s10">
+<div class="sc">TRAINING</div>
+<div class="st">Training Losses <span class="chip" style="background:var(--oa);color:var(--orange)">TRAINING</span></div>
+<div class="desc">AI Creator is trained with a <strong>multi-component loss function</strong> that ensures accurate lip sync, photorealistic appearance, and stable head poses. Each loss targets a specific aspect of quality.</div>
+<div class="cd"><div class="cl">Loss breakdown — four components</div><canvas id="c10a" width="960" height="280"></canvas></div>
+<div class="cd"><div class="cl">Training schedule</div><canvas id="c10b" width="960" height="180"></canvas></div>
+<div class="an"><div class="e">📊</div><div class="at">Why so many losses?</div><p>Each loss prevents a specific failure mode: <strong>lip sync loss (BCE)</strong> ensures mouth shapes match audio phonemes; <strong>reconstruction loss (L1)</strong> prevents color drift and ensures pixel-level accuracy; <strong>perceptual loss (MSE + LPIPS)</strong> captures high-level structural similarity that L1 misses; <strong>pose loss (L2)</strong> keeps head motion smooth and accurate. Without any one of these, quality degrades in that specific dimension.</p></div>
+</div>
+
+<!-- S11: Summary -->
+<div class="sec" id="s11">
+<div class="sc">SUMMARY</div>
+<div class="st">End-to-End Recap <span class="chip" style="background:var(--aa);color:var(--acc)">SUMMARY</span></div>
+<div class="desc">AI Creator transforms audio into a photorealistic 3D talking avatar through five stages: <strong>encode</strong> the conditioning signals, <strong>condition</strong> the NeRF with region-specific attention, <strong>render</strong> via volume rendering, <strong>restore</strong> with portrait enhancement, and <strong>relight</strong> to match any target scene.</div>
+<div class="cd"><div class="cl">Complete pipeline — encode → condition → render → restore → relight</div><canvas id="c11a" width="960" height="520"></canvas></div>
+<div class="key"><b>Key insights:</b> (1) Decoupling lip sync from expression via masked attention gives independent control. (2) Multi-plane hash encoding makes NeRF rendering efficient. (3) Joint pose optimization from landmarks + optical flow yields smooth head motion. (4) Portrait restoration + soft blending bridges the quality gap to photorealism. (5) Intrinsic decomposition enables relighting from any reference image without retraining.</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+<button class="nb" id="pB" disabled onclick="go(-1)">&larr; Previous</button>
+<button class="nb pr" id="nB" onclick="go(1)">Next &rarr;</button>
+</div>
+
+</div>
+
+<script>
+// ========= Navigation =========
+const S=['The Vision','Architecture','Audio Encoder','Blendshapes','Masked Attn','Head Pose','Hash-Grid NeRF','Vol. Rendering','Restoration','Relighting','Training','Summary'];
+let cur=0;
+const $=id=>document.getElementById(id);
+
+$('tabs').innerHTML=S.map((s,i)=>`<div class="tab${i?'':' on'}" data-i="${i}">${s}</div>`).join('');
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTo(+t.dataset.i)));
+
+function goTo(n){
+  cur=n;
+  document.querySelectorAll('.sec').forEach((e,i)=>e.classList.toggle('on',i===n));
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('on',i===n));
+  $('pB').disabled=n===0;
+  const b=$('nB');
+  b.disabled=n===S.length-1;
+  b.textContent=n===S.length-1?'Done \u2713':'Next \u2192';
+  draw();
+}
+function go(d){if(cur+d>=0&&cur+d<S.length)goTo(cur+d)}
+
+// ========= Canvas Helpers =========
+const DESIGN_W=960;
+function dpr(el){
+  var d=window.devicePixelRatio||1;
+  if(!el._origH)el._origH=parseInt(el.getAttribute('height'));
+  var parent=el.parentElement;
+  var padL=parent?parseFloat(getComputedStyle(parent).paddingLeft)||0:0;
+  var padR=parent?parseFloat(getComputedStyle(parent).paddingRight)||0:0;
+  var availW=parent?(parent.clientWidth-padL-padR):DESIGN_W;
+  var logicW=Math.min(DESIGN_W,Math.max(280,availW));
+  var s=logicW/DESIGN_W;
+  var logicH=Math.round(el._origH*s);
+  el.width=logicW*d;el.height=logicH*d;
+  el.style.width=logicW+'px';el.style.height=logicH+'px';
+  var x=el.getContext('2d');x.setTransform(1,0,0,1,0,0);x.scale(d*s,d*s);
+  return{w:DESIGN_W,h:el._origH,x:x,s:s};
+}
+function rr(c,x,y,w,h,r){
+  r=r||8;
+  c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);
+  c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);
+  c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);
+  c.quadraticCurveTo(x,y,x+r,y);c.closePath();
+}
+function ar(c,x1,y1,x2,y2,col){
+  col=col||'#507860';
+  c.strokeStyle=col;c.lineWidth=1.5;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+  var a=Math.atan2(y2-y1,x2-x1);
+  c.fillStyle=col;c.beginPath();c.moveTo(x2,y2);
+  c.lineTo(x2-7*Math.cos(a-.4),y2-7*Math.sin(a-.4));
+  c.lineTo(x2-7*Math.cos(a+.4),y2-7*Math.sin(a+.4));c.fill();
+}
+function bx(c,x,y,w,h,f,s,t,tc,fs){
+  fs=fs||11;
+  rr(c,x,y,w,h);c.fillStyle=f;c.fill();
+  if(s){c.strokeStyle=s;c.lineWidth=1;c.stroke();}
+  if(t){c.fillStyle=tc||'#e0f2e8';c.font='500 '+fs+'px DM Sans';c.textAlign='center';c.textBaseline='middle';
+  t.split('\n').forEach(function(l,i,a){c.fillText(l,x+w/2,y+h/2+(i-(a.length-1)/2)*15);});}
+}
+
+// ========= Render Functions =========
+var renders=[];
+
+// S0: The Vision
+renders[0]=function(){
+  // Input → Output flow
+  var c=$('c0a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+  bx(x,30,50,160,100,'#5888e80a','#5888e822','Training\nVideo\n(3-5 min)','#5888e8',11);
+  ar(x,200,100,260,100,'#507860');
+  bx(x,260,70,120,60,'#e8a04008','#e8a04020','New\nAudio','#e8a040',11);
+  ar(x,390,100,450,100,'#507860');
+  bx(x,450,40,200,120,'#34d39908','#34d39922','','');
+  x.font='700 13px Fraunces';x.fillStyle='#34d399';x.textAlign='center';x.fillText('AI Creator',550,70);
+  x.font='500 10px DM Sans';x.fillStyle='#88b8a0';x.fillText('NeRF + Audio Conditioning',550,90);
+  x.fillText('+ Expression + Pose',550,106);
+  x.fillText('+ Portrait Restoration',550,122);
+  ar(x,660,100,720,100,'#507860');
+  bx(x,720,50,200,100,'#40c88a08','#40c88a22','Talking Avatar\nVideo\n(3D consistent)','#40c88a',11);
+
+  // Output → Input flow
+  var c2=$('c0b'),o2=dpr(c2),W2=o2.w,H2=o2.h,x2=o2.x;x2.clearRect(0,0,W2,H2);
+  // 2D column
+  bx(x2,30,10,420,220,'#e060600a','#e0606018','','');
+  x2.font='700 13px Fraunces';x2.fillStyle='#e06060';x2.textAlign='center';x2.fillText('2D Methods',240,35);
+  x2.font='500 10px DM Sans';x2.fillStyle='#88b8a0';
+  var items2d=['Warp or paste face texture onto 2D image','No true 3D understanding of head geometry','Artifacts at large head rotations','Identity leakage between frames','Cannot handle novel viewpoints'];
+  items2d.forEach(function(it,i){x2.fillStyle='#e06060';x2.fillText('\u2717',80,65+i*32);x2.fillStyle='#88b8a0';x2.textAlign='left';x2.fillText(it,95,65+i*32);x2.textAlign='center';});
+
+  // 3D column
+  bx(x2,500,10,430,220,'#34d39908','#34d39918','','');
+  x2.font='700 13px Fraunces';x2.fillStyle='#34d399';x2.textAlign='center';x2.fillText('3D Methods (AI Creator)',715,35);
+  x2.font='500 10px DM Sans';
+  var items3d=['NeRF learns full 3D head geometry','Consistent rendering from any viewpoint','Natural motion at large rotations','Stable identity from volumetric representation','Audio/expression/pose independently controlled'];
+  items3d.forEach(function(it,i){x2.fillStyle='#34d399';x2.fillText('\u2713',550,65+i*32);x2.fillStyle='#88b8a0';x2.textAlign='left';x2.fillText(it,565,65+i*32);x2.textAlign='center';});
+};
+
+// S1: Architecture
+renders[1]=function(){
+  var c=$('c1a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+
+  // Title row
+  x.font='700 11px Fraunces';x.textAlign='center';
+
+  // Audio stream
+  bx(x,30,30,170,50,'#34d39908','#34d39920','Audio Waveform','#34d399',10);
+  ar(x,115,85,115,110,'#34d39944');
+  bx(x,30,110,170,50,'#34d39908','#34d39920','Audio-Visual\nEncoder','#34d399',10);
+  ar(x,115,165,115,190,'#34d39944');
+  bx(x,30,190,170,40,'#34d39908','#34d39920','Lip Embeddings','#34d399',9);
+
+  // Blendshape stream
+  bx(x,230,30,170,50,'#e8a04008','#e8a04020','Expression\nCoefficients','#e8a040',10);
+  ar(x,315,85,315,110,'#e8a04044');
+  bx(x,230,110,170,50,'#e8a04008','#e8a04020','Blendshape\nEncoder','#e8a040',10);
+  ar(x,315,165,315,190,'#e8a04044');
+  bx(x,230,190,170,40,'#e8a04008','#e8a04020','Expression Feat.','#e8a040',9);
+
+  // Head pose stream
+  bx(x,430,30,170,50,'#48c8d808','#48c8d820','3DMM + Optical\nFlow','#48c8d8',10);
+  ar(x,515,85,515,110,'#48c8d844');
+  bx(x,430,110,170,50,'#48c8d808','#48c8d820','Head Pose\nOptimizer','#48c8d8',10);
+  ar(x,515,165,515,190,'#48c8d844');
+  bx(x,430,190,170,40,'#48c8d808','#48c8d820','Pose Params','#48c8d8',9);
+
+  // Appearance stream
+  bx(x,630,30,170,50,'#5888e808','#5888e820','3D Point\nCoordinates','#5888e8',10);
+  ar(x,715,85,715,110,'#5888e844');
+  bx(x,630,110,170,50,'#5888e808','#5888e820','Multi-Plane\nHash Encoding','#5888e8',10);
+  ar(x,715,165,715,190,'#5888e844');
+  bx(x,630,190,170,40,'#5888e808','#5888e820','Spatial Features','#5888e8',9);
+
+  // Masked Attention merge
+  ar(x,115,235,420,270,'#34d39933');
+  ar(x,315,235,420,270,'#e8a04033');
+  ar(x,515,235,500,270,'#48c8d833');
+  ar(x,715,235,580,270,'#5888e833');
+  bx(x,380,270,220,50,'#9078e808','#9078e820','Masked Attention\n+ Feature Fusion','#9078e8',10);
+
+  // NeRF MLP
+  ar(x,490,325,490,350,'#9078e844');
+  bx(x,380,350,220,50,'#5888e808','#5888e820','NeRF MLP\n→ RGB, σ','#5888e8',10);
+
+  // Volume rendering
+  ar(x,490,405,490,430,'#5888e844');
+  bx(x,350,430,280,45,'#34d39908','#34d39920','Volume Rendering\n(Ray Casting + Compositing)','#34d399',10);
+
+  // Restoration
+  ar(x,640,452,720,452,'#34d39944');
+  bx(x,720,430,200,45,'#e068a808','#e068a820','Portrait Restoration\n+ Mask Blending','#e068a8',10);
+
+  // Relighting (below restoration, separate path)
+  bx(x,140,430,180,45,'#d8c84008','#d8c84020','Reference Image\n(user upload)','#d8c840',10);
+  ar(x,235,430,235,410,'#d8c84044');
+  bx(x,150,370,160,40,'#d8c84008','#d8c84020','Lighting Estimation\n→ SH coefficients','#d8c840',9);
+  ar(x,320,390,380,410,'#d8c84044');
+  // Label on the NeRF MLP showing intrinsic decomp feeds relighting
+  x.font='500 8px DM Sans';x.fillStyle='#d8c840';x.textAlign='center';
+  x.fillText('intrinsic decomposition + relight',490,415);
+};
+
+// S2: Audio Encoder
+renders[2]=function(){
+  var c=$('c2a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+
+  // Waveform
+  bx(x,20,70,120,80,'#5888e808','#5888e820','','');
+  x.font='600 10px DM Sans';x.fillStyle='#5888e8';x.textAlign='center';x.fillText('Audio',80,90);x.fillText('Waveform',80,106);
+  // Draw waveform squiggle
+  x.strokeStyle='#5888e844';x.lineWidth=1.5;x.beginPath();
+  for(var i=0;i<100;i++){var wx=30+i;var wy=130+Math.sin(i*.3)*8*Math.sin(i*.07);x.lineTo(wx,wy);}
+  x.stroke();
+
+  ar(x,150,110,200,110,'#507860');
+
+  // Mel spectrogram
+  bx(x,200,70,130,80,'#e8a04008','#e8a04020','','');
+  x.font='600 10px DM Sans';x.fillStyle='#e8a040';x.textAlign='center';x.fillText('Mel',265,90);x.fillText('Spectrogram',265,106);
+  // Draw mel grid hint
+  for(var mi=0;mi<5;mi++){for(var mj=0;mj<8;mj++){
+    var a2=Math.random()*.3+.05;x.fillStyle='rgba(232,160,64,'+a2+')';x.fillRect(215+mj*13,118+mi*5,11,4);
+  }}
+
+  ar(x,340,110,400,110,'#507860');
+
+  // Lip-reading encoder
+  bx(x,400,50,180,120,'#34d39908','#34d39920','','');
+  x.font='700 11px Fraunces';x.fillStyle='#34d399';x.textAlign='center';x.fillText('Lip-Reading',490,80);x.fillText('Encoder',490,98);
+  x.font='500 9px DM Sans';x.fillStyle='#88b8a0';x.fillText('(pretrained backbone)',490,118);x.fillText('fine-tuned for audio',490,134);
+
+  ar(x,590,110,650,110,'#507860');
+
+  // Per-frame embeddings
+  bx(x,650,60,140,100,'#34d39908','#34d39920','','');
+  x.font='600 10px DM Sans';x.fillStyle='#34d399';x.textAlign='center';x.fillText('Per-Frame',720,85);x.fillText('Lip Embeddings',720,101);
+  x.font='9px DM Sans';x.fillStyle='#507860';x.fillText('e₁, e₂, ..., eₜ',720,125);
+  // small vector bars
+  for(var vi=0;vi<6;vi++){var vh=10+Math.random()*20;x.fillStyle='#34d39933';x.fillRect(670+vi*18,140-vh,12,vh);}
+
+  ar(x,800,110,860,110,'#507860');
+  bx(x,860,80,80,60,'#40c88a08','#40c88a20','→ NeRF\nMLP','#40c88a',10);
+
+  // Cosine similarity diagram
+  var c2=$('c2b'),o2=dpr(c2),W2=o2.w,H2=o2.h,x2=o2.x;x2.clearRect(0,0,W2,H2);
+  var cosVal=+$('cosSlider').value/100;
+  $('cosVal').textContent=cosVal.toFixed(2);
+
+  // Two vectors
+  var cx2=200,cy2=140,vr=90;
+  // Audio embedding vector
+  var angA=-.3;
+  x2.strokeStyle='#34d399';x2.lineWidth=2.5;x2.beginPath();x2.moveTo(cx2,cy2);
+  x2.lineTo(cx2+vr*Math.cos(angA),cy2+vr*Math.sin(angA));x2.stroke();
+  x2.font='600 11px DM Sans';x2.fillStyle='#34d399';x2.textAlign='left';
+  x2.fillText('audio embedding',cx2+vr*Math.cos(angA)+8,cy2+vr*Math.sin(angA));
+
+  // Lip feature vector (angle depends on cosine similarity)
+  var angDiff=Math.acos(Math.max(-1,Math.min(1,cosVal)));
+  var angL=angA-angDiff;
+  x2.strokeStyle='#e8a040';x2.lineWidth=2.5;x2.beginPath();x2.moveTo(cx2,cy2);
+  x2.lineTo(cx2+vr*Math.cos(angL),cy2+vr*Math.sin(angL));x2.stroke();
+  x2.font='600 11px DM Sans';x2.fillStyle='#e8a040';x2.textAlign='left';
+  x2.fillText('lip feature',cx2+vr*Math.cos(angL)+8,cy2+vr*Math.sin(angL));
+
+  // Arc showing angle
+  x2.strokeStyle='rgba(136,184,160,.3)';x2.lineWidth=1;x2.beginPath();
+  x2.arc(cx2,cy2,40,Math.min(angA,angL),Math.max(angA,angL));x2.stroke();
+  x2.font='500 10px DM Sans';x2.fillStyle='#88b8a0';x2.textAlign='center';
+  x2.fillText('cos θ = '+cosVal.toFixed(2),cx2+55,cy2-50);
+
+  // Feedback loop
+  bx(x2,450,20,200,60,'#34d39908','#34d39920','Cosine Similarity\nDiscriminator','#34d399',10);
+  bx(x2,450,110,200,50,'#e8a04008','#e8a04020','','');
+  x2.font='500 10px DM Sans';x2.fillStyle='#e8a040';x2.textAlign='center';
+  x2.fillText('Threshold: '+cosVal.toFixed(2),550,130);
+  x2.fillText(cosVal>=0.7?'PASS — good lip sync':'FAIL — push closer',550,148);
+  // Color the pass/fail
+  if(cosVal>=0.7){bx(x2,700,110,100,50,'#40c88a08','#40c88a22','PASS','#40c88a',12);}
+  else{bx(x2,700,110,100,50,'#e0606008','#e0606022','FAIL','#e06060',12);}
+
+  ar(x2,550,85,550,105,'#507860');
+
+  // Feedback arrow
+  bx(x2,450,190,200,50,'#9078e808','#9078e820','Gradient feedback\n→ encoder update','#9078e8',9);
+  ar(x2,550,165,550,185,'#9078e844');
+
+  x2.font='10px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+  x2.fillText('Higher cosine similarity = audio embedding better predicts lip shape',480,250);
+};
+$('cosSlider').addEventListener('input',function(){renders[2]();});
+
+// S3: Blendshapes
+renders[3]=function(){
+  var c=$('c3a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+  var region=+$('bsSel').value;
+
+  // Draw face outline
+  var fcx=200,fcy=160;
+  x.strokeStyle='#34d39933';x.lineWidth=2;
+  x.beginPath();x.ellipse(fcx,fcy,80,110,0,0,Math.PI*2);x.stroke();
+
+  // Regions with labels
+  var regions=[
+    {name:'Upper face',y:80,h:50,c:'#e8a040',items:['Brow raise L/R','Brow furrow','Forehead wrinkle'],group:1},
+    {name:'Mid face',y:130,h:60,c:'#5888e8',items:['Eye blink L/R','Eye squint','Nose wrinkle','Cheek puff'],group:2},
+    {name:'Lower face',y:190,h:60,c:'#48c8d8',items:['Jaw open','Jaw slide','Chin raise'],group:3},
+  ];
+
+  regions.forEach(function(r){
+    var active=region===0||region===r.group;
+    var alpha=active?1:.2;
+    // Highlight region on face
+    x.fillStyle=r.c+(active?'22':'08');
+    x.fillRect(fcx-70,r.y,140,r.h);
+    x.strokeStyle=r.c+(active?'55':'15');x.lineWidth=1;
+    x.strokeRect(fcx-70,r.y,140,r.h);
+    // Label
+    x.font='600 11px DM Sans';x.fillStyle=r.c;x.globalAlpha=alpha;x.textAlign='left';
+    x.fillText(r.name,320,r.y+15);
+    x.font='500 9px DM Sans';x.fillStyle='#88b8a0';
+    r.items.forEach(function(it,i){x.fillText('  \u2022 '+it,320,r.y+32+i*15);});
+    x.globalAlpha=1;
+  });
+
+  // Face features (simplified)
+  x.strokeStyle='#34d39955';x.lineWidth=1.5;
+  // Eyes
+  x.beginPath();x.ellipse(fcx-25,fcy-20,15,8,0,0,Math.PI*2);x.stroke();
+  x.beginPath();x.ellipse(fcx+25,fcy-20,15,8,0,0,Math.PI*2);x.stroke();
+  // Nose
+  x.beginPath();x.moveTo(fcx,fcy-8);x.lineTo(fcx-8,fcy+10);x.lineTo(fcx+8,fcy+10);x.stroke();
+  // Mouth
+  x.beginPath();x.ellipse(fcx,fcy+40,20,10,0,0,Math.PI*2);x.stroke();
+  // Brows
+  x.beginPath();x.moveTo(fcx-40,fcy-35);x.quadraticCurveTo(fcx-25,fcy-45,fcx-10,fcy-33);x.stroke();
+  x.beginPath();x.moveTo(fcx+40,fcy-35);x.quadraticCurveTo(fcx+25,fcy-45,fcx+10,fcy-33);x.stroke();
+
+  // Label
+  x.font='600 10px DM Sans';x.fillStyle='#507860';x.textAlign='left';
+  x.fillText('Mouth controlled by audio encoder (not blendshapes)',320,280);
+  x.fillStyle='#34d39955';x.fillText('\u2192 Blendshapes control non-mouth regions only',320,300);
+
+  // Right side: decoupling diagram
+  bx(x,620,30,140,50,'#34d39908','#34d39920','Audio\nEncoder','#34d399',10);
+  ar(x,690,85,690,110,'#34d39944');
+  bx(x,640,110,100,30,'#34d39908','#34d39920','→ Mouth','#34d399',9);
+
+  bx(x,790,30,140,50,'#e8a04008','#e8a04020','Blendshape\nEncoder','#e8a040',10);
+  ar(x,860,85,860,110,'#e8a04044');
+  bx(x,810,110,100,30,'#e8a04008','#e8a04020','→ Upper face','#e8a040',9);
+
+  x.font='600 12px DM Sans';x.fillStyle='#507860';x.textAlign='center';x.fillText('Decoupled',760,170);
+  x.font='500 10px DM Sans';x.fillStyle='#88b8a0';x.fillText('Independent control',760,188);
+
+  // Blendshape sliders
+  var c2=$('c3b'),o2=dpr(c2),W2=o2.w,H2=o2.h,x2=o2.x;x2.clearRect(0,0,W2,H2);
+  var channels=[
+    {name:'browRaiseL',val:.7,c:'#e8a040'},
+    {name:'browRaiseR',val:.5,c:'#e8a040'},
+    {name:'eyeBlinkL',val:.2,c:'#5888e8'},
+    {name:'eyeBlinkR',val:.3,c:'#5888e8'},
+    {name:'noseWrinkle',val:.4,c:'#5888e8'},
+    {name:'cheekPuff',val:.6,c:'#5888e8'},
+    {name:'jawOpen',val:.8,c:'#48c8d8'},
+    {name:'jawSlide',val:.1,c:'#48c8d8'},
+  ];
+  var sw=90,sh=22,gap=8;
+  var totalW=channels.length*(sw+gap)-gap;
+  var startX=(W2-totalW)/2;
+  channels.forEach(function(ch,i){
+    var sx=startX+i*(sw+gap);
+    // Track
+    x2.fillStyle='#1a3024';rr(x2,sx,80,sw,sh,4);x2.fill();
+    // Fill
+    var fw=sw*ch.val;
+    x2.fillStyle=ch.c+'44';rr(x2,sx,80,fw,sh,4);x2.fill();
+    x2.strokeStyle=ch.c+'66';rr(x2,sx,80,fw,sh,4);x2.stroke();
+    // Thumb
+    x2.fillStyle=ch.c;x2.beginPath();x2.arc(sx+fw,80+sh/2,5,0,Math.PI*2);x2.fill();
+    // Label
+    x2.font='500 8px DM Mono';x2.fillStyle=ch.c;x2.textAlign='center';x2.fillText(ch.name,sx+sw/2,75);
+    // Value
+    x2.font='500 9px DM Sans';x2.fillStyle='#88b8a0';x2.fillText(ch.val.toFixed(1),sx+sw/2,118);
+  });
+  x2.font='10px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+  x2.fillText('Each blendshape coefficient (0.0–1.0) controls one facial deformation independently',W2/2,155);
+  x2.fillText('These are extracted from the training video and can be modified at inference time',W2/2,175);
+};
+$('bsSel').addEventListener('change',function(){renders[3]();});
+
+// S4: Masked Attention
+renders[4]=function(){
+  var c=$('c4a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+
+  // Attention matrix
+  var mx=80,my=60,ms=180;
+  // Labels
+  x.font='600 11px DM Sans';x.textAlign='center';
+  x.fillStyle='#88b8a0';x.fillText('Spatial Regions (Keys)',mx+ms/2,my-15);
+  x.save();x.translate(mx-20,my+ms/2);x.rotate(-Math.PI/2);
+  x.fillText('Cond. Signals (Queries)',0,0);x.restore();
+
+  var rows=['Audio','Blendshape','Pose'];
+  var cols=['Mouth','Upper','Eyes','Nose','Forehead'];
+  var mask=[
+    [1,0,0,0,0],  // Audio → mouth only
+    [0,1,1,1,1],  // Blendshape → upper face
+    [1,1,1,1,1],  // Pose → all
+  ];
+
+  var cellW=ms/cols.length,cellH=ms/rows.length;
+  // Column headers
+  x.font='500 9px DM Sans';
+  cols.forEach(function(cl,ci){x.fillStyle='#507860';x.textAlign='center';x.fillText(cl,mx+ci*cellW+cellW/2,my-3);});
+  // Row headers
+  rows.forEach(function(rl,ri){x.fillStyle='#507860';x.textAlign='right';x.fillText(rl,mx-8,my+ri*cellH+cellH/2+3);});
+
+  // Grid cells
+  rows.forEach(function(_,ri){
+    cols.forEach(function(_,ci){
+      var cx=mx+ci*cellW,cy=my+ri*cellH;
+      if(mask[ri][ci]){
+        var colors=['#34d399','#e8a040','#48c8d8'];
+        x.fillStyle=colors[ri]+'33';x.fillRect(cx+1,cy+1,cellW-2,cellH-2);
+        x.fillStyle=colors[ri];x.font='600 14px DM Sans';x.textAlign='center';x.fillText('\u2713',cx+cellW/2,cy+cellH/2+5);
+      }else{
+        x.fillStyle='#1a302488';x.fillRect(cx+1,cy+1,cellW-2,cellH-2);
+        x.fillStyle='#50786044';x.font='600 14px DM Sans';x.textAlign='center';x.fillText('\u2717',cx+cellW/2,cy+cellH/2+5);
+      }
+    });
+  });
+  // Grid lines
+  x.strokeStyle='#243a2e';x.lineWidth=1;
+  for(var i=0;i<=rows.length;i++){x.beginPath();x.moveTo(mx,my+i*cellH);x.lineTo(mx+ms,my+i*cellH);x.stroke();}
+  for(var j=0;j<=cols.length;j++){x.beginPath();x.moveTo(mx+j*cellW,my);x.lineTo(mx+j*cellW,my+ms);x.stroke();}
+
+  // Legend
+  x.font='500 10px DM Sans';x.textAlign='left';
+  x.fillStyle='#34d399';x.fillText('\u2713 Audio attends only to mouth region',360,90);
+  x.fillStyle='#e8a040';x.fillText('\u2713 Blendshapes attend to upper face, eyes, nose, forehead',360,115);
+  x.fillStyle='#48c8d8';x.fillText('\u2713 Pose attends to all regions (global transform)',360,140);
+  x.fillStyle='#507860';x.fillText('\u2717 Blocked — prevents cross-region leakage',360,170);
+
+  // Routing diagram
+  bx(x,360,200,240,80,'#9078e808','#9078e818','','');
+  x.font='700 11px Fraunces';x.fillStyle='#9078e8';x.textAlign='center';x.fillText('Masked Attention = Routing Table',480,225);
+  x.font='500 9px DM Sans';x.fillStyle='#88b8a0';
+  x.fillText('Each conditioning signal is routed to its',480,248);
+  x.fillText('designated face regions via the binary mask',480,264);
+
+  // S4b: Before/after
+  var c2=$('c4b'),o2=dpr(c2),W2=o2.w,H2=o2.h,x2=o2.x;x2.clearRect(0,0,W2,H2);
+
+  // Before
+  bx(x2,30,20,400,160,'#e0606008','#e0606018','','');
+  x2.font='700 12px Fraunces';x2.fillStyle='#e06060';x2.textAlign='center';x2.fillText('Without Masked Attention',230,45);
+  // Face with artifacts
+  x2.strokeStyle='#e0606044';x2.lineWidth=1.5;x2.beginPath();x2.ellipse(230,110,50,65,0,0,Math.PI*2);x2.stroke();
+  // Wavy brows (artifact)
+  x2.strokeStyle='#e06060';x2.lineWidth=2;x2.setLineDash([3,3]);
+  x2.beginPath();x2.moveTo(185,68);x2.quadraticCurveTo(210,55,230,72);x2.stroke();
+  x2.beginPath();x2.moveTo(275,68);x2.quadraticCurveTo(250,55,230,72);x2.stroke();
+  x2.setLineDash([]);
+  x2.font='500 9px DM Sans';x2.fillStyle='#e06060';x2.fillText('Brows twitch with speech',230,170);
+
+  // After
+  bx(x2,500,20,430,160,'#34d39908','#34d39918','','');
+  x2.font='700 12px Fraunces';x2.fillStyle='#34d399';x2.textAlign='center';x2.fillText('With Masked Attention',715,45);
+  // Clean face
+  x2.strokeStyle='#34d39944';x2.lineWidth=1.5;x2.beginPath();x2.ellipse(715,110,50,65,0,0,Math.PI*2);x2.stroke();
+  // Stable brows
+  x2.strokeStyle='#34d399';x2.lineWidth=2;
+  x2.beginPath();x2.moveTo(670,72);x2.quadraticCurveTo(695,62,715,72);x2.stroke();
+  x2.beginPath();x2.moveTo(760,72);x2.quadraticCurveTo(735,62,715,72);x2.stroke();
+  x2.font='500 9px DM Sans';x2.fillStyle='#34d399';x2.fillText('Brows stable, mouth synced to audio',715,170);
+};
+
+// S5: Head Pose
+renders[5]=function(){
+  var c=$('c5a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+  var iters=+$('iterSlider').value;
+  $('iterVal').textContent=iters;
+
+  // Two tracks
+  bx(x,30,30,200,60,'#48c8d808','#48c8d820','3DMM Sparse\nLandmarks','#48c8d8',10);
+  bx(x,30,120,200,60,'#e8a04008','#e8a04020','Dense Optical\nFlow','#e8a040',10);
+
+  // Convergence arrows
+  ar(x,240,60,340,100,'#48c8d844');
+  ar(x,240,150,340,120,'#e8a04044');
+
+  // Joint optimization box
+  bx(x,340,80,180,60,'#9078e808','#9078e820','Joint\nOptimization','#9078e8',11);
+
+  ar(x,530,110,600,110,'#507860');
+
+  // Output
+  bx(x,600,80,160,60,'#34d39908','#34d39920','Head Pose\n(R, t)','#34d399',11);
+
+  // Convergence curve
+  var gx=50,gy=220,gw=400,gh=60;
+  // Axes
+  x.strokeStyle='#243a2e';x.lineWidth=1;
+  x.beginPath();x.moveTo(gx,gy);x.lineTo(gx+gw,gy);x.stroke();
+  x.beginPath();x.moveTo(gx,gy);x.lineTo(gx,gy-gh);x.stroke();
+  x.font='500 8px DM Mono';x.fillStyle='#507860';x.textAlign='center';
+  x.fillText('iteration',gx+gw/2,gy+15);
+  x.textAlign='right';x.fillText('error',gx-8,gy-gh/2);
+
+  // 3DMM curve (blue)
+  x.strokeStyle='#48c8d8';x.lineWidth=1.5;x.beginPath();
+  for(var i=0;i<=50;i++){
+    var px=gx+i*(gw/50);
+    var err=Math.exp(-i*.08)*50+8;
+    if(i<=iters){if(i===0)x.moveTo(px,gy-err);else x.lineTo(px,gy-err);}
+  }
+  x.stroke();
+
+  // Optical flow curve (orange)
+  x.strokeStyle='#e8a040';x.lineWidth=1.5;x.beginPath();
+  for(var i=0;i<=50;i++){
+    var px=gx+i*(gw/50);
+    var err=Math.exp(-i*.06)*55+5;
+    if(i<=iters){if(i===0)x.moveTo(px,gy-err);else x.lineTo(px,gy-err);}
+  }
+  x.stroke();
+
+  // Joint curve (green, lower)
+  x.strokeStyle='#34d399';x.lineWidth=2;x.beginPath();
+  for(var i=0;i<=50;i++){
+    var px=gx+i*(gw/50);
+    var err=Math.exp(-i*.12)*45+3;
+    if(i<=iters){if(i===0)x.moveTo(px,gy-err);else x.lineTo(px,gy-err);}
+  }
+  x.stroke();
+
+  // Iteration marker
+  var markerX=gx+iters*(gw/50);
+  x.strokeStyle='#34d39955';x.lineWidth=1;x.setLineDash([4,4]);
+  x.beginPath();x.moveTo(markerX,gy);x.lineTo(markerX,gy-gh);x.stroke();
+  x.setLineDash([]);
+  x.font='500 9px DM Sans';x.fillStyle='#34d399';x.textAlign='center';x.fillText('iter '+iters,markerX,gy+15);
+
+  // Legend
+  x.textAlign='left';x.font='500 9px DM Sans';
+  x.fillStyle='#48c8d8';x.fillText('\u2014 3DMM landmarks only',540,170);
+  x.fillStyle='#e8a040';x.fillText('\u2014 Optical flow only',540,190);
+  x.fillStyle='#34d399';x.fillText('\u2014 Joint optimization (lower error)',540,210);
+
+  x.font='10px DM Sans';x.fillStyle='#507860';x.textAlign='center';
+  x.fillText('Joint optimization converges faster and to lower error than either signal alone',480,285);
+};
+$('iterSlider').addEventListener('input',function(){renders[5]();});
+
+// S6: Hash-Grid NeRF
+renders[6]=function(){
+  var c=$('c6a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+  var res=+$('resSlider').value;
+  $('resVal').textContent=res;
+
+  var planes=[
+    {name:'XY Plane',subtitle:'(frontal)',cx:160,cy:170,c:'#34d399',dx:1,dy:0,skewX:0,skewY:0},
+    {name:'YZ Plane',subtitle:'(side profile)',cx:430,cy:170,c:'#5888e8',dx:1,dy:0,skewX:0,skewY:0},
+    {name:'XZ Plane',subtitle:'(top-down)',cx:700,cy:170,c:'#e8a040',dx:1,dy:0,skewX:0,skewY:0},
+  ];
+
+  planes.forEach(function(p){
+    var pw=180,ph=180;
+    var ox=p.cx-pw/2,oy=p.cy-ph/2;
+
+    // Background
+    bx(x,ox-10,oy-30,pw+20,ph+50,p.c+'06',p.c+'15','','');
+    x.font='600 11px DM Sans';x.fillStyle=p.c;x.textAlign='center';
+    x.fillText(p.name,p.cx,oy-12);
+    x.font='500 9px DM Sans';x.fillStyle='#507860';x.fillText(p.subtitle,p.cx,oy+2);
+
+    // Grid
+    var cellSize=pw/res;
+    x.strokeStyle=p.c+'33';x.lineWidth=.5;
+    for(var gi=0;gi<=res;gi++){
+      x.beginPath();x.moveTo(ox+gi*cellSize,oy+15);x.lineTo(ox+gi*cellSize,oy+15+ph-30);x.stroke();
+      x.beginPath();x.moveTo(ox,oy+15+gi*(ph-30)/res);x.lineTo(ox+pw,oy+15+gi*(ph-30)/res);x.stroke();
+    }
+
+    // Hash entries (random fill)
+    for(var hi=0;hi<res;hi++){
+      for(var hj=0;hj<res;hj++){
+        var hx=ox+hj*cellSize,hy=oy+15+hi*(ph-30)/res;
+        // Pseudo-random fill based on position
+        var hash=(hi*7+hj*13+res)%17;
+        if(hash<8){
+          x.fillStyle=p.c+(hash<4?'22':'11');
+          x.fillRect(hx+1,hy+1,cellSize-2,(ph-30)/res-2);
+        }
+      }
+    }
+
+    // Resolution label
+    x.font='500 8px DM Mono';x.fillStyle=p.c;x.textAlign='center';
+    x.fillText(res+'×'+res+' grid',p.cx,p.cy+ph/2+5);
+  });
+
+  // Concatenation arrows
+  ar(x,260,170,320,220,'#507860');
+  ar(x,530,170,520,220,'#507860');
+  ar(x,800,170,720,220,'#507860');
+
+  // MLP
+  bx(x,420,260,200,50,'#9078e808','#9078e820','Concat → MLP\n→ RGB, σ','#9078e8',10);
+
+  // Bottom label
+  x.font='10px DM Sans';x.fillStyle='#507860';x.textAlign='center';
+  x.fillText('3D point (x,y,z) is projected onto each plane → hash lookup → features concatenated → MLP predicts color + density',480,340);
+};
+$('resSlider').addEventListener('input',function(){renders[6]();});
+
+// S7: Volume Rendering
+renders[7]=function(){
+  var c=$('c7a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+
+  // Camera
+  bx(x,30,100,80,60,'#5888e808','#5888e820','Camera','#5888e8',11);
+
+  // Rays fanning out
+  var numRays=5;
+  for(var ri=0;ri<numRays;ri++){
+    var ry=50+ri*45;
+    var alpha=ri===2?'88':'33';
+    x.strokeStyle='#34d399'+alpha;x.lineWidth=ri===2?2:1;
+    x.beginPath();x.moveTo(120,130);x.lineTo(700,ry);x.stroke();
+
+    // Sample dots along ray
+    for(var si=0;si<6;si++){
+      var t2=(si+1)/7;
+      var sx2=120+t2*580,sy2=130+t2*(ry-130);
+      x.fillStyle='#34d399'+(ri===2?'66':'22');
+      x.beginPath();x.arc(sx2,sy2,3,0,Math.PI*2);x.fill();
+    }
+  }
+
+  // NeRF volume (translucent box)
+  bx(x,300,30,250,220,'#34d39906','#34d39918','','');
+  x.font='600 10px DM Sans';x.fillStyle='#34d399';x.textAlign='center';x.fillText('NeRF Volume',425,25);
+
+  // Head silhouette in volume
+  x.fillStyle='#34d39915';x.beginPath();x.ellipse(425,140,60,80,0,0,Math.PI*2);x.fill();
+  x.strokeStyle='#34d39933';x.lineWidth=1;x.beginPath();x.ellipse(425,140,60,80,0,0,Math.PI*2);x.stroke();
+
+  // Output pixel
+  ar(x,700,130,780,130,'#507860');
+  bx(x,780,100,100,60,'#40c88a08','#40c88a20','Rendered\nPixel','#40c88a',10);
+
+  // Label
+  x.font='500 9px DM Sans';x.fillStyle='#507860';x.textAlign='center';
+  x.fillText('Each pixel gets its own ray → sample points → query NeRF → composite color',400,270);
+
+  // Single ray detail
+  var c2=$('c7b'),o2=dpr(c2),W2=o2.w,H2=o2.h,x2=o2.x;x2.clearRect(0,0,W2,H2);
+
+  // Ray line
+  x2.strokeStyle='#34d39955';x2.lineWidth=2;
+  x2.beginPath();x2.moveTo(50,100);x2.lineTo(800,100);x2.stroke();
+
+  // Sample points with varying density
+  var samples=[
+    {t:.1,sigma:.05,c:'#5888e8',label:'air'},
+    {t:.25,sigma:.1,c:'#5888e8',label:'air'},
+    {t:.4,sigma:.7,c:'#34d399',label:'skin'},
+    {t:.5,sigma:.9,c:'#34d399',label:'skin'},
+    {t:.6,sigma:.8,c:'#34d399',label:'skin'},
+    {t:.72,sigma:.15,c:'#e8a040',label:'hair'},
+    {t:.85,sigma:.02,c:'#507860',label:'bg'},
+  ];
+
+  samples.forEach(function(sp){
+    var spx=50+sp.t*750;
+    var r2=4+sp.sigma*12;
+    x2.fillStyle=sp.c+(Math.floor(sp.sigma*80+20).toString(16));
+    x2.beginPath();x2.arc(spx,100,r2,0,Math.PI*2);x2.fill();
+    x2.strokeStyle=sp.c+'55';x2.lineWidth=1;x2.beginPath();x2.arc(spx,100,r2,0,Math.PI*2);x2.stroke();
+    // Alpha bar
+    var barH=sp.sigma*50;
+    x2.fillStyle=sp.c+'44';x2.fillRect(spx-4,140,8,barH);
+    // Label
+    x2.font='500 8px DM Sans';x2.fillStyle=sp.c;x2.textAlign='center';x2.fillText(sp.label,spx,80);
+    x2.font='500 7px DM Mono';x2.fillStyle='#507860';x2.fillText('σ='+sp.sigma.toFixed(1),spx,195);
+  });
+
+  x2.font='500 9px DM Sans';x2.fillStyle='#34d399';x2.textAlign='left';x2.fillText('near',55,75);
+  x2.textAlign='right';x2.fillText('far',795,75);
+  x2.textAlign='center';x2.fillStyle='#507860';x2.font='500 9px DM Sans';
+  x2.fillText('Circle size = density (σ). Higher σ → more opaque → contributes more color to final pixel.',425,195);
+};
+
+// S8: Restoration
+renders[8]=function(){
+  var c=$('c8a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+
+  var stages=[
+    {l:'NeRF Raw Output',x:30,c:'#5888e8',desc:'Low-res render\nfrom volume rendering'},
+    {l:'Portrait Restoration',x:340,c:'#9078e8',desc:'Enhanced details:\npores, hair, textures'},
+    {l:'Final Composite',x:650,c:'#40c88a',desc:'Blended with\noriginal background'},
+  ];
+  stages.forEach(function(st){
+    bx(x,st.x,20,260,170,st.c+'08',st.c+'18','','');
+    x.font='600 11px DM Sans';x.fillStyle=st.c;x.textAlign='center';x.fillText(st.l,st.x+130,40);
+    // Simplified face
+    x.strokeStyle=st.c+'44';x.lineWidth=1.5;
+    x.beginPath();x.ellipse(st.x+130,110,35,45,0,0,Math.PI*2);x.stroke();
+    if(st.x===30){
+      // Low res indicator - pixelated look
+      for(var pi=0;pi<7;pi++){for(var pj=0;pj<9;pj++){
+        x.fillStyle=st.c+(Math.random()>.5?'15':'08');
+        x.fillRect(st.x+95+pi*10,65+pj*10,9,9);
+      }}
+    }else if(st.x===340){
+      // Enhanced - smoother fill
+      x.fillStyle=st.c+'15';x.beginPath();x.ellipse(st.x+130,110,35,45,0,0,Math.PI*2);x.fill();
+      // Detail lines
+      x.strokeStyle=st.c+'33';x.lineWidth=.5;
+      for(var di=0;di<5;di++){x.beginPath();x.arc(st.x+130,110,10+di*7,0,Math.PI*2);x.stroke();}
+    }else{
+      // Final - full composite
+      x.fillStyle='#1a3024';x.fillRect(st.x+15,55,230,110);
+      x.fillStyle=st.c+'22';x.beginPath();x.ellipse(st.x+130,110,35,45,0,0,Math.PI*2);x.fill();
+      x.strokeStyle=st.c+'55';x.lineWidth=1;x.beginPath();x.ellipse(st.x+130,110,35,45,0,0,Math.PI*2);x.stroke();
+    }
+    x.font='500 9px DM Sans';x.fillStyle='#507860';x.textAlign='center';
+    st.desc.split('\n').forEach(function(dl,di){x.fillText(dl,st.x+130,178+di*14);});
+  });
+  ar(x,300,105,330,105,'#507860');ar(x,610,105,640,105,'#507860');
+
+  // Gaussian mask
+  var c2=$('c8b'),o2=dpr(c2),W2=o2.w,H2=o2.h,x2=o2.x;x2.clearRect(0,0,W2,H2);
+  var sig=+$('sigSlider').value;
+  $('sigVal').textContent='\u03c3 = '+sig;
+
+  // Mask visualization
+  var mcx=480,mcy=100;
+  for(var r=60;r>0;r-=2){
+    var alpha=Math.exp(-(r*r)/(2*sig*sig));
+    x2.fillStyle='rgba(52,211,153,'+(alpha*.5)+')';
+    x2.beginPath();x2.ellipse(mcx,mcy,r*1.2,r*1.4,0,0,Math.PI*2);x2.fill();
+  }
+
+  // Labels
+  x2.font='600 11px DM Sans';x2.fillStyle='#34d399';x2.textAlign='center';
+  x2.fillText('Gaussian Blending Mask',mcx,20);
+  x2.font='500 9px DM Sans';x2.fillStyle='#88b8a0';
+  x2.fillText('\u03c3 = '+sig+'px — '+(sig<15?'sharp edge, visible seam risk':'smooth falloff, seamless blend'),mcx,175);
+
+  // Left: face region (full strength)
+  bx(x2,30,40,160,120,'#34d39908','#34d39918','','');
+  x2.font='600 10px DM Sans';x2.fillStyle='#34d399';x2.textAlign='center';
+  x2.fillText('Center: 100%',110,65);x2.fillText('restored head',110,85);
+  x2.font='500 9px DM Sans';x2.fillStyle='#507860';x2.fillText('full NeRF output',110,110);x2.fillText('applied here',110,126);
+
+  // Right: background (zero)
+  bx(x2,770,40,160,120,'#5888e808','#5888e818','','');
+  x2.font='600 10px DM Sans';x2.fillStyle='#5888e8';x2.textAlign='center';
+  x2.fillText('Edge: 0%',850,65);x2.fillText('original background',850,85);
+  x2.font='500 9px DM Sans';x2.fillStyle='#507860';x2.fillText('untouched from',850,110);x2.fillText('source video',850,126);
+};
+$('sigSlider').addEventListener('input',function(){renders[8]();});
+
+// S9: Relighting
+renders[9]=function(){
+  var c=$('c9a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+
+  // Reference image (user upload)
+  bx(x,20,30,160,140,'#d8c84008','#d8c84020','','');
+  x.font='600 11px DM Sans';x.fillStyle='#d8c840';x.textAlign='center';x.fillText('Reference Image',100,50);
+  x.font='500 9px DM Sans';x.fillStyle='#88b8a0';x.fillText('(user upload)',100,68);
+  // Lighting indicator — sun/lamp icon
+  x.fillStyle='#d8c84033';x.beginPath();x.arc(100,115,25,0,Math.PI*2);x.fill();
+  x.strokeStyle='#d8c84055';x.lineWidth=1;x.beginPath();x.arc(100,115,25,0,Math.PI*2);x.stroke();
+  // Rays from light
+  for(var ri=0;ri<8;ri++){
+    var a2=ri*Math.PI/4;
+    x.strokeStyle='#d8c84044';x.lineWidth=1;x.beginPath();
+    x.moveTo(100+30*Math.cos(a2),115+30*Math.sin(a2));
+    x.lineTo(100+40*Math.cos(a2),115+40*Math.sin(a2));x.stroke();
+  }
+
+  ar(x,190,100,250,100,'#d8c84066');
+
+  // Lighting estimation
+  bx(x,250,50,180,100,'#d8c84008','#d8c84020','','');
+  x.font='700 11px Fraunces';x.fillStyle='#d8c840';x.textAlign='center';x.fillText('Lighting',340,75);x.fillText('Estimation',340,93);
+  x.font='500 9px DM Sans';x.fillStyle='#88b8a0';x.fillText('→ SH coefficients',340,115);x.fillText('(spherical harmonics)',340,130);
+
+  ar(x,440,100,500,100,'#d8c84066');
+
+  // NeRF intrinsic decomposition
+  bx(x,500,20,240,160,'#9078e808','#9078e820','','');
+  x.font='700 11px Fraunces';x.fillStyle='#9078e8';x.textAlign='center';x.fillText('Intrinsic Decomposition',620,45);
+  // Three components
+  var comps=[
+    {l:'Albedo',desc:'surface color',c:'#5888e8',y:65},
+    {l:'Normals',desc:'geometry orientation',c:'#34d399',y:95},
+    {l:'Shading',desc:'light interaction',c:'#d8c840',y:125},
+  ];
+  comps.forEach(function(cp){
+    bx(x,520,cp.y,90,24,cp.c+'10',cp.c+'25',cp.l,cp.c,9);
+    x.font='500 8px DM Sans';x.fillStyle='#88b8a0';x.textAlign='left';x.fillText(cp.desc,618,cp.y+14);
+  });
+  // Re-shade arrow
+  x.font='500 9px DM Sans';x.fillStyle='#d8c840';x.textAlign='center';
+  x.fillText('re-shade with new SH',620,165);
+
+  ar(x,750,100,810,100,'#507860');
+
+  // Output
+  bx(x,810,40,130,120,'#40c88a08','#40c88a20','','');
+  x.font='600 11px DM Sans';x.fillStyle='#40c88a';x.textAlign='center';x.fillText('Relit',875,70);x.fillText('Avatar',875,88);
+  x.font='500 9px DM Sans';x.fillStyle='#88b8a0';x.fillText('same identity',875,112);x.fillText('new lighting',875,128);
+
+  x.font='10px DM Sans';x.fillStyle='#507860';x.textAlign='center';
+  x.fillText('User uploads a reference photo → lighting is extracted → NeRF re-renders the avatar under that illumination',480,210);
+  x.fillText('No retraining required — the intrinsic decomposition allows instant relighting at inference time',480,230);
+
+  // Intrinsic decomposition detail
+  var c2=$('c9b'),o2=dpr(c2),W2=o2.w,H2=o2.h,x2=o2.x;x2.clearRect(0,0,W2,H2);
+
+  var decomps=[
+    {l:'Full Render',desc:'albedo × shading',cx:120,c:'#40c88a'},
+    {l:'Albedo',desc:'view-independent\nsurface color',cx:320,c:'#5888e8'},
+    {l:'Surface Normals',desc:'per-point geometry\norientation (nx,ny,nz)',cx:520,c:'#34d399'},
+    {l:'Shading',desc:'light × normal\ndot product',cx:720,c:'#d8c840'},
+  ];
+  decomps.forEach(function(d){
+    bx(x2,d.cx-90,15,180,130,d.c+'08',d.c+'18','','');
+    x2.font='600 11px DM Sans';x2.fillStyle=d.c;x2.textAlign='center';x2.fillText(d.l,d.cx,35);
+    // Face silhouette with different fills per type
+    x2.strokeStyle=d.c+'55';x2.lineWidth=1.5;
+    x2.beginPath();x2.ellipse(d.cx,90,30,40,0,0,Math.PI*2);x2.stroke();
+    if(d.l==='Albedo'){
+      x2.fillStyle=d.c+'22';x2.beginPath();x2.ellipse(d.cx,90,30,40,0,0,Math.PI*2);x2.fill();
+    }else if(d.l==='Surface Normals'){
+      // Rainbow-ish normal map hint
+      var nCols=['#34d39933','#5888e833','#e8a04033'];
+      nCols.forEach(function(nc,ni){
+        x2.fillStyle=nc;x2.beginPath();x2.ellipse(d.cx-10+ni*10,90,15,25,0,0,Math.PI*2);x2.fill();
+      });
+    }else if(d.l==='Shading'){
+      // Gradient light/shadow
+      for(var si=0;si<20;si++){
+        var sa=.3-si*.015;
+        x2.fillStyle='rgba(216,192,64,'+Math.max(0,sa)+')';
+        x2.fillRect(d.cx-30+si*3,55,3,70);
+      }
+    }else{
+      x2.fillStyle=d.c+'18';x2.beginPath();x2.ellipse(d.cx,90,30,40,0,0,Math.PI*2);x2.fill();
+    }
+    x2.font='500 9px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+    d.desc.split('\n').forEach(function(dl,di){x2.fillText(dl,d.cx,155+di*14);});
+  });
+
+  // Equals and multiply signs
+  x2.font='600 16px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+  x2.fillText('=',220,90);x2.fillText('\u00d7',420,90);x2.fillText('\u00d7',620,90);
+
+  x2.font='10px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+  x2.fillText('Full render = albedo × shading. To relight: keep albedo, recompute shading with new light direction.',480,205);
+};
+
+// S10: Training
+renders[10]=function(){
+  var c=$('c10a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+
+  var losses=[
+    {l:'Lip Sync\nLoss',d:'BCE between audio\nembedding and\nground-truth lip',w:'L_sync',c:'#34d399'},
+    {l:'Reconstruction\nLoss',d:'L1 pixel-level\ndifference\nbetween pred & GT',w:'L_recon',c:'#5888e8'},
+    {l:'Perceptual\nLoss',d:'MSE + LPIPS\nhigh-level structure\nsimilarity',w:'L_percep',c:'#9078e8'},
+    {l:'Pose\nLoss',d:'L2 distance between\npredicted and GT\nhead pose params',w:'L_pose',c:'#48c8d8'},
+  ];
+  var lw=210,gap=15;
+  var totalLW=losses.length*(lw+gap)-gap;
+  var startLX=(W-totalLW)/2;
+  losses.forEach(function(lo,i){
+    var lx=startLX+i*(lw+gap);
+    bx(x,lx,20,lw,130,lo.c+'0a',lo.c+'22','','');
+    x.font='600 11px DM Sans';x.fillStyle=lo.c;x.textAlign='center';
+    lo.l.split('\n').forEach(function(ll,li){x.fillText(ll,lx+lw/2,45+li*16);});
+    x.font='9px DM Sans';x.fillStyle='#88b8a0';
+    lo.d.split('\n').forEach(function(dl,di){x.fillText(dl,lx+lw/2,85+di*14);});
+    bx(x,lx+lw/2-45,135,90,28,lo.c+'15',lo.c+'33',lo.w,lo.c,10);
+  });
+
+  // Total
+  bx(x,100,180,760,50,'#d8c84006','#d8c84015','','');
+  x.font='600 11px DM Sans';x.fillStyle='#d8c840';x.textAlign='center';
+  x.fillText('L_total = \u03bb_sync \u00b7 L_sync + \u03bb_recon \u00b7 L_recon + \u03bb_percep \u00b7 L_percep + \u03bb_pose \u00b7 L_pose',480,210);
+  x.font='10px DM Sans';x.fillStyle='#507860';
+  x.fillText('Each loss targets a specific quality dimension — removing any one degrades that aspect',480,265);
+
+  // Training schedule
+  var c2=$('c10b'),o2=dpr(c2),W2=o2.w,H2=o2.h,x2=o2.x;x2.clearRect(0,0,W2,H2);
+
+  var phases=[
+    {l:'Phase 1: NeRF Pre-train',desc:'Train hash-grid NeRF on static frames\n(reconstruction loss only)',w:200,c:'#5888e8'},
+    {l:'Phase 2: Audio + Expression',desc:'Add audio encoder, blendshapes,\nmasked attention (all losses)',w:240,c:'#34d399'},
+    {l:'Phase 3: Restoration',desc:'Fine-tune portrait restoration\nnetwork end-to-end',w:200,c:'#9078e8'},
+    {l:'Phase 4: Relighting',desc:'Train intrinsic decomposition\n+ lighting estimation',w:200,c:'#d8c840'},
+  ];
+  var px=30;
+  phases.forEach(function(ph,i){
+    bx(x2,px,20,ph.w,60,ph.c+'0a',ph.c+'22','','');
+    x2.font='600 10px DM Sans';x2.fillStyle=ph.c;x2.textAlign='center';x2.fillText(ph.l,px+ph.w/2,42);
+    x2.font='9px DM Sans';x2.fillStyle='#88b8a0';
+    ph.desc.split('\n').forEach(function(dl,di){x2.fillText(dl,px+ph.w/2,62+di*14);});
+    if(i<phases.length-1){ar(x2,px+ph.w+5,50,px+ph.w+25,50,'#507860');}
+    // Timeline bar
+    x2.fillStyle=ph.c+'33';x2.fillRect(px,95,ph.w,12);
+    x2.fillStyle=ph.c;x2.font='500 8px DM Mono';x2.textAlign='center';
+    x2.fillText('Phase '+(i+1),px+ph.w/2,120);
+    px+=ph.w+30;
+  });
+
+  x2.font='10px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+  x2.fillText('Training is staged: first learn geometry, then add conditioning, then enhance quality, finally enable relighting',480,155);
+};
+
+// S11: Summary
+renders[11]=function(){
+  var c=$('c11a'),o=dpr(c),W=o.w,H=o.h,x=o.x;x.clearRect(0,0,W,H);
+
+  var sections=[
+    {l:'1. ENCODE INPUTS',items:[
+      'Audio waveform \u2192 mel-spectrogram \u2192 lip-reading encoder \u2192 per-frame lip embeddings',
+      'Expression coefficients \u2192 blendshape encoder \u2192 upper-face features',
+      '3DMM landmarks + optical flow \u2192 joint optimization \u2192 head pose (R, t)',
+      '3D coordinates \u2192 multi-plane hash encoding (XY/YZ/XZ) \u2192 spatial features'
+    ],c:'#e8a040',y:10},
+    {l:'2. CONDITION NeRF (Masked Attention)',items:[
+      'Audio embeddings \u2192 attend to mouth region only',
+      'Blendshape features \u2192 attend to upper face only',
+      'Pose parameters \u2192 attend to all regions (global transform)',
+      'Hash-grid features provide spatial structure for the MLP'
+    ],c:'#9078e8',y:110},
+    {l:'3. RENDER (Volume Rendering)',items:[
+      'Cast rays from camera through each pixel into NeRF volume',
+      'Sample points along rays \u2192 query conditioned MLP \u2192 (RGB, \u03c3)',
+      'Alpha compositing: C = \u03a3 T\u1d62 \u00b7 \u03b1\u1d62 \u00b7 c\u1d62',
+      'Produces raw head render at NeRF resolution'
+    ],c:'#34d399',y:210},
+    {l:'4. RESTORE & COMPOSITE',items:[
+      'Portrait restoration network enhances fine details (pores, hair, textures)',
+      'Gaussian mask creates soft blending boundary',
+      'Restored head \u2299 mask + background \u2299 (1\u2212mask) = final frame'
+    ],c:'#40c88a',y:310},
+    {l:'5. RELIGHT',items:[
+      'User uploads reference image \u2192 lighting estimation \u2192 SH coefficients',
+      'NeRF intrinsic decomposition: albedo \u00d7 shading = full render',
+      'Re-shade with new lighting environment \u2192 avatar matches target scene',
+      'Result: photorealistic 3D talking avatar with custom lighting'
+    ],c:'#d8c840',y:400},
+  ];
+
+  sections.forEach(function(s){
+    var bh=s.items.length*17+30;
+    bx(x,30,s.y,900,bh,s.c+'06',s.c+'18','','');
+    x.font='600 12px DM Sans';x.fillStyle=s.c;x.textAlign='left';x.fillText(s.l,50,s.y+20);
+    x.font='10px DM Sans';x.fillStyle='#88b8a0';
+    s.items.forEach(function(it,i){x.fillText('\u2022  '+it,70,s.y+40+i*17);});
+  });
+  [100,200,300,395].forEach(function(y){x.fillStyle='#507860';x.textAlign='center';x.font='12px DM Sans';x.fillText('\u2193',480,y);});
+};
+
+// ========= Draw dispatcher =========
+function draw(){if(renders[cur])renders[cur]();}
+
+// ========= Resize =========
+var _rTimer;
+window.addEventListener('resize',function(){clearTimeout(_rTimer);_rTimer=setTimeout(draw,200);});
+
+// Init
+draw();
+</script>
+</body>
+</html>
