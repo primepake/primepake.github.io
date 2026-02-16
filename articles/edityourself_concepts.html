@@ -218,8 +218,31 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 <div class="wrn"><b>Why overlap matters:</b> Without overlap, you'd see visible seams where one block ends and the next begins — like visible stitching on a quilt. Overlap regions are denoised by both blocks and averaged, creating a smooth blend.</div>
 </div>
 
-<!-- ===== S5: 3D Position Encoding ===== -->
+<!-- ===== S5: Long Inference (TAPSF) ===== -->
 <div class="sec" id="s5">
+<div class="st">Long Inference (TAPSF) <span class="chip" style="background:var(--ca);color:var(--cyan)">LONG VIDEO</span></div>
+<p class="desc">A long video has far more latent frames than the model can process at once. A naive approach — fully denoise one block, then the next — causes visible seams at block boundaries. <strong>TAPSF (Time-aware Position Shift Fusion)</strong> fixes this by <strong>inverting the loop order</strong>: the outer loop iterates over denoising timesteps, and the inner loop iterates over blocks — doing just <strong>one denoising step per block</strong>. After each full pass over all blocks, the partition boundaries <strong>shift by 5 latent frames</strong>. Over many timesteps, frames that were at a boundary in one step end up in the middle of a block in the next, naturally propagating context across the entire video.</p>
+
+<div class="cd">
+<div class="cl">Interactive: How block partitions shift between denoising steps</div>
+<div class="ctrl">
+  <div class="ctrl-g"><label>Denoising Step</label><input type="range" id="tapsfR" min="0" max="7" value="0"><span class="cv" id="tapsfV">t=T (start)</span></div>
+</div>
+<canvas id="tapsC" width="1020" height="420"></canvas>
+</div>
+
+<div class="cd">
+<div class="cl">Adaptive caching — 3-phase denoising strategy</div>
+<canvas id="cacheC" width="1020" height="200"></canvas>
+</div>
+
+<div class="ins"><b>Boundary handling:</b> When a shift causes edge frames to fall outside a complete block, those frames are processed by <strong>both</strong> neighboring blocks. The predicted velocities from each block are <strong>averaged</strong> for overlapping frames. RoPE positions are always computed in <strong>global frame coordinates</strong> — frame 42 always gets the same positional encoding regardless of which block it falls into after shifting.</div>
+
+<div class="wrn"><b>Why is TAPSF incompatible with caching?</b> TeaCache reuses DiT block outputs from the previous timestep when the new input is "similar enough." But with shifting, block 0 at timestep <i>t</i> covers frames [0–16] while block 0 at timestep <i>t−1</i> covers frames [5–21] — the cached outputs correspond to entirely different frames, so the similarity check fails. The solution: <strong>disable shifting during the middle ~75% of timesteps</strong> (where refinement is incremental) so partitions stay fixed and TeaCache can safely accelerate those steps. Shifting is only active during early steps (establishing lip sync, identity, and motion) and late steps (final cross-block fusion), yielding <strong>~1.6× speedup</strong>.</div>
+</div>
+
+<!-- ===== S6: 3D Position Encoding ===== -->
+<div class="sec" id="s6">
 <div class="st">3D Position Encoding (RoPE) <span class="chip" style="background:var(--ca);color:var(--cyan)">WHERE AM I?</span></div>
 <p class="desc">Every patch in the video needs to know <strong>where</strong> it is — in time, height, and width. EditYourself uses <strong>3D Rotary Position Embedding</strong>, but with a twist: the time axis uses <strong>real timestamps</strong> (in seconds) instead of simple frame counts.</p>
 
@@ -236,8 +259,8 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 <div class="analogy"><b>Analogy — GPS for patches:</b> Every patch in the video gets a GPS coordinate (time, row, column). When two patches compute attention, the RoPE rotation makes the score naturally depend on how far apart they are — like signal strength dropping with distance. Nearby patches (same frame, adjacent position) communicate strongly. Distant patches (3 frames away, opposite corner) communicate weakly.</div>
 </div>
 
-<!-- ===== S6: Identity Reference ===== -->
-<div class="sec" id="s6">
+<!-- ===== S7: Identity Reference ===== -->
+<div class="sec" id="s7">
 <div class="st">Identity Preservation <span class="chip" style="background:var(--oa);color:var(--orange)">FACE ID</span></div>
 <p class="desc">To keep the person's face looking like them (not a generic face), EditYourself extracts <strong>face tokens from reference frames</strong> and injects them as extra context. These tokens are placed at <strong>negative time positions</strong> — "before" the current window.</p>
 
@@ -257,8 +280,8 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 <div class="analogy"><b>Analogy — Photo on the desk:</b> Imagine you're an artist painting a portrait from memory. You keep a few reference photos on your desk (identity tokens). They're from the past (negative time), they're clean and clear (zero noise), and you only look at them to remember what the person's face looks like — not to copy the exact expression.</div>
 </div>
 
-<!-- ===== S7: Guidance ===== -->
-<div class="sec" id="s7">
+<!-- ===== S8: Guidance ===== -->
+<div class="sec" id="s8">
 <div class="st">Guidance Strategies <span class="chip" style="background:var(--ka);color:var(--pink)">QUALITY CONTROL</span></div>
 <p class="desc">EditYourself runs the transformer <strong>multiple times per denoising step</strong> with different conditions, then combines the results to amplify quality. This uses two complementary techniques: <strong>Classifier-Free Guidance (CFG)</strong> and <strong>Spatio-Temporal Guidance (STG)</strong>.</p>
 
@@ -275,8 +298,8 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 <div class="analogy"><b>Analogy — Two drafts:</b> CFG is like asking an artist to draw two versions: one following the brief (conditional) and one ignoring it (unconditional). The final image exaggerates the differences — amplifying what the brief contributed. STG is like asking the artist to draw with one hand tied (skipped layers) — the difference from the full version reveals what those layers contribute, which is then amplified.</div>
 </div>
 
-<!-- ===== S8: Multi-Scale ===== -->
-<div class="sec" id="s8">
+<!-- ===== S9: Multi-Scale ===== -->
+<div class="sec" id="s9">
 <div class="st">Multi-Scale Refinement <span class="chip" style="background:var(--ya);color:var(--yellow)">HIGH-RES</span></div>
 <p class="desc">For high-resolution output, EditYourself uses a <strong>two-pass approach</strong>: first generate at low resolution (where the mouth has enough tokens), then upsample and refine at full resolution.</p>
 
@@ -288,8 +311,8 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 <div class="wrn"><b>Why two passes?</b> At 720p, the mouth might only be 3-4 tokens in the latent space — too few pixels for the model to express different mouth shapes. By first rendering at half resolution, the mouth gets 12-16 tokens. The second pass adds crisp spatial detail to the upsampled result.</div>
 </div>
 
-<!-- ===== S9: Summary ===== -->
-<div class="sec" id="s9">
+<!-- ===== S10: Summary ===== -->
+<div class="sec" id="s10">
 <div class="st">Putting It All Together <span class="chip" style="background:var(--ba);color:var(--blue)">SUMMARY</span></div>
 
 <div class="cd">
@@ -329,7 +352,7 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 
 <script>
 // ========= Navigation =========
-const STEPS=['The Problem','Big Picture','The Selective Mask','Audio → Lips','Sliding Window','3D Positions','Identity Refs','Guidance','Multi-Scale','Summary'];
+const STEPS=['The Problem','Big Picture','The Selective Mask','Audio → Lips','Sliding Window','Long Inference','3D Positions','Identity Refs','Guidance','Multi-Scale','Summary'];
 let cur=0;
 const $=id=>document.getElementById(id);
 function buildTabs(){$('tabs').innerHTML=STEPS.map((s,i)=>`<div class="tab${i===0?' on':''}" data-i="${i}">${s}</div>`).join('');$('tabs').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTo(+t.dataset.i)))}
@@ -368,7 +391,7 @@ function box(ctx,x,y,w,h,fill,stroke,text,textColor,fontSize=11){
 
 // ========= Renders =========
 function render(){
-  [renderProblem,renderArch,renderMask,renderAudio,renderSlide,renderPos,renderId,renderGuid,renderMS,renderSum][cur]?.();
+  [renderProblem,renderArch,renderMask,renderAudio,renderSlide,renderTapsf,renderPos,renderId,renderGuid,renderMS,renderSum][cur]?.();
 }
 
 // S0: Problem
@@ -728,7 +751,187 @@ function renderTricks(){
   });
 }
 
-// S5: Position
+// S5: Long Inference (TAPSF)
+function renderTapsf(){
+  const{w,h,x}=dpr($('tapsC'));x.clearRect(0,0,w,h);
+  const step=+$('tapsfR').value;
+  // 0-2: early shifted, 3-5: middle fixed+cached, 6-7: late shifted
+  const labels=['t = T (start)','t = T−1 (shift +5)','t = T−2 (shift +5)','t = T−3 (fixed)','t = T−4 (fixed, cached)','t = T−5 (fixed, cached)','t = 2 (shift +5)','t = 1 (shift +5)'];
+  $('tapsfV').textContent=labels[step];
+
+  // Layout
+  const TF=51,pl=140,pr=20,cellW=(w-pl-pr)/TF,rowH=26,rowGap=4;
+  const bw=17; // 17 latent frames per block
+  const SHIFT=5;
+  const colors=['#4a8ee6','#30c878','#e89040','#9078e8'];
+
+  // Accumulated shifts: early accumulates, middle frozen, late resumes
+  const cumShifts=[0,SHIFT,SHIFT*2,SHIFT*2,SHIFT*2,SHIFT*2,SHIFT*3,SHIFT*4];
+  const cachedSteps=[false,false,false,false,true,true,false,false]; // steps 4,5 show CACHE badges
+  const isMiddle=step>=3&&step<=5;
+  const phase=step<=2?1:step<=5?2:3;
+  const phaseLabel=['','Phase 1: Shifted — establishing structure','Phase 1: Shifted — establishing structure','Phase 1: Shifted — establishing structure','Phase 2: Fixed + TeaCache — incremental refinement','Phase 2: Fixed + TeaCache — incremental refinement','Phase 2: Fixed + TeaCache — incremental refinement','Phase 3: Shifted — final cross-block fusion','Phase 3: Shifted — final cross-block fusion'][step+1];
+  const phaseColor=isMiddle?'#9078e8':'#28c8d8';
+
+  // Title
+  x.fillStyle=phaseColor;x.font='bold 12px DM Sans';x.textAlign='left';
+  x.fillText(phaseLabel,pl,18);
+  x.fillStyle='#8e9fb8';x.font='10px DM Sans';
+  const subtitle=isMiddle
+    ?'Partitions frozen — TeaCache reuses DiT outputs when input change is small'
+    :'After denoising all blocks, shift partition boundaries by 5 latent frames';
+  x.fillText(subtitle,pl,34);
+
+  // Helper: compute non-overlapping blocks given cumulative shift
+  function makeBlocks(cumShift){
+    const off=cumShift%bw;
+    const bs=[];
+    if(off>0)bs.push({s:0,e:off}); // partial leading block
+    for(let s=off;s<TF;s+=bw){
+      bs.push({s:s,e:Math.min(s+bw,TF)});
+    }
+    return bs;
+  }
+
+  // Draw a row of blocks
+  function drawRow(blocks,ry,label,faded,cached,showCacheBadge){
+    // Label
+    x.fillStyle=faded?'#3f5070':'#dee6f2';x.font=faded?'9px DM Mono':'bold 9px DM Mono';
+    x.textAlign='right';x.fillText(label,pl-12,ry+rowH/2+3);
+
+    blocks.forEach((b,i)=>{
+      const bx0=pl+b.s*cellW,bx1=pl+b.e*cellW;
+      const c=cached?'#9078e8':colors[i%colors.length];
+      const alpha=faded?'0a':'18';
+      const strokeAlpha=faded?'25':'55';
+      roundRect(bx0+1,ry,bx1-bx0-2,rowH,3,x);
+      x.fillStyle=c+alpha;x.fill();
+      x.strokeStyle=c+strokeAlpha;x.lineWidth=faded?0.5:1;
+      if(faded){x.setLineDash([3,3]);}x.stroke();x.setLineDash([]);
+      // Block label
+      x.fillStyle=c+(faded?'55':'');x.font=(faded?'7':'8')+'px DM Sans';x.textAlign='center';
+      const size=b.e-b.s;
+      x.fillText(size===bw?`B${i}`:`${size}f`,bx0+(bx1-bx0)/2,ry+rowH/2+3);
+      // Cache badge on current row
+      if(showCacheBadge&&!faded&&size===bw){
+        x.fillStyle='#30c878';x.font='6px DM Mono';
+        x.fillText('CACHED',bx0+(bx1-bx0)/2,ry+rowH-1);
+      }
+    });
+  }
+
+  // Show all rows up to current step (stacked)
+  const startY=46;
+  const rowLabels=['t = T','t = T−1','t = T−2','t = T−3','t = T−4','t = T−5','t = 2','t = 1'];
+  for(let s=0;s<=step;s++){
+    const ry=startY+s*(rowH+rowGap);
+    const blocks=makeBlocks(cumShifts[s]);
+    const faded=s<step;
+    const mid=s>=3&&s<=5;
+    drawRow(blocks,ry,rowLabels[s],faded,mid,cachedSteps[s]);
+
+    // Annotations between rows
+    if(s>0){
+      const shifted=cumShifts[s]!==cumShifts[s-1];
+      if(shifted){
+        const prevRy=startY+(s-1)*(rowH+rowGap);
+        x.strokeStyle='#28c8d8';x.lineWidth=1;x.setLineDash([2,2]);
+        const ax=pl+(cumShifts[s-1]%bw)*cellW+bw*cellW/2;
+        x.beginPath();x.moveTo(ax,prevRy+rowH+1);x.lineTo(ax+SHIFT*cellW,ry-1);x.stroke();x.setLineDash([]);
+        x.fillStyle='#28c8d8';x.font='7px DM Sans';x.textAlign='left';
+        x.fillText('shift +5',ax+SHIFT*cellW+2,ry+3);
+      } else {
+        // Same partition — show "= same" or cache indicator
+        x.fillStyle=cachedSteps[s]?'#30c878':'#9078e8';x.font='7px DM Sans';x.textAlign='left';
+        x.fillText(cachedSteps[s]?'= same (cached)':'= same',pl+TF*cellW+4,ry+rowH/2+3);
+      }
+    }
+  }
+
+  // Ellipsis hint when on middle steps
+  if(step>=3&&step<=5){
+    const ellY=startY+(step+1)*(rowH+rowGap);
+    x.fillStyle='#9078e8';x.font='10px DM Sans';x.textAlign='center';
+    x.fillText('⋮  ~75% of all steps look like this — fixed partitions, TeaCache skipping redundant passes  ⋮',w/2,ellY+6);
+  }
+
+  // Frame index ruler at bottom
+  const rulerY=startY+(step+1)*(rowH+rowGap)+4;
+  for(let f=0;f<TF;f++){
+    if(f%bw===0||f===TF-1){
+      const fx=pl+f*cellW;
+      x.fillStyle='#3f5070';x.font='7px DM Mono';x.textAlign='center';
+      x.fillText(f,fx+cellW/2,rulerY);
+    }
+  }
+  x.fillStyle='#3f5070';x.font='9px DM Sans';x.textAlign='center';
+  x.fillText('Latent frames (global index) — each block = 17 frames, shift = 5 per step',w/2,rulerY+14);
+
+  // Key at bottom
+  const keyY=h-30;
+  x.fillStyle='#8e9fb8';x.font='10px DM Sans';x.textAlign='center';
+  x.fillText('Outer loop: timesteps (T → 0)   |   Inner loop: blocks (denoise once each)   |   RoPE uses global frame coordinates',w/2,keyY);
+}
+$('tapsfR').addEventListener('input',renderTapsf);
+
+function renderCache(){
+  const{w,h,x}=dpr($('cacheC'));x.clearRect(0,0,w,h);
+  const pl=60,pr=60,barY=50,barH=55;
+  const barW=w-pl-pr;
+
+  // Title
+  x.fillStyle='#dee6f2';x.font='bold 12px Fraunces';x.textAlign='center';
+  x.fillText('Adaptive Caching: 3-Phase Denoising Strategy',w/2,25);
+
+  // Timeline arrow
+  x.fillStyle='#3f5070';x.font='9px DM Mono';x.textAlign='center';
+  x.fillText('t = T (noise)',pl,barY-8);
+  x.fillText('t = 0 (clean)',pl+barW,barY-8);
+  arrow(x,pl,barY-12,pl+barW,barY-12,'#172038');
+
+  // Three regions
+  const earlyW=barW*0.125,midW=barW*0.75,lateW=barW*0.125;
+
+  // Phase 1: Early (shifted)
+  roundRect(pl,barY,earlyW,barH,6,x);x.fillStyle='rgba(40,200,216,.15)';x.fill();x.strokeStyle='#28c8d8';x.lineWidth=1.5;x.stroke();
+  x.fillStyle='#28c8d8';x.font='bold 9px DM Sans';x.textAlign='center';
+  x.fillText('SHIFTED',pl+earlyW/2,barY+16);
+  x.fillStyle='#8e9fb8';x.font='8px DM Sans';
+  x.fillText('lip sync +',pl+earlyW/2,barY+30);
+  x.fillText('motion',pl+earlyW/2,barY+40);
+  x.fillText('~12.5%',pl+earlyW/2,barY+52);
+
+  // Phase 2: Middle (fixed + TeaCache)
+  roundRect(pl+earlyW,barY,midW,barH,0,x);x.fillStyle='rgba(144,120,232,.12)';x.fill();x.strokeStyle='#9078e8';x.lineWidth=1.5;x.stroke();
+  x.fillStyle='#9078e8';x.font='bold 10px DM Sans';x.textAlign='center';
+  x.fillText('FIXED PARTITIONS + TeaCache',pl+earlyW+midW/2,barY+16);
+  x.fillStyle='#8e9fb8';x.font='9px DM Sans';
+  x.fillText('incremental refinement — cache DiT outputs, skip when input barely changes',pl+earlyW+midW/2,barY+34);
+  x.fillText('~75% of steps',pl+earlyW+midW/2,barY+50);
+
+  // Phase 3: Late (shifted)
+  roundRect(pl+earlyW+midW,barY,lateW,barH,6,x);x.fillStyle='rgba(40,200,216,.15)';x.fill();x.strokeStyle='#28c8d8';x.lineWidth=1.5;x.stroke();
+  x.fillStyle='#28c8d8';x.font='bold 9px DM Sans';x.textAlign='center';
+  x.fillText('SHIFTED',pl+earlyW+midW+lateW/2,barY+16);
+  x.fillStyle='#8e9fb8';x.font='8px DM Sans';
+  x.fillText('cross-block',pl+earlyW+midW+lateW/2,barY+30);
+  x.fillText('fusion',pl+earlyW+midW+lateW/2,barY+40);
+  x.fillText('~12.5%',pl+earlyW+midW+lateW/2,barY+52);
+
+  // Annotations
+  const annY=barY+barH+18;
+  x.fillStyle='#3f5070';x.font='10px DM Sans';x.textAlign='left';
+  x.fillText('Shifted: partitions move +5 latent frames each step — boundary frames become mid-block, propagating context',pl,annY);
+  x.fillText('Fixed: same frames stay in same blocks across steps — cached outputs remain valid for similarity checks',pl,annY+16);
+
+  // Speedup callout
+  const speedX=w/2,speedY=annY+40;
+  roundRect(speedX-130,speedY,260,28,8,x);x.fillStyle='rgba(48,200,120,.1)';x.fill();x.strokeStyle='rgba(48,200,120,.4)';x.lineWidth=1;x.stroke();
+  x.fillStyle='#30c878';x.font='bold 11px DM Sans';x.textAlign='center';
+  x.fillText('~1.6× speedup from caching the middle 75%',speedX,speedY+18);
+}
+
+// S6: Position
 function renderPos(){
   const{w,h,x}=dpr($('posC'));x.clearRect(0,0,w,h);
   
@@ -826,7 +1029,7 @@ function renderWhyTs(){
   x.fillStyle='#30c878';x.font='10px DM Sans';x.textAlign='left';x.fillText('Frame 3 is always t=0.96 regardless of which block processes it ✓',120,245);
 }
 
-// S6: Identity
+// S7: Identity
 function renderId(){
   const{w,h,x}=dpr($('idC'));x.clearRect(0,0,w,h);
   const nr=+$('nrR').value;$('nrV').textContent=nr+' refs';
@@ -902,7 +1105,7 @@ function wrapText(ctx,text,x,y,maxW,lineH){
   ctx.fillText(line.trim(),x,y);
 }
 
-// S7: Guidance
+// S8: Guidance
 function renderGuid(){
   const{w,h,x}=dpr($('guidC'));x.clearRect(0,0,w,h);
   
@@ -959,7 +1162,7 @@ function renderCfgStar(){
   lines.forEach((l,i)=>x.fillText(l,30,48+i*17));
 }
 
-// S8: Multi-Scale
+// S9: Multi-Scale
 function renderMS(){
   const{w,h,x}=dpr($('msC'));x.clearRect(0,0,w,h);
 
@@ -992,7 +1195,7 @@ function renderMS(){
   box(x,390,my,100,40,'rgba(48,200,120,.1)','rgba(48,200,120,.3)','360p: 16 tokens\n(enough detail!)','#30c878',9);
 }
 
-// S9: Summary
+// S10: Summary
 function renderSum(){
   const{w,h,x}=dpr($('sumC'));x.clearRect(0,0,w,h);
 
@@ -1044,11 +1247,12 @@ function renderAll(){
   if(cur===2){renderMask();renderSignals();}
   if(cur===3){renderAudio();renderAlign();}
   if(cur===4){renderSlide();renderTricks();}
-  if(cur===5){renderPos();renderWhyTs();}
-  if(cur===6){renderId();renderRefProps();}
-  if(cur===7){renderGuid();renderCfgStar();}
-  if(cur===8)renderMS();
-  if(cur===9)renderSum();
+  if(cur===5){renderTapsf();renderCache();}
+  if(cur===6){renderPos();renderWhyTs();}
+  if(cur===7){renderId();renderRefProps();}
+  if(cur===8){renderGuid();renderCfgStar();}
+  if(cur===9)renderMS();
+  if(cur===10)renderSum();
 }
 const origGoTo=goTo;
 goTo=function(n){origGoTo(n);setTimeout(renderAll,50)};
