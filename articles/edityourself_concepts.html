@@ -760,7 +760,7 @@ function renderTapsf(){
   $('tapsfV').textContent=labels[step];
 
   // Layout
-  const TF=51,pl=140,pr=20,cellW=(w-pl-pr)/TF,rowH=26,rowGap=4;
+  const TF=51,pl=60,pr=20,cellW=(w-pl-pr)/TF,rowH=26,rowGap=4;
   const bw=17; // 17 latent frames per block
   const SHIFT=5;
   const colors=['#4a8ee6','#30c878','#e89040','#9078e8'];
@@ -769,18 +769,17 @@ function renderTapsf(){
   const cumShifts=[0,SHIFT,SHIFT*2,SHIFT*2,SHIFT*2,SHIFT*2,SHIFT*3,SHIFT*4];
   const cachedSteps=[false,false,false,false,true,true,false,false]; // steps 4,5 show CACHE badges
   const isMiddle=step>=3&&step<=5;
-  const phase=step<=2?1:step<=5?2:3;
-  const phaseLabel=['','Phase 1: Shifted — establishing structure','Phase 1: Shifted — establishing structure','Phase 1: Shifted — establishing structure','Phase 2: Fixed + TeaCache — incremental refinement','Phase 2: Fixed + TeaCache — incremental refinement','Phase 2: Fixed + TeaCache — incremental refinement','Phase 3: Shifted — final cross-block fusion','Phase 3: Shifted — final cross-block fusion'][step+1];
+  const phaseLabel=step<=2?'Phase 1: Shifted — establishing structure':step<=5?'Phase 2: Fixed + TeaCache — incremental refinement':'Phase 3: Shifted — final cross-block fusion';
   const phaseColor=isMiddle?'#9078e8':'#28c8d8';
 
   // Title
   x.fillStyle=phaseColor;x.font='bold 12px DM Sans';x.textAlign='left';
-  x.fillText(phaseLabel,pl,18);
+  x.fillText(phaseLabel,20,18);
   x.fillStyle='#8e9fb8';x.font='10px DM Sans';
   const subtitle=isMiddle
     ?'Partitions frozen — TeaCache reuses DiT outputs when input change is small'
     :'After denoising all blocks, shift partition boundaries by 5 latent frames';
-  x.fillText(subtitle,pl,34);
+  x.fillText(subtitle,20,34);
 
   // Helper: compute non-overlapping blocks given cumulative shift
   function makeBlocks(cumShift){
@@ -794,10 +793,10 @@ function renderTapsf(){
   }
 
   // Draw a row of blocks
-  function drawRow(blocks,ry,label,faded,cached,showCacheBadge){
-    // Label
-    x.fillStyle=faded?'#3f5070':'#dee6f2';x.font=faded?'9px DM Mono':'bold 9px DM Mono';
-    x.textAlign='right';x.fillText(label,pl-12,ry+rowH/2+3);
+  function drawRow(blocks,ry,label,faded,cached,showCacheBadge,annotation){
+    // Label on left
+    x.fillStyle=faded?'#3f5070':'#dee6f2';x.font=faded?'8px DM Mono':'bold 8px DM Mono';
+    x.textAlign='right';x.fillText(label,pl-8,ry+rowH/2+3);
 
     blocks.forEach((b,i)=>{
       const bx0=pl+b.s*cellW,bx1=pl+b.e*cellW;
@@ -818,33 +817,38 @@ function renderTapsf(){
         x.fillText('CACHED',bx0+(bx1-bx0)/2,ry+rowH-1);
       }
     });
+
+    // Right-side annotation
+    if(annotation){
+      x.fillStyle=annotation.c;x.font='8px DM Sans';x.textAlign='right';
+      x.fillText(annotation.t,w-10,ry+rowH/2+3);
+    }
   }
 
   // Show all rows up to current step (stacked)
   const startY=46;
-  const rowLabels=['t = T','t = T−1','t = T−2','t = T−3','t = T−4','t = T−5','t = 2','t = 1'];
+  const rowLabels=['t=T','t=T−1','t=T−2','t=T−3','t=T−4','t=T−5','t=2','t=1'];
   for(let s=0;s<=step;s++){
     const ry=startY+s*(rowH+rowGap);
     const blocks=makeBlocks(cumShifts[s]);
     const faded=s<step;
     const mid=s>=3&&s<=5;
-    drawRow(blocks,ry,rowLabels[s],faded,mid,cachedSteps[s]);
-
-    // Annotations between rows
+    // Build annotation
+    let ann=null;
     if(s>0){
       const shifted=cumShifts[s]!==cumShifts[s-1];
-      if(shifted){
-        const prevRy=startY+(s-1)*(rowH+rowGap);
-        x.strokeStyle='#28c8d8';x.lineWidth=1;x.setLineDash([2,2]);
-        const ax=pl+(cumShifts[s-1]%bw)*cellW+bw*cellW/2;
-        x.beginPath();x.moveTo(ax,prevRy+rowH+1);x.lineTo(ax+SHIFT*cellW,ry-1);x.stroke();x.setLineDash([]);
-        x.fillStyle='#28c8d8';x.font='7px DM Sans';x.textAlign='left';
-        x.fillText('shift +5',ax+SHIFT*cellW+2,ry+3);
-      } else {
-        // Same partition — show "= same" or cache indicator
-        x.fillStyle=cachedSteps[s]?'#30c878':'#9078e8';x.font='7px DM Sans';x.textAlign='left';
-        x.fillText(cachedSteps[s]?'= same (cached)':'= same',pl+TF*cellW+4,ry+rowH/2+3);
-      }
+      if(shifted)ann={t:'← shift +5',c:'#28c8d8'};
+      else if(cachedSteps[s])ann={t:'← same (cached)',c:'#30c878'};
+      else ann={t:'← same',c:'#9078e8'};
+    }
+    drawRow(blocks,ry,rowLabels[s],faded,mid,cachedSteps[s],ann);
+
+    // Draw shift arrow between rows when shifted
+    if(s>0&&cumShifts[s]!==cumShifts[s-1]){
+      const prevRy=startY+(s-1)*(rowH+rowGap);
+      x.strokeStyle='#28c8d8';x.lineWidth=1;x.setLineDash([2,2]);
+      const ax=pl+(cumShifts[s-1]%bw)*cellW+bw*cellW/2;
+      x.beginPath();x.moveTo(ax,prevRy+rowH+1);x.lineTo(ax+SHIFT*cellW,ry-1);x.stroke();x.setLineDash([]);
     }
   }
 
@@ -852,11 +856,12 @@ function renderTapsf(){
   if(step>=3&&step<=5){
     const ellY=startY+(step+1)*(rowH+rowGap);
     x.fillStyle='#9078e8';x.font='10px DM Sans';x.textAlign='center';
-    x.fillText('⋮  ~75% of all steps look like this — fixed partitions, TeaCache skipping redundant passes  ⋮',w/2,ellY+6);
+    x.fillText('⋮  ~75% of all steps look like this — fixed partitions, TeaCache skipping  ⋮',w/2,ellY+6);
   }
 
-  // Frame index ruler at bottom
-  const rulerY=startY+(step+1)*(rowH+rowGap)+4;
+  // Frame index ruler at bottom (push down if ellipsis is showing)
+  const hasEllipsis=step>=3&&step<=5;
+  const rulerY=startY+(step+1)*(rowH+rowGap)+(hasEllipsis?18:4);
   for(let f=0;f<TF;f++){
     if(f%bw===0||f===TF-1){
       const fx=pl+f*cellW;
