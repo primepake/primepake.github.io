@@ -238,7 +238,7 @@ canvas{display:block;border-radius:8px;max-width:100%;height:auto !important}
 
 <div class="cd">
 <div class="cl">How TeaCache decides what to skip</div>
-<canvas id="teaC" width="1020" height="380"></canvas>
+<canvas id="teaC" width="1020" height="460"></canvas>
 </div>
 
 <div class="ins"><b>Boundary handling:</b> When a shift causes edge frames to fall outside a complete block, those frames are processed by <strong>both</strong> neighboring blocks. The predicted velocities from each block are <strong>averaged</strong> for overlapping frames. RoPE positions are always computed in <strong>global frame coordinates</strong> — frame 42 always gets the same positional encoding regardless of which block it falls into after shifting.</div>
@@ -967,56 +967,56 @@ function renderTea(){
   x.fillText('How It Decides: Skip or Compute?',lx,126);
 
   // Flow diagram: 4 boxes in a consistent grid
-  const flowY=138,flowH=62;
+  const flowY=138,flowH=76;
   const flowSteps=[
-    {l:'1. Measure Change',desc:'Relative L1 distance\nbetween consecutive\nmodulated inputs',c:'#4a8ee6'},
-    {l:'2. Rescale',desc:'Apply degree-4 polynomial\nto correct scaling bias\n(from calibration)',c:'#9078e8'},
-    {l:'3. Accumulate',desc:'Add rescaled distance\nto running total since\nlast full computation',c:'#e89040'},
-    {l:'4. Threshold',desc:'Accumulated > threshold?\nYes → COMPUTE + reset\nNo → SKIP, reuse cache',c:'#30c878'},
+    {l:'1. Measure Change',desc:'Compute relative L1\ndistance between\nconsecutive modulated\ninputs',c:'#4a8ee6'},
+    {l:'2. Rescale',desc:'Apply a degree-4\npolynomial to correct\nscaling bias (fitted\nfrom calibration)',c:'#9078e8'},
+    {l:'3. Accumulate',desc:'Add rescaled distance\nto a running total\nsince the last full\ncomputation',c:'#e89040'},
+    {l:'4. Threshold',desc:'Total > threshold?\n→ COMPUTE + reset\nTotal < threshold?\n→ SKIP, reuse cache',c:'#30c878'},
   ];
   flowSteps.forEach((s,i)=>{
     const bx=lx+i*(boxW+gap);
     roundRect(bx,flowY,boxW,flowH,6,x);x.fillStyle=s.c+'0c';x.fill();x.strokeStyle=s.c+'40';x.lineWidth=1;x.stroke();
-    x.fillStyle=s.c;x.font='bold 9px DM Sans';x.textAlign='center';
-    x.fillText(s.l,bx+boxW/2,flowY+14);
-    x.fillStyle='#8e9fb8';x.font='9px DM Sans';
-    s.desc.split('\n').forEach((l,li)=>x.fillText(l,bx+boxW/2,flowY+28+li*12));
+    x.fillStyle=s.c;x.font='bold 10px DM Sans';x.textAlign='center';
+    x.fillText(s.l,bx+boxW/2,flowY+16);
+    x.fillStyle='#8e9fb8';x.font='10px DM Sans';
+    s.desc.split('\n').forEach((l,li)=>x.fillText(l,bx+boxW/2,flowY+32+li*13));
     if(i<flowSteps.length-1)arrow(x,bx+boxW+2,flowY+flowH/2,bx+boxW+gap-2,flowY+flowH/2,s.c+'88');
   });
 
   // ── Section 3: What Gets Cached ──
-  const secY=flowY+flowH+18;
+  const secY=flowY+flowH+20;
   x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='left';
   x.fillText('What Gets Cached: The Residual',lx,secY);
 
   // Two-path diagram — spans full width
-  const pathY=secY+12,pathH=38;
+  const pathY=secY+14,pathH=40;
   // Compute path
   roundRect(lx,pathY,totalW,pathH,6,x);x.fillStyle='rgba(48,200,120,.06)';x.fill();x.strokeStyle='rgba(48,200,120,.25)';x.lineWidth=1;x.stroke();
-  x.fillStyle='#30c878';x.font='bold 10px DM Sans';x.textAlign='left';
-  x.fillText('COMPUTE:',lx+10,pathY+14);
-  x.fillStyle='#8e9fb8';x.font='10px DM Sans';
-  x.fillText('Run all transformer blocks → cache residual = output − input',lx+90,pathY+14);
-  x.fillStyle='#3f5070';x.font='9px DM Sans';
-  x.fillText('The residual captures "what the transformer changed" — independent of the specific noisy input',lx+10,pathY+30);
+  x.fillStyle='#30c878';x.font='bold 11px DM Sans';x.textAlign='left';
+  x.fillText('COMPUTE:',lx+12,pathY+16);
+  x.fillStyle='#8e9fb8';x.font='11px DM Sans';
+  x.fillText('Run all transformer blocks → cache residual = output − input',lx+100,pathY+16);
+  x.fillStyle='#3f5070';x.font='10px DM Sans';
+  x.fillText('The residual captures "what the transformer changed" — independent of the specific noisy input',lx+12,pathY+32);
 
   // Skip path
-  const skipY=pathY+pathH+6;
+  const skipY=pathY+pathH+8;
   roundRect(lx,skipY,totalW,pathH,6,x);x.fillStyle='rgba(232,144,64,.06)';x.fill();x.strokeStyle='rgba(232,144,64,.25)';x.lineWidth=1;x.stroke();
-  x.fillStyle='#e89040';x.font='bold 10px DM Sans';x.textAlign='left';
-  x.fillText('SKIP:',lx+10,skipY+14);
-  x.fillStyle='#8e9fb8';x.font='10px DM Sans';
-  x.fillText('output = input + previous_residual   (skip all transformer blocks)',lx+90,skipY+14);
-  x.fillStyle='#3f5070';x.font='9px DM Sans';
-  x.fillText('If the transformer would do roughly the same thing, just reuse what it did last time',lx+10,skipY+30);
+  x.fillStyle='#e89040';x.font='bold 11px DM Sans';x.textAlign='left';
+  x.fillText('SKIP:',lx+12,skipY+16);
+  x.fillStyle='#8e9fb8';x.font='11px DM Sans';
+  x.fillText('output = input + previous_residual   (skip all transformer blocks)',lx+100,skipY+16);
+  x.fillStyle='#3f5070';x.font='10px DM Sans';
+  x.fillText('If the transformer would do roughly the same thing, just reuse what it did last time',lx+12,skipY+32);
 
   // ── Section 4: Calibration ──
-  const calY=skipY+pathH+18;
+  const calY=skipY+pathH+20;
   x.fillStyle='#dee6f2';x.font='bold 13px Fraunces';x.textAlign='left';
   x.fillText('Calibrating the Polynomial (one-time, per model)',lx,calY);
 
   // Calibration flow — same 4-column grid as decision flow
-  const calH=50;
+  const calH=56;
   const calSteps=[
     {l:'Run inference on\n~70 calibration videos',c:'#4a8ee6'},
     {l:'At each timestep, record\ninput-space & output-space\ndistances',c:'#9078e8'},
@@ -1025,15 +1025,15 @@ function renderTea(){
   ];
   calSteps.forEach((s,i)=>{
     const bx=lx+i*(boxW+gap);
-    roundRect(bx,calY+12,boxW,calH,6,x);x.fillStyle=s.c+'0a';x.fill();x.strokeStyle=s.c+'30';x.lineWidth=1;x.stroke();
-    x.fillStyle=s.c;x.font='9px DM Sans';x.textAlign='center';
-    s.l.split('\n').forEach((l,li)=>x.fillText(l,bx+boxW/2,calY+28+li*13));
-    if(i<calSteps.length-1)arrow(x,bx+boxW+2,calY+12+calH/2,bx+boxW+gap-2,calY+12+calH/2,s.c+'55');
+    roundRect(bx,calY+14,boxW,calH,6,x);x.fillStyle=s.c+'0a';x.fill();x.strokeStyle=s.c+'30';x.lineWidth=1;x.stroke();
+    x.fillStyle=s.c;x.font='10px DM Sans';x.textAlign='center';
+    s.l.split('\n').forEach((l,li)=>x.fillText(l,bx+boxW/2,calY+32+li*14));
+    if(i<calSteps.length-1)arrow(x,bx+boxW+2,calY+14+calH/2,bx+boxW+gap-2,calY+14+calH/2,s.c+'55');
   });
 
   // Why polynomial — spans full width
   x.fillStyle='#3f5070';x.font='10px DM Sans';x.textAlign='left';
-  x.fillText('Why the polynomial? Raw input-space distance doesn\'t perfectly predict output-space distance — the polynomial corrects this bias.',lx,calY+calH+28);
+  x.fillText('Why the polynomial? Raw input-space distance doesn\'t perfectly predict output-space distance — the polynomial corrects this bias.',lx,calY+calH+32);
 }
 
 // S6: Position
