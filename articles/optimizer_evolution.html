@@ -450,68 +450,78 @@ document.addEventListener('touchmove',function(e){
 },{passive:false});
 document.addEventListener('touchend',function(){_dragState=null;});
 
-// Height function — clamp for visual clarity
+// Height function — use sqrt scaling for better valley visibility
 function lossHeight(px,py){
-  return Math.min(lossF(px,py),120)*0.025; // scale Z to reasonable range
+  var v=lossF(px,py);
+  return Math.sqrt(Math.min(v,200))*0.22; // sqrt compresses peaks, reveals valley shape
 }
 
 function drawContour(x,W,H,ox,oy,scale){
   // 3D surface view
   var cx=W/2,cy=H*0.62; // projection center
   var s3d=scale*0.9; // 3D scale factor
-  var gridN=30; // grid resolution
-  var range=5; // parameter range [-range, range]
-  var step=2*range/gridN;
+  var gridN=40; // grid resolution
+  var rangeX=5,rangeY=2.5; // asymmetric range — y is steeper so show less of it
+  var stepX=2*rangeX/gridN,stepY=2*rangeY/gridN;
+  var ca=Math.cos(cam.angle),sa=Math.sin(cam.angle);
 
-  // Draw surface mesh from back to front (painter's algorithm)
-  // Sort by depth (ry in projection)
-  for(var j=gridN-1;j>=0;j--){
+  // Collect all quads with depth for proper painter's algorithm sorting
+  var quads=[];
+  for(var j=0;j<gridN;j++){
     for(var i=0;i<gridN;i++){
-      var px0=-range+i*step,py0=-range+j*step;
-      var px1=px0+step,py1=py0+step;
-      // 4 corners of quad
+      var px0=-rangeX+i*stepX,py0=-rangeY+j*stepY;
+      var px1=px0+stepX,py1=py0+stepY;
+      var midX=(px0+px1)/2,midY=(py0+py1)/2;
+      // Depth = distance along view direction (higher = farther back)
+      var depth=midX*sa+midY*ca;
       var z00=lossHeight(px0,py0),z10=lossHeight(px1,py0);
       var z01=lossHeight(px0,py1),z11=lossHeight(px1,py1);
-      var p00=project3D(px0,py0,z00,cx,cy,s3d);
-      var p10=project3D(px1,py0,z10,cx,cy,s3d);
-      var p01=project3D(px0,py1,z01,cx,cy,s3d);
-      var p11=project3D(px1,py1,z11,cx,cy,s3d);
-      // Color based on height
-      var avgZ=(z00+z10+z01+z11)/4;
-      var rgb=contourColor(avgZ/0.025);
-      // Fill quad
-      x.fillStyle='rgb('+Math.round(rgb[0])+','+Math.round(rgb[1])+','+Math.round(rgb[2])+')';
-      x.beginPath();
-      x.moveTo(p00[0],p00[1]);x.lineTo(p10[0],p10[1]);
-      x.lineTo(p11[0],p11[1]);x.lineTo(p01[0],p01[1]);
-      x.closePath();x.fill();
-      // Wireframe
-      x.strokeStyle='rgba(255,255,255,0.08)';x.lineWidth=0.5;x.stroke();
+      var avgLoss=(lossF(px0,py0)+lossF(px1,py0)+lossF(px0,py1)+lossF(px1,py1))/4;
+      quads.push({px0:px0,py0:py0,px1:px1,py1:py1,z00:z00,z10:z10,z01:z01,z11:z11,depth:depth,loss:avgLoss});
     }
   }
+  // Sort back-to-front
+  quads.sort(function(a,b){return a.depth-b.depth;});
 
-  // Draw grid lines for clarity
-  x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=0.5;
-  // θ₁ axis line (y=0)
+  // Draw sorted quads
+  for(var q=0;q<quads.length;q++){
+    var quad=quads[q];
+    var p00=project3D(quad.px0,quad.py0,quad.z00,cx,cy,s3d);
+    var p10=project3D(quad.px1,quad.py0,quad.z10,cx,cy,s3d);
+    var p01=project3D(quad.px0,quad.py1,quad.z01,cx,cy,s3d);
+    var p11=project3D(quad.px1,quad.py1,quad.z11,cx,cy,s3d);
+    var rgb=contourColor(quad.loss);
+    // Shading: darken quads facing away from light (top-left light)
+    var nx=quad.z00-quad.z10,ny=quad.z00-quad.z01;
+    var shade=0.7+0.3*Math.max(0,(nx+ny)/Math.sqrt(nx*nx+ny*ny+1));
+    x.fillStyle='rgb('+Math.round(rgb[0]*shade)+','+Math.round(rgb[1]*shade)+','+Math.round(rgb[2]*shade)+')';
+    x.beginPath();
+    x.moveTo(p00[0],p00[1]);x.lineTo(p10[0],p10[1]);
+    x.lineTo(p11[0],p11[1]);x.lineTo(p01[0],p01[1]);
+    x.closePath();x.fill();
+    x.strokeStyle='rgba(255,255,255,0.06)';x.lineWidth=0.5;x.stroke();
+  }
+
+  // Axis lines on surface
+  x.strokeStyle='rgba(255,255,255,0.15)';x.lineWidth=1;
   x.beginPath();
   for(var i=0;i<=gridN;i++){
-    var px=-range+i*step,py=0;
+    var px=-rangeX+i*stepX,py=0;
     var z=lossHeight(px,py);
     var p=project3D(px,py,z,cx,cy,s3d);
     if(i===0)x.moveTo(p[0],p[1]);else x.lineTo(p[0],p[1]);
   }
   x.stroke();
-  // θ₂ axis line (x=0)
   x.beginPath();
   for(var j=0;j<=gridN;j++){
-    var px=0,py=-range+j*step;
+    var px=0,py=-rangeY+j*stepY;
     var z=lossHeight(px,py);
     var p=project3D(px,py,z,cx,cy,s3d);
     if(j===0)x.moveTo(p[0],p[1]);else x.lineTo(p[0],p[1]);
   }
   x.stroke();
 
-  // Minimum marker (at origin, z=0)
+  // Minimum marker
   var pMin=project3D(0,0,0,cx,cy,s3d);
   x.fillStyle='#fff';x.beginPath();x.arc(pMin[0],pMin[1],4,0,Math.PI*2);x.fill();
   x.fillStyle='#34d399';x.beginPath();x.arc(pMin[0],pMin[1],2.5,0,Math.PI*2);x.fill();
@@ -519,14 +529,12 @@ function drawContour(x,W,H,ox,oy,scale){
   x.fillText('min',pMin[0],pMin[1]+14);
 
   // Axis labels
-  var pX=project3D(range+0.5,0,0,cx,cy,s3d);
-  var pY=project3D(0,range+0.5,0,cx,cy,s3d);
+  var pX=project3D(rangeX+0.3,0,0,cx,cy,s3d);
+  var pY=project3D(0,rangeY+0.3,0,cx,cy,s3d);
   x.font='11px DM Mono';x.fillStyle='rgba(255,255,255,0.4)';
   x.textAlign='center';
   x.fillText('θ₁',pX[0],pX[1]+4);
   x.fillText('θ₂',pY[0],pY[1]+4);
-  // Z label
-  var pZ=project3D(0,0,lossHeight(0,2)+0.5,cx,cy,s3d);
   x.fillText('Loss',cx-W*0.35,cy-H*0.35);
   // Interaction hint
   x.font='9px DM Sans';x.fillStyle='rgba(255,255,255,0.25)';x.textAlign='right';
@@ -1259,9 +1267,9 @@ renders[7]=()=>{
   x.font='600 9px DM Sans';x.textAlign='left';var lx=30,ly=H-48;
   x.fillStyle=colors.sgd;x.fillText('■ SGD (η=0.018)',lx,ly);
   x.fillStyle=colors.mom;x.fillText('■ Momentum (η=0.005)',lx+130,ly);
-  x.fillStyle=colors.rms;x.fillText('■ RMSprop (η=0.3)',lx+290,ly);
-  x.fillStyle=colors.adam;x.fillText('■ Adam (η=0.7)',lx+430,ly);
-  x.fillStyle=colors.adamw;x.fillText('■ AdamW (η=0.7, λ=0.05)',lx+560,ly);
+  x.fillStyle=colors.rms;x.fillText('■ RMSprop (η=0.1)',lx+290,ly);
+  x.fillStyle=colors.adam;x.fillText('■ Adam (η=0.5)',lx+430,ly);
+  x.fillStyle=colors.adamw;x.fillText('■ AdamW (η=0.7, λ=0.2)',lx+560,ly);
   x.fillStyle=colors.muon;x.fillText('■ Muon (η=0.05)',lx+740,ly);
   x.font='9px DM Sans';x.fillStyle='rgba(255,255,255,0.4)';
   x.fillText('Each optimizer uses its own tuned lr — adaptive optimizers normalize gradients internally so they can use much higher learning rates',lx,ly+16);
@@ -1335,10 +1343,10 @@ $('cmpRun').addEventListener('click',function(){
   // Each optimizer uses its own tuned lr — in practice you always tune lr per optimizer
   var fullSgd=runSGD(0.018,200);            // high enough to show zig-zag
   var fullMom=runMomentum(0.005,0.9,200);   // lower lr because momentum amplifies steps
-  var fullRms=runRMSprop(0.3,0.9,200);      // adaptive scaling normalizes gradients
-  var fullAdam=runAdam(0.7,200);             // bias correction → needs higher lr
-  var fullAdamW=runAdamW(0.7,0.05,200);      // decoupled weight decay pushes toward zero
-  var fullMuon=runMuon(0.05,0.7,200);          // curvature preconditioning → near second-order convergence
+  var fullRms=runRMSprop(0.1,0.9,200);      // adaptive scaling normalizes gradients
+  var fullAdam=runAdam(0.5,200);             // bias correction → needs higher lr
+  var fullAdamW=runAdamW(0.7,0.2,200);       // decoupled weight decay pushes toward zero
+  var fullMuon=runMuon(0.05,0.7,200);        // curvature preconditioning → near second-order convergence
   cmpPaths={sgd:[],mom:[],rms:[],adam:[],adamw:[],muon:[]};
   var step=0;
   var maxS=Math.max(fullSgd.length,fullMom.length,fullRms.length,fullAdam.length,fullAdamW.length,fullMuon.length);
