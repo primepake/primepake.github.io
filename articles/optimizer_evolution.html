@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimizer Evolution — From SGD to Muon</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#060e0a;--s1:#0c1a12;--s2:#142418;--s3:#1c3020;
+  --bd:#264030;--bd2:#387050;
+  --t:#88b8a0;--td:#507860;--tb:#e0f2e8;
+  --acc:#34d399;--acc2:#10b981;--blue:#60a5fa;--green:#4ade80;--orange:#fb923c;--red:#f87171;
+  --cyan:#22d3ee;--pink:#f472b6;--yellow:#facc15;--purple:#a78bfa;
+  --aa:rgba(52,211,153,.1);--ba:rgba(96,165,250,.1);--ga:rgba(74,222,128,.08);
+  --oa:rgba(251,146,60,.08);--ra:rgba(248,113,113,.08);--ca:rgba(34,211,238,.08);
+  --pa:rgba(167,139,250,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.pg{max-width:1080px;margin:0 auto;padding:36px 20px 100px}
+.hd{margin-bottom:32px;text-align:center}
+.hd h1{font-family:'Fraunces',serif;font-size:2rem;font-weight:800;color:var(--tb);letter-spacing:-.5px}
+.hd .paper{font-size:.88rem;color:var(--acc);margin:6px 0 4px;font-style:italic;font-weight:500}
+.hd .sub{font-size:.85rem;color:var(--td);font-weight:300}
+.tabs{display:flex;gap:0;border:1px solid var(--bd);border-radius:12px;overflow-x:auto;background:var(--s1);margin-bottom:30px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:88px;padding:12px 6px;text-align:center;font-size:.66rem;color:var(--td);cursor:pointer;border-right:1px solid var(--bd);position:relative;transition:all .2s;font-weight:500}
+.tab:last-child{border-right:none}
+.tab:hover{background:rgba(52,211,153,.04)}
+.tab.on{background:var(--aa);color:var(--acc)}
+.tab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;background:var(--acc);border-radius:2px 2px 0 0}
+.sec{display:none;animation:fu .35s ease}.sec.on{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.st{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--tb);margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chip{font-size:.6rem;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:16px;font-weight:500}
+.desc{font-size:.9rem;color:var(--t);max-width:780px;margin-bottom:22px;line-height:1.9;word-wrap:break-word;overflow-wrap:break-word}
+.desc strong{color:var(--tb);font-weight:600}
+.cd{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:26px;margin-bottom:16px;position:relative;overflow:hidden}
+.cd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent);opacity:.12}
+.cl{font-size:.64rem;font-family:'DM Mono',monospace;color:var(--td);text-transform:uppercase;letter-spacing:1.6px;margin-bottom:14px}
+.ins{background:var(--ga);border-left:3px solid var(--green);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.ins b{color:var(--green);font-weight:600}
+.wrn{background:var(--oa);border-left:3px solid var(--orange);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.wrn b{color:var(--orange);font-weight:600}
+.key{background:var(--aa);border-left:3px solid var(--acc);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.86rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+.key b{color:var(--acc);font-weight:600}
+.an{background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:18px 20px;margin:16px 0}
+.an .e{font-size:1.3rem;margin-bottom:4px}.an .at{font-size:.84rem;font-weight:600;color:var(--tb);margin-bottom:5px}
+.an p{font-size:.84rem;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word}
+canvas{display:block;border-radius:8px;max-width:100%;height:auto;cursor:grab}
+canvas:active{cursor:grabbing}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){
+  .cols{grid-template-columns:1fr}
+  .tab{flex:none;min-width:72px;font-size:.56rem;padding:10px 6px}
+  .pg{padding:20px 10px 60px}
+  .hd h1{font-size:1.5rem}
+  .hd .paper{font-size:.8rem}
+  .st{font-size:1.1rem}
+  .desc{font-size:.82rem}
+  .cd{padding:14px}
+  .cl{font-size:.58rem;letter-spacing:1.2px;margin-bottom:10px}
+  .ins,.wrn,.key{padding:10px 14px;font-size:.8rem}
+  .an{padding:14px 16px}
+  .an .at{font-size:.8rem}
+  .an p{font-size:.78rem}
+  .ctrl{gap:10px;padding:8px 10px}
+  .ctrl input[type=range]{width:100px}
+  .ctrl label{font-size:.66rem}
+  .nav{margin-top:20px}
+  .nb{padding:8px 16px;font-size:.78rem}
+}
+@media(max-width:400px){
+  .pg{padding:14px 6px 40px}
+  .hd h1{font-size:1.2rem}
+  .hd .paper{font-size:.74rem}
+  .st{font-size:.95rem;gap:8px}
+  .chip{font-size:.52rem;padding:2px 7px}
+  .cd{padding:8px}
+  .cl{font-size:.52rem}
+  .tab{min-width:56px;font-size:.48rem;padding:8px 4px}
+  .ins,.wrn,.key{padding:8px 10px;font-size:.76rem}
+  .an{padding:10px 12px}
+  .ctrl{flex-direction:column;align-items:flex-start}
+  .ctrl input[type=range]{width:100%}
+}
+.ctrl{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:10px 14px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)}
+.ctrl label{font-size:.72rem;color:var(--td);font-weight:500}
+.ctrl input[type=range]{width:160px;height:3px;-webkit-appearance:none;background:var(--s3);border-radius:2px}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--acc);border-radius:50%;cursor:pointer}
+.ctrl select{background:var(--s3);border:1px solid var(--bd);color:var(--tb);padding:4px 8px;border-radius:4px;font-size:.8rem;font-family:'DM Sans'}
+.ctrl .v{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--acc);min-width:50px}
+.ctrl button{padding:5px 16px;border-radius:6px;font-size:.78rem;cursor:pointer;border:1px solid var(--acc);background:var(--aa);color:var(--acc);font-family:'DM Sans';font-weight:500;transition:all .2s}
+.ctrl button:hover{background:var(--acc);color:var(--bg)}
+.nav{display:flex;justify-content:space-between;margin-top:28px}
+.nb{padding:9px 22px;border-radius:9px;font-size:.84rem;cursor:pointer;border:1px solid var(--bd);background:var(--s1);color:var(--t);font-family:'DM Sans';font-weight:500;transition:all .2s}
+.nb:hover{border-color:var(--acc);color:var(--acc)}.nb.pr{background:var(--aa);border-color:rgba(52,211,153,.25);color:var(--acc)}
+.nb:disabled{opacity:.2;cursor:not-allowed}
+.sc{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--td);letter-spacing:1px;margin-bottom:4px}
+.formula{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:14px 20px;margin:12px 0;font-family:'DM Mono',monospace;font-size:.82rem;color:var(--tb);line-height:2;text-align:center;overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="pg">
+<div class="hd">
+<h1>Optimizer Evolution — From SGD to Muon</h1>
+<div class="paper">Why each optimizer was invented and what problems it solves</div>
+<div class="sub">Interactive visual guide — gradient descent, momentum, adaptive rates &amp; beyond</div>
+</div>
+<div class="tabs" id="tabs"></div>
+
+<!-- S0: Why Optimizers Matter -->
+<div class="sec on" id="s0">
+<div class="sc">THE PROBLEM</div>
+<div class="st">Why Optimizers Matter <span class="chip" style="background:var(--aa);color:var(--acc)">OVERVIEW</span></div>
+<div class="desc">Training a neural network means finding the set of parameters (weights) that <strong>minimize a loss function</strong>. The loss function is a high-dimensional surface — a landscape with valleys, ridges, saddle points, and flat plateaus. An <strong>optimizer</strong> is the algorithm that navigates this landscape, deciding how to update each parameter at every training step. The choice of optimizer profoundly affects training speed, stability, and final model quality.</div>
+<div class="cd"><div class="cl">The loss landscape — navigating to the minimum</div><canvas id="c0a" width="960" height="360"></canvas></div>
+<div class="cd"><div class="cl">Evolution of optimizers — each solves the previous one's problems</div><canvas id="c0b" width="960" height="200"></canvas></div>
+<div class="an"><div class="e">🎯</div><div class="at">The fundamental question</div><p>Given a gradient ∇L (the direction of steepest ascent), how should we update parameters? Vanilla gradient descent says: go in the opposite direction by a fixed step size. But real loss landscapes are complex — they have <strong>narrow ravines</strong> where one direction is much steeper than another, <strong>saddle points</strong> where gradients vanish, and <strong>noisy gradients</strong> from mini-batch sampling. Each optimizer in this article addresses specific failure modes of its predecessor.</p></div>
+<div class="key"><b>The evolution chain:</b> SGD → SGD+Momentum → AdaGrad → RMSprop → Adam → AdamW → Muon. Each step introduces a key insight: momentum accumulates gradient history, adaptive methods scale per-parameter, Adam combines both, AdamW fixes weight decay, and Muon leverages second-order structure.</div>
+</div>
+
+<!-- S1: SGD -->
+<div class="sec" id="s1">
+<div class="sc">STOCHASTIC GRADIENT DESCENT</div>
+<div class="st">SGD — The Foundation <span class="chip" style="background:var(--ba);color:var(--blue)">FIRST-ORDER</span></div>
+<div class="desc">Stochastic Gradient Descent is the simplest optimizer. At each step, it computes the gradient of the loss on a <strong>mini-batch</strong> of data (not the full dataset — that's what makes it "stochastic") and updates parameters in the opposite direction. The update rule is beautifully simple: <strong>θ = θ - η · ∇L</strong>, where η is the learning rate. But this simplicity comes with severe limitations that motivated decades of optimizer research.</div>
+<div class="formula">θ<sub>t+1</sub> = θ<sub>t</sub> - η · ∇L(θ<sub>t</sub>)</div>
+<div class="cd"><div class="cl">SGD update rule — step opposite to gradient</div><canvas id="c1a" width="960" height="240"></canvas></div>
+<div class="cd"><div class="cl">Interactive: SGD on a loss surface</div>
+<div class="ctrl">
+<label>Learning rate η</label>
+<input type="range" id="sgdLr" min="1" max="50" value="18">
+<span class="v" id="sgdLrVal">0.018</span>
+<button id="sgdRun">Run SGD</button>
+<button id="sgdReset">Reset</button>
+</div>
+<canvas id="c1b" width="960" height="400"></canvas></div>
+<div class="wrn"><b>Problem 1 — Noisy zig-zagging:</b> Because each mini-batch gives a slightly different gradient estimate, SGD's path zig-zags erratically instead of moving smoothly toward the minimum. On elongated loss surfaces (common in deep learning), the gradient points mostly across the narrow direction, causing wild oscillations perpendicular to the valley while making tiny progress along it.</div>
+<div class="wrn"><b>Problem 2 — One learning rate for all:</b> SGD uses a single learning rate η for every parameter. But different parameters may need very different step sizes — parameters connected to frequently-activated features get large gradients and may overshoot, while parameters for rare features get tiny gradients and barely move. There's no way to tune η to satisfy both.</div>
+<div class="wrn"><b>Problem 3 — Saddle points:</b> In high-dimensional spaces, saddle points (where the gradient is near zero but it's not a minimum) are far more common than local minima. SGD slows to a crawl near saddle points because the gradient signal becomes vanishingly small, and with noisy mini-batch gradients, the optimizer can get stuck oscillating around the saddle for many iterations.</div>
+<div class="wrn"><b>Problem 4 — Ravines:</b> A ravine is a region where the loss surface curves sharply in one direction but gently in another. The gradient at any point in a ravine points mostly across the ravine (the steep direction), not along it (toward the minimum). SGD bounces back and forth across the narrow direction, making painfully slow progress toward the optimum.</div>
+<div class="ins"><b>What SGD gets right:</b> Despite its problems, SGD has a powerful implicit regularization effect — the noise from mini-batch sampling actually helps generalization by preventing the optimizer from overfitting to sharp, narrow minima. This is why SGD+Momentum remains competitive with Adam for many tasks, especially in computer vision.</div>
+</div>
+
+<!-- S2: SGD + Momentum -->
+<div class="sec" id="s2">
+<div class="sc">MOMENTUM</div>
+<div class="st">SGD + Momentum — Building Velocity <span class="chip" style="background:var(--ga);color:var(--green)">MOMENTUM</span></div>
+<div class="desc">The key insight of momentum: <strong>accumulate a running average of past gradients</strong> and use that to update parameters instead of just the current gradient. Think of a ball rolling down a hill — it builds up speed in consistent directions and dampens oscillations. The velocity vector v accumulates gradient history, so if gradients consistently point the same way, momentum accelerates; if they flip-flop (zig-zagging), momentum dampens them.</div>
+<div class="formula">v<sub>t</sub> = β · v<sub>t-1</sub> + ∇L(θ<sub>t</sub>)<br>θ<sub>t+1</sub> = θ<sub>t</sub> - η · v<sub>t</sub></div>
+<div class="cd"><div class="cl">How momentum accumulates velocity</div><canvas id="c2a" width="960" height="280"></canvas></div>
+<div class="cd"><div class="cl">Interactive: SGD vs. SGD+Momentum</div>
+<div class="ctrl">
+<label>Learning rate η</label>
+<input type="range" id="momLr" min="1" max="50" value="5">
+<span class="v" id="momLrVal">0.005</span>
+<label>Momentum β</label>
+<input type="range" id="momBeta" min="0" max="99" value="90">
+<span class="v" id="momBetaVal">0.90</span>
+<button id="momRun">Run Both</button>
+<button id="momReset">Reset</button>
+</div>
+<canvas id="c2b" width="960" height="400"></canvas></div>
+<div class="ins"><b>How momentum fixes zig-zagging:</b> In a ravine, gradients across the narrow direction flip sign each step. Momentum averages these out — the oscillations cancel while the consistent component along the valley accumulates. The result: faster progress along the valley with reduced bouncing. With β=0.9, the effective step in the consistent direction is ~10x larger than a single gradient step.</div>
+<div class="an"><div class="e">⚽</div><div class="at">The rolling ball analogy</div><p>Imagine a ball rolling down a bumpy hill. Without momentum (vanilla SGD), the ball teleports at each step — no memory of where it was going. With momentum, the ball has <strong>inertia</strong>. It accelerates down smooth slopes, powers through small bumps, and only slowly changes direction when the terrain truly changes. The momentum coefficient β controls how "heavy" the ball is — higher β means more inertia, smoother trajectory, but slower to respond to gradient changes.</p></div>
+<div class="wrn"><b>Remaining problem 1 — Still one learning rate:</b> Momentum smooths the trajectory but still applies the same learning rate to every parameter. A parameter that only activates for rare inputs still gets the same η as one that fires on every sample. This is especially problematic in NLP where word embeddings for rare words receive very sparse gradient updates.</div>
+<div class="wrn"><b>Remaining problem 2 — No per-parameter adaptation:</b> Momentum treats all dimensions equally. If the loss surface is elongated differently in different parameter dimensions, momentum can't adapt — it applies the same β and η everywhere. What we really need is a way to automatically scale the learning rate per parameter based on the gradient history for that specific parameter.</div>
+</div>
+
+<!-- S3: AdaGrad & RMSprop -->
+<div class="sec" id="s3">
+<div class="sc">ADAPTIVE LEARNING RATES</div>
+<div class="st">AdaGrad → RMSprop <span class="chip" style="background:var(--oa);color:var(--orange)">ADAPTIVE</span></div>
+<div class="desc">The next breakthrough came from a completely different direction: instead of smoothing gradients (momentum), what if we <strong>adapt the learning rate for each parameter individually</strong>? AdaGrad (2011) introduced this idea by accumulating squared gradients — parameters with large historical gradients get smaller learning rates, and parameters with small gradients get larger ones. But AdaGrad had a fatal flaw that RMSprop (2012) elegantly fixed.</div>
+
+<div class="desc"><strong>AdaGrad</strong> accumulates the sum of all squared gradients since the start of training. This sum only grows, so the learning rate monotonically decreases. For convex problems, this is actually optimal. But for deep learning's non-convex landscapes, training may need to increase the learning rate when entering new regions — and AdaGrad can't do this. After many steps, the accumulated sum becomes so large that the effective learning rate approaches zero and training stops prematurely.</div>
+<div class="formula">AdaGrad: G<sub>t</sub> = G<sub>t-1</sub> + g<sub>t</sub>² &nbsp;&nbsp;→&nbsp;&nbsp; θ<sub>t+1</sub> = θ<sub>t</sub> - (η / √(G<sub>t</sub> + ε)) · g<sub>t</sub></div>
+
+<div class="desc"><strong>RMSprop</strong> (Hinton, 2012) fixes this with one simple change: use an <strong>exponential moving average</strong> of squared gradients instead of the cumulative sum. This means old gradient information gradually decays, so the effective learning rate can both increase and decrease. The optimizer "forgets" ancient gradient history and adapts to the current region of the loss surface.</div>
+<div class="formula">RMSprop: E[g²]<sub>t</sub> = β · E[g²]<sub>t-1</sub> + (1-β) · g<sub>t</sub>² &nbsp;&nbsp;→&nbsp;&nbsp; θ<sub>t+1</sub> = θ<sub>t</sub> - (η / √(E[g²]<sub>t</sub> + ε)) · g<sub>t</sub></div>
+
+<div class="cd"><div class="cl">AdaGrad vs RMSprop — accumulation strategy</div><canvas id="c3a" width="960" height="300"></canvas></div>
+<div class="cd"><div class="cl">Interactive: RMSprop on a loss surface</div>
+<div class="ctrl">
+<label>Learning rate η</label>
+<input type="range" id="rmsLr" min="1" max="100" value="30">
+<span class="v" id="rmsLrVal">0.030</span>
+<label>Decay β</label>
+<input type="range" id="rmsBeta" min="80" max="99" value="90">
+<span class="v" id="rmsBetaVal">0.90</span>
+<button id="rmsRun">Run RMSprop</button>
+<button id="rmsReset">Reset</button>
+</div>
+<canvas id="c3b" width="960" height="400"></canvas></div>
+<div class="ins"><b>How RMSprop adapts per-parameter:</b> Consider two parameters: one with consistently large gradients (say, a bias term in a frequently-used layer) and one with small, sparse gradients (an embedding for a rare word). RMSprop divides each gradient by √(E[g²]) — for the large-gradient parameter, this denominator is large, shrinking its effective step. For the small-gradient parameter, the denominator is small, enlarging its step. Each parameter automatically gets an appropriate learning rate.</div>
+<div class="an"><div class="e">🔑</div><div class="at">Why exponential moving average is the key insight</div><p>The difference between AdaGrad and RMSprop is the difference between <strong>memory</strong> and <strong>attention</strong>. AdaGrad remembers every gradient forever (sum), so parameters that were active early in training are permanently penalized. RMSprop pays attention to recent gradients (exponential decay), so if a parameter enters a new region of the loss surface, its effective learning rate can adapt. With β=0.9, gradients from ~10 steps ago contribute only ~35% as much as the current gradient. Gradients from ~50 steps ago contribute less than 1%.</p></div>
+<div class="wrn"><b>Remaining problem 1 — No momentum:</b> RMSprop adapts learning rates per-parameter but has no momentum — it doesn't smooth out noisy gradient directions. The trajectory is still subject to the noise of individual mini-batches. Can we combine the benefits of momentum (smooth direction) with adaptive rates (per-parameter scaling)?</div>
+<div class="wrn"><b>Remaining problem 2 — Bias at initialization:</b> The exponential moving average E[g²] is initialized to 0. In the first few steps, the estimate is heavily biased toward zero, leading to artificially large initial updates. This can cause instability at the start of training.</div>
+</div>
+
+<!-- S4: Adam -->
+<div class="sec" id="s4">
+<div class="sc">ADAPTIVE MOMENT ESTIMATION</div>
+<div class="st">Adam — Best of Both Worlds <span class="chip" style="background:var(--ca);color:var(--cyan)">ADAM</span></div>
+<div class="desc">Adam (Kingma & Ba, 2015) combines the two key ideas: <strong>momentum</strong> (first moment — running average of gradients, like SGD+Momentum) and <strong>adaptive learning rates</strong> (second moment — running average of squared gradients, like RMSprop). It also introduces <strong>bias correction</strong> to fix the initialization problem. Adam became the default optimizer for most deep learning tasks because it "just works" with minimal hyperparameter tuning.</div>
+<div class="formula">
+m<sub>t</sub> = β₁ · m<sub>t-1</sub> + (1-β₁) · g<sub>t</sub> &nbsp;&nbsp;&nbsp; <span style="color:var(--cyan)">(1st moment — momentum)</span><br>
+v<sub>t</sub> = β₂ · v<sub>t-1</sub> + (1-β₂) · g<sub>t</sub>² &nbsp;&nbsp;&nbsp; <span style="color:var(--orange)">(2nd moment — adaptive rate)</span><br>
+m̂<sub>t</sub> = m<sub>t</sub> / (1 - β₁<sup>t</sup>) &nbsp;&nbsp;&nbsp; <span style="color:var(--green)">(bias correction)</span><br>
+v̂<sub>t</sub> = v<sub>t</sub> / (1 - β₂<sup>t</sup>) &nbsp;&nbsp;&nbsp; <span style="color:var(--green)">(bias correction)</span><br>
+θ<sub>t+1</sub> = θ<sub>t</sub> - η · m̂<sub>t</sub> / (√v̂<sub>t</sub> + ε)
+</div>
+<div class="cd"><div class="cl">Adam's dual moving averages with bias correction</div><canvas id="c4a" width="960" height="320"></canvas></div>
+<div class="cd"><div class="cl">Interactive: Adam on a loss surface</div>
+<div class="ctrl">
+<label>Learning rate η</label>
+<input type="range" id="adamLr" min="1" max="100" value="30">
+<span class="v" id="adamLrVal">0.030</span>
+<button id="adamRun">Run Adam</button>
+<button id="adamReset">Reset</button>
+</div>
+<canvas id="c4b" width="960" height="400"></canvas></div>
+<div class="an"><div class="e">💡</div><div class="at">Why bias correction matters</div><p>Both m and v are initialized to 0. In the first step with β₁=0.9: m₁ = 0.1·g₁ (only 10% of the gradient!). The bias-corrected version: m̂₁ = m₁/(1-0.9¹) = m₁/0.1 = g₁ (the full gradient). Without correction, the first ~10 steps would use severely underestimated gradients and squared gradients, causing either sluggish starts or unstable behavior. As t grows, (1-β^t) → 1 and the correction vanishes — it's only needed for the first few steps.</p></div>
+<div class="ins"><b>Why Adam "just works":</b> The first moment (momentum) smooths noisy gradients, giving a better estimate of the true gradient direction. The second moment (adaptive rate) normalizes each parameter's update by its recent gradient magnitude. Together, they produce updates that are both well-directed and well-scaled. Default hyperparameters (β₁=0.9, β₂=0.999, η=0.001) work surprisingly well across many architectures and tasks.</div>
+<div class="wrn"><b>Problem — Weight decay is broken in Adam:</b> When you add L2 regularization to Adam (adding λ·θ to the gradient), something subtle goes wrong. The L2 penalty gradient (λ·θ) gets divided by √v̂ just like the task gradient. But the adaptive scaling that helps the task gradient <strong>hurts</strong> the regularization — parameters with large gradients get less regularization than intended. This means Adam's L2 regularization is not equivalent to true weight decay, leading to worse generalization than SGD+Momentum on many tasks.</div>
+<div class="wrn"><b>Problem — Generalization gap:</b> Despite converging faster, Adam often finds solutions that generalize worse than SGD+Momentum. This "generalization gap" was a major concern in computer vision tasks. The root cause is partially the weight decay issue (fixed by AdamW) and partially that Adam's adaptive rates reduce the beneficial noise that helps SGD escape sharp minima.</div>
+</div>
+
+<!-- S5: AdamW -->
+<div class="sec" id="s5">
+<div class="sc">DECOUPLED WEIGHT DECAY</div>
+<div class="st">AdamW — Fixing Regularization <span class="chip" style="background:var(--pa);color:var(--purple)">ADAMW</span></div>
+<div class="desc">Loshchilov & Hutter (2019) identified the core problem: in SGD, <strong>L2 regularization and weight decay are mathematically equivalent</strong>. But in Adam, they are not! When you add an L2 penalty (λ·θ²/2) to the loss, the gradient becomes g + λ·θ. Adam divides this entire gradient by √v̂, so the regularization term λ·θ also gets scaled by the adaptive learning rate — parameters with large past gradients receive <strong>less</strong> regularization. AdamW fixes this by applying weight decay <strong>directly to the parameters</strong>, completely separate from the gradient-based update.</div>
+
+<div class="cols">
+<div class="cd"><div class="cl">Adam + L2 (broken)</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--red)">●</span> Gradient: g<sub>t</sub> = ∇L + <strong>λ·θ</strong><br>
+<span style="color:var(--red)">●</span> m, v computed on (∇L + λ·θ)<br>
+<span style="color:var(--red)">●</span> Update: θ -= η · m̂ / √v̂<br>
+<span style="color:var(--red)">●</span> Regularization scaled by 1/√v̂<br>
+<span style="color:var(--red)">●</span> Large-gradient params: less decay<br>
+<span style="color:var(--red)">●</span> Small-gradient params: more decay
+</div></div>
+<div class="cd"><div class="cl">AdamW (correct)</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--green)">●</span> Gradient: g<sub>t</sub> = ∇L &nbsp;(no λ·θ!)<br>
+<span style="color:var(--green)">●</span> m, v computed on ∇L only<br>
+<span style="color:var(--green)">●</span> Adaptive update: θ -= η · m̂ / √v̂<br>
+<span style="color:var(--green)">●</span> Weight decay: θ -= η · λ · θ<br>
+<span style="color:var(--green)">●</span> All params: same decay rate λ<br>
+<span style="color:var(--green)">●</span> Regularization independent of v̂
+</div></div></div>
+
+<div class="formula">
+AdamW: θ<sub>t+1</sub> = θ<sub>t</sub> - η · (m̂<sub>t</sub> / (√v̂<sub>t</sub> + ε) + λ · θ<sub>t</sub>)
+</div>
+
+<div class="cd"><div class="cl">Adam + L2 vs AdamW — how adaptive rates distort regularization</div><canvas id="c5a" width="960" height="320"></canvas></div>
+<div class="an"><div class="e">🔬</div><div class="at">Why this matters for generalization</div><p>Weight decay pushes all parameters toward zero, preventing the network from relying too heavily on any single parameter. In Adam+L2, parameters with large gradients (which already have large v̂) receive <strong>reduced</strong> regularization — exactly the parameters that might benefit most from it. AdamW ensures uniform regularization: every parameter decays by the same fraction λ per step, regardless of its gradient history. This simple fix closes much of the generalization gap between Adam and SGD+Momentum.</p></div>
+<div class="ins"><b>AdamW is now the standard:</b> Nearly all modern large language models (GPT, LLaMA, etc.), vision transformers, and diffusion models use AdamW as their optimizer. PyTorch made AdamW a separate optimizer class (torch.optim.AdamW) specifically because this distinction matters. If you're using Adam with weight_decay > 0 in the old Adam class, you're doing it wrong — switch to AdamW.</div>
+<div class="wrn"><b>Remaining problem 1 — First-order only:</b> AdamW still only uses gradient information (first derivative). It has no knowledge of the loss surface's <strong>curvature</strong> (second derivative / Hessian). A second-order optimizer could take larger steps in flat directions and smaller steps in curved directions, converging much faster. But computing the full Hessian is O(n²) in parameters — prohibitively expensive for modern networks with billions of parameters.</div>
+<div class="wrn"><b>Remaining problem 2 — Per-parameter independence:</b> AdamW scales each parameter independently. It doesn't consider relationships <strong>between</strong> parameters — how the loss changes when two parameters change together. The optimal update for one parameter depends on what all other parameters are doing, but AdamW ignores this cross-parameter structure entirely.</div>
+</div>
+
+<!-- S6: Muon -->
+<div class="sec" id="s6">
+<div class="sc">MOMENTUM + ORTHOGONALIZATION</div>
+<div class="st">Muon — Cheap Second-Order Updates <span class="chip" style="background:var(--ra);color:var(--red)">MUON</span></div>
+<div class="desc">Muon (Momentum + Orthogonalization + Newton, Jordan et al. 2024) takes a fundamentally different approach. Instead of tracking per-parameter statistics like Adam, Muon <strong>orthogonalizes the momentum buffer</strong> using Newton-Schulz iterations — a cheap approximation to multiplying by the inverse square root of the gradient covariance matrix (G<sup>T</sup>G)<sup>-1/2</sup>. This gives the optimizer awareness of <strong>cross-parameter correlations</strong> and implicitly incorporates second-order curvature information, achieving near-second-order convergence at first-order computational cost.</div>
+
+<div class="desc">The core idea: after computing Nesterov momentum (a look-ahead version of momentum), Muon <strong>orthogonalizes the update matrix</strong> by projecting it onto the Stiefel manifold (the set of matrices with orthonormal rows/columns). This is done via Newton-Schulz iterations — a simple iterative formula that converges to the polar decomposition X·(X<sup>T</sup>X)<sup>-1/2</sup> without ever computing the inverse explicitly. The orthogonalized update has several remarkable properties:</div>
+
+<div class="cd"><div class="cl">Muon algorithm — Nesterov momentum + orthogonalization</div><canvas id="c6a" width="960" height="360"></canvas></div>
+
+<div class="cols">
+<div class="cd"><div class="cl">Why orthogonalization helps</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--red)">●</span> Equalizes singular values of update<br>
+<span style="color:var(--red)">●</span> Large gradient directions: scaled down<br>
+<span style="color:var(--red)">●</span> Small gradient directions: scaled up<br>
+<span style="color:var(--red)">●</span> All directions get equal "energy"<br>
+<span style="color:var(--red)">●</span> Approximates natural gradient
+</div></div>
+<div class="cd"><div class="cl">Newton-Schulz iteration</div>
+<div style="font-size:.84rem;line-height:2.1">
+<span style="color:var(--cyan)">●</span> Initialize: X₀ = G / ‖G‖<sub>F</sub><br>
+<span style="color:var(--cyan)">●</span> Iterate: X<sub>k+1</sub> = aX<sub>k</sub> + bX<sub>k</sub>(X<sub>k</sub><sup>T</sup>X<sub>k</sub>) + c(X<sub>k</sub><sup>T</sup>X<sub>k</sub>)X<sub>k</sub><br>
+<span style="color:var(--cyan)">●</span> 5 iterations suffice (fast convergence)<br>
+<span style="color:var(--cyan)">●</span> Only matrix multiplications — GPU-friendly<br>
+<span style="color:var(--cyan)">●</span> Result: orthogonal update matrix
+</div></div></div>
+
+<div class="cd"><div class="cl">First-order vs. second-order update directions</div><canvas id="c6b" width="960" height="280"></canvas></div>
+<div class="an"><div class="e">⚡</div><div class="at">The spectral perspective</div><p>Think of the gradient matrix G as having multiple "directions" with different magnitudes (singular values). AdamW scales each parameter independently but doesn't change the <strong>relative directions</strong>. Muon's orthogonalization sets all singular values to 1, making the update <strong>uniformly energetic</strong> in all directions. This is equivalent to preconditioning by (G<sup>T</sup>G)<sup>-1/2</sup> — a form of natural gradient descent that accounts for the geometry of the parameter space. It's like having a perfectly conditioned Hessian approximation for free.</p></div>
+<div class="ins"><b>When to use Muon:</b> Muon is designed for <strong>matrix-shaped parameters</strong> (weight matrices in linear layers, attention projections, etc.) — which make up the vast majority of parameters in transformers. For embeddings and 1D parameters (biases, norms), AdamW is still used alongside Muon. In practice, Muon achieves comparable or better results to AdamW with significantly fewer training steps, especially for large language models.</div>
+<div class="key"><b>Computational cost:</b> The Newton-Schulz iterations add ~5 matrix multiplications per optimizer step. For large models this is a small fraction of the forward/backward pass cost. Muon's overhead is minimal compared to its convergence speedup — often reaching the same loss in 2x fewer steps.</div>
+</div>
+
+<!-- S7: Comparison -->
+<div class="sec" id="s7">
+<div class="sc">COMPARISON</div>
+<div class="st">The Full Picture <span class="chip" style="background:var(--aa);color:var(--acc)">COMPARE</span></div>
+<div class="desc">Now let's see all the optimizers side-by-side on the same loss surface. Each optimizer starts from the same point and uses its own <strong>tuned learning rate</strong> (in practice, you always tune lr per optimizer). Adaptive optimizers (RMSprop, Adam) can use much higher learning rates because they normalize gradients internally. Watch how their trajectories differ — SGD zig-zags wildly, Momentum smooths the path, RMSprop adapts per-axis and moves diagonally, Adam combines both for the most direct route.</div>
+<div class="cd"><div class="cl">Interactive: all optimizers on the same surface</div>
+<div class="ctrl">
+<button id="cmpRun">Run All</button>
+<button id="cmpReset">Reset</button>
+</div>
+<canvas id="c7a" width="960" height="480"></canvas></div>
+<div class="cd"><div class="cl">Evolution chain — each innovation builds on the last</div><canvas id="c7b" width="960" height="280"></canvas></div>
+<div class="cd"><div class="cl">Optimizer comparison table</div><canvas id="c7c" width="960" height="320"></canvas></div>
+</div>
+
+<!-- S8: Summary -->
+<div class="sec" id="s8">
+<div class="sc">SUMMARY</div>
+<div class="st">Key Takeaways <span class="chip" style="background:var(--aa);color:var(--acc)">SUMMARY</span></div>
+<div class="desc">Each optimizer in the evolution chain was born from a specific limitation of its predecessor. Understanding <strong>why</strong> each was invented is more important than memorizing the update rules — it reveals the fundamental challenges of navigating high-dimensional loss landscapes.</div>
+<div class="cd"><div class="cl">The complete evolution — problems and solutions</div><canvas id="c8a" width="960" height="480"></canvas></div>
+<div class="an"><div class="e">📊</div><div class="at">Key takeaways</div><p><strong>SGD:</strong> Simple but zig-zags, one learning rate for all. <strong>Momentum:</strong> Smooths trajectory via velocity accumulation. <strong>AdaGrad:</strong> Per-parameter rates but learning rate dies. <strong>RMSprop:</strong> Fixes AdaGrad with exponential decay. <strong>Adam:</strong> Combines momentum + adaptive rates + bias correction. <strong>AdamW:</strong> Fixes broken weight decay for better generalization. <strong>Muon:</strong> Cheap second-order via orthogonalization — aware of cross-parameter structure.</p></div>
+<div class="key"><b>Practical advice:</b> For most tasks, start with <strong>AdamW</strong> (β₁=0.9, β₂=0.999, lr=3e-4, weight_decay=0.01). For large language models and where compute is critical, consider <strong>Muon</strong> for matrix parameters with AdamW for embeddings. SGD+Momentum remains excellent for computer vision tasks with careful learning rate scheduling. The "best" optimizer depends on your task, model, and compute budget.</div>
+</div>
+
+<div class="nav"><button class="nb" id="pB" disabled onclick="go(-1)">← Previous</button><button class="nb pr" id="nB" onclick="go(1)">Next →</button></div>
+</div>
+
+<script>
+const S=['Why Optimizers','SGD','Momentum','RMSprop','Adam','AdamW','Muon','Comparison','Summary'];
+let cur=0;const $=id=>document.getElementById(id);
+$('tabs').innerHTML=S.map((s,i)=>`<div class="tab${i?'':' on'}" data-i="${i}">${s}</div>`).join('');
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTo(+t.dataset.i)));
+function goTo(n){cur=n;document.querySelectorAll('.sec').forEach((e,i)=>e.classList.toggle('on',i===n));document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('on',i===n));$('pB').disabled=n===0;const b=$('nB');b.disabled=n===S.length-1;b.textContent=n===S.length-1?'Done ✓':'Next →';draw();stopAllAnims();}
+function go(d){if(cur+d>=0&&cur+d<S.length)goTo(cur+d)}
+function draw(){renders[cur]?.()}
+
+// Helpers
+function rr(c,x,y,w,h,r=8){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath()}
+function bx(c,x,y,w,h,f,s,t,tc,fs=11){rr(c,x,y,w,h);c.fillStyle=f;c.fill();if(s){c.strokeStyle=s;c.lineWidth=1;c.stroke()}if(t){c.fillStyle=tc||'#e0f2e8';c.font=`500 ${fs}px DM Sans`;c.textAlign='center';c.textBaseline='middle';t.split('\n').forEach((l,i,a)=>c.fillText(l,x+w/2,y+h/2+(i-(a.length-1)/2)*15))}}
+function ar(c,x1,y1,x2,y2,col='#507860'){c.strokeStyle=col;c.lineWidth=1.5;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();const a=Math.atan2(y2-y1,x2-x1);c.fillStyle=col;c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-7*Math.cos(a-.4),y2-7*Math.sin(a-.4));c.lineTo(x2-7*Math.cos(a+.4),y2-7*Math.sin(a+.4));c.fill()}
+const DESIGN_W=960;
+function dpr(el){
+  var d=window.devicePixelRatio||1;
+  if(!el._origH)el._origH=parseInt(el.getAttribute('height'));
+  var parent=el.parentElement;
+  var padL=parent?parseFloat(getComputedStyle(parent).paddingLeft)||0:0;
+  var padR=parent?parseFloat(getComputedStyle(parent).paddingRight)||0:0;
+  var availW=parent?(parent.clientWidth-padL-padR):DESIGN_W;
+  var logicW=Math.min(DESIGN_W,Math.max(280,availW));
+  var s=logicW/DESIGN_W;
+  var logicH=Math.round(el._origH*s);
+  el.width=logicW*d;el.height=logicH*d;
+  el.style.width=logicW+'px';el.style.height=logicH+'px';
+  var x=el.getContext('2d');x.setTransform(1,0,0,1,0,0);x.scale(d*s,d*s);
+  return{w:DESIGN_W,h:el._origH,x:x,s:s};
+}
+
+// ========== LOSS SURFACE UTILITIES ==========
+// Loss function: f(x,y) = x² + 50*y² (50:1 ratio — very elongated, clearly shows zig-zagging)
+function lossF(px,py){return px*px+50*py*py}
+// Gradient: [2x, 100y]
+function gradF(px,py){return[2*px,100*py]}
+
+// Color palette for contour heat map (dark blue → cyan → green → yellow → red)
+var CONTOUR_COLORS=[
+  [8,20,40],    // deep dark blue (lowest)
+  [10,40,70],
+  [12,60,100],
+  [20,80,120],
+  [30,120,140],
+  [40,160,150],  // teal
+  [60,180,120],
+  [100,190,80],  // green
+  [160,200,60],
+  [210,190,40],  // yellow
+  [240,160,40],
+  [250,120,50],  // orange
+  [240,80,60],   // red-orange
+  [220,50,60],   // red
+];
+
+function contourColor(val){
+  // Map loss value to color index using log scale
+  if(val<=0)return CONTOUR_COLORS[0];
+  var t=Math.log(val+1)/Math.log(300);// normalize to ~0-1 range
+  t=Math.min(1,Math.max(0,t));
+  var idx=t*(CONTOUR_COLORS.length-1);
+  var lo=Math.floor(idx),hi=Math.min(lo+1,CONTOUR_COLORS.length-1);
+  var f=idx-lo;
+  return[
+    CONTOUR_COLORS[lo][0]+(CONTOUR_COLORS[hi][0]-CONTOUR_COLORS[lo][0])*f,
+    CONTOUR_COLORS[lo][1]+(CONTOUR_COLORS[hi][1]-CONTOUR_COLORS[lo][1])*f,
+    CONTOUR_COLORS[lo][2]+(CONTOUR_COLORS[hi][2]-CONTOUR_COLORS[lo][2])*f
+  ];
+}
+
+// ========== 3D SURFACE RENDERER ==========
+// Camera state — shared by drawContour and drawPath
+var cam={angle:0.7,tilt:0.55,zoom:1.0};
+
+function project3D(px,py,pz,cx,cy,s3d){
+  var ca=Math.cos(cam.angle),sa=Math.sin(cam.angle);
+  var rx=px*ca-py*sa;
+  var ry=px*sa+py*ca;
+  var screenX=cx+rx*s3d*cam.zoom;
+  var screenY=cy+ry*s3d*cam.tilt*cam.zoom-pz*s3d*0.9*cam.zoom;
+  return[screenX,screenY];
+}
+
+// Interactive 3D: mouse drag for rotation, scroll for zoom
+var _dragState=null;
+function init3DControls(canvasId,renderFn){
+  var el=$(canvasId);if(!el)return;
+  el.addEventListener('mousedown',function(e){
+    e.preventDefault();
+    _dragState={startX:e.clientX,startY:e.clientY,startAngle:cam.angle,startTilt:cam.tilt,canvas:canvasId};
+  });
+  el.addEventListener('touchstart',function(e){
+    if(e.touches.length===1){
+      e.preventDefault();
+      var t=e.touches[0];
+      _dragState={startX:t.clientX,startY:t.clientY,startAngle:cam.angle,startTilt:cam.tilt,canvas:canvasId};
+    }
+  },{passive:false});
+  el.addEventListener('wheel',function(e){
+    e.preventDefault();
+    cam.zoom=Math.max(0.4,Math.min(2.5,cam.zoom-e.deltaY*0.001));
+    draw();
+  },{passive:false});
+}
+document.addEventListener('mousemove',function(e){
+  if(!_dragState)return;
+  var dx=e.clientX-_dragState.startX;
+  var dy=e.clientY-_dragState.startY;
+  cam.angle=_dragState.startAngle+dx*0.005;
+  cam.tilt=Math.max(0.1,Math.min(0.9,_dragState.startTilt+dy*0.003));
+  draw();
+});
+document.addEventListener('mouseup',function(){_dragState=null;});
+document.addEventListener('touchmove',function(e){
+  if(!_dragState||e.touches.length!==1)return;
+  var t=e.touches[0];
+  var dx=t.clientX-_dragState.startX;
+  var dy=t.clientY-_dragState.startY;
+  cam.angle=_dragState.startAngle+dx*0.005;
+  cam.tilt=Math.max(0.1,Math.min(0.9,_dragState.startTilt+dy*0.003));
+  draw();
+},{passive:false});
+document.addEventListener('touchend',function(){_dragState=null;});
+
+// Height function — clamp for visual clarity
+function lossHeight(px,py){
+  return Math.min(lossF(px,py),120)*0.025; // scale Z to reasonable range
+}
+
+function drawContour(x,W,H,ox,oy,scale){
+  // 3D surface view
+  var cx=W/2,cy=H*0.62; // projection center
+  var s3d=scale*0.9; // 3D scale factor
+  var gridN=30; // grid resolution
+  var range=5; // parameter range [-range, range]
+  var step=2*range/gridN;
+
+  // Draw surface mesh from back to front (painter's algorithm)
+  // Sort by depth (ry in projection)
+  for(var j=gridN-1;j>=0;j--){
+    for(var i=0;i<gridN;i++){
+      var px0=-range+i*step,py0=-range+j*step;
+      var px1=px0+step,py1=py0+step;
+      // 4 corners of quad
+      var z00=lossHeight(px0,py0),z10=lossHeight(px1,py0);
+      var z01=lossHeight(px0,py1),z11=lossHeight(px1,py1);
+      var p00=project3D(px0,py0,z00,cx,cy,s3d);
+      var p10=project3D(px1,py0,z10,cx,cy,s3d);
+      var p01=project3D(px0,py1,z01,cx,cy,s3d);
+      var p11=project3D(px1,py1,z11,cx,cy,s3d);
+      // Color based on height
+      var avgZ=(z00+z10+z01+z11)/4;
+      var rgb=contourColor(avgZ/0.025);
+      // Fill quad
+      x.fillStyle='rgb('+Math.round(rgb[0])+','+Math.round(rgb[1])+','+Math.round(rgb[2])+')';
+      x.beginPath();
+      x.moveTo(p00[0],p00[1]);x.lineTo(p10[0],p10[1]);
+      x.lineTo(p11[0],p11[1]);x.lineTo(p01[0],p01[1]);
+      x.closePath();x.fill();
+      // Wireframe
+      x.strokeStyle='rgba(255,255,255,0.08)';x.lineWidth=0.5;x.stroke();
+    }
+  }
+
+  // Draw grid lines for clarity
+  x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=0.5;
+  // θ₁ axis line (y=0)
+  x.beginPath();
+  for(var i=0;i<=gridN;i++){
+    var px=-range+i*step,py=0;
+    var z=lossHeight(px,py);
+    var p=project3D(px,py,z,cx,cy,s3d);
+    if(i===0)x.moveTo(p[0],p[1]);else x.lineTo(p[0],p[1]);
+  }
+  x.stroke();
+  // θ₂ axis line (x=0)
+  x.beginPath();
+  for(var j=0;j<=gridN;j++){
+    var px=0,py=-range+j*step;
+    var z=lossHeight(px,py);
+    var p=project3D(px,py,z,cx,cy,s3d);
+    if(j===0)x.moveTo(p[0],p[1]);else x.lineTo(p[0],p[1]);
+  }
+  x.stroke();
+
+  // Minimum marker (at origin, z=0)
+  var pMin=project3D(0,0,0,cx,cy,s3d);
+  x.fillStyle='#fff';x.beginPath();x.arc(pMin[0],pMin[1],4,0,Math.PI*2);x.fill();
+  x.fillStyle='#34d399';x.beginPath();x.arc(pMin[0],pMin[1],2.5,0,Math.PI*2);x.fill();
+  x.font='600 10px DM Mono';x.fillStyle='rgba(255,255,255,0.7)';x.textAlign='center';
+  x.fillText('min',pMin[0],pMin[1]+14);
+
+  // Axis labels
+  var pX=project3D(range+0.5,0,0,cx,cy,s3d);
+  var pY=project3D(0,range+0.5,0,cx,cy,s3d);
+  x.font='11px DM Mono';x.fillStyle='rgba(255,255,255,0.4)';
+  x.textAlign='center';
+  x.fillText('θ₁',pX[0],pX[1]+4);
+  x.fillText('θ₂',pY[0],pY[1]+4);
+  // Z label
+  var pZ=project3D(0,0,lossHeight(0,2)+0.5,cx,cy,s3d);
+  x.fillText('Loss',cx-W*0.35,cy-H*0.35);
+  // Interaction hint
+  x.font='9px DM Sans';x.fillStyle='rgba(255,255,255,0.25)';x.textAlign='right';
+  x.fillText('drag to rotate · scroll to zoom',W-20,16);
+}
+
+// Draw optimizer trajectory on 3D surface
+function drawPath(x,path,col,label,W,H,scale){
+  if(path.length<2)return;
+  // Use same projection center as drawContour
+  var c3x=W/2,c3y=H*0.62;
+  var s3d=scale*0.9;
+
+  // Draw path as line on surface
+  x.save();
+  x.shadowColor=col;x.shadowBlur=8;
+  x.strokeStyle=col;x.lineWidth=2.5;x.globalAlpha=0.95;
+  x.beginPath();
+  var p0=project3D(path[0][0],path[0][1],lossHeight(path[0][0],path[0][1]),c3x,c3y,s3d);
+  x.moveTo(p0[0],p0[1]);
+  for(var i=1;i<path.length;i++){
+    var z=lossHeight(path[i][0],path[i][1]);
+    var p=project3D(path[i][0],path[i][1],z,c3x,c3y,s3d);
+    x.lineTo(p[0],p[1]);
+  }
+  x.stroke();
+  x.restore();
+  x.globalAlpha=1;
+
+  // Draw dots on surface
+  path.forEach(function(pt,i){
+    var z=lossHeight(pt[0],pt[1]);
+    var p=project3D(pt[0],pt[1],z,c3x,c3y,s3d);
+    var isCurrent=i===path.length-1;
+    if(isCurrent){
+      x.fillStyle=col+'55';x.beginPath();x.arc(p[0],p[1],8,0,Math.PI*2);x.fill();
+    }
+    x.fillStyle=isCurrent?'#fff':col;
+    x.beginPath();x.arc(p[0],p[1],isCurrent?4:i===0?4:2,0,Math.PI*2);x.fill();
+    // Drop line from point to base plane for start and current
+    if(i===0||isCurrent){
+      var pBase=project3D(pt[0],pt[1],0,c3x,c3y,s3d);
+      x.strokeStyle=col+'44';x.lineWidth=1;x.setLineDash([3,3]);
+      x.beginPath();x.moveTo(p[0],p[1]);x.lineTo(pBase[0],pBase[1]);x.stroke();
+      x.setLineDash([]);
+    }
+  });
+
+  // Start label
+  if(path.length>0){
+    var z0=lossHeight(path[0][0],path[0][1]);
+    var p0l=project3D(path[0][0],path[0][1],z0,c3x,c3y,s3d);
+    x.fillStyle=col;x.font='600 10px DM Sans';x.textAlign='left';
+    x.fillText(label,p0l[0]+8,p0l[1]-8);
+  }
+  // Step counter and loss at current position
+  if(path.length>1){
+    var last=path[path.length-1];
+    var loss=lossF(last[0],last[1]);
+    var zL=lossHeight(last[0],last[1]);
+    var pL=project3D(last[0],last[1],zL,c3x,c3y,s3d);
+    x.font='600 9px DM Mono';x.fillStyle='#fff';x.textAlign='left';
+    x.fillText('step '+path.length+' | loss: '+loss.toFixed(1),pL[0]+10,pL[1]-6);
+  }
+}
+
+// Optimizer step functions — start off-center in the elongated valley
+var START_X=-4,START_Y=1.2;
+
+function runSGD(lr,steps){
+  var path=[[START_X,START_Y]];
+  var px=START_X,py=START_Y;
+  for(var i=0;i<steps;i++){
+    var g=gradF(px,py);
+    px-=lr*g[0];py-=lr*g[1];
+    path.push([px,py]);
+    if(px*px+py*py<0.0001)break;
+  }
+  return path;
+}
+
+function runMomentum(lr,beta,steps){
+  var path=[[START_X,START_Y]];
+  var px=START_X,py=START_Y,vx=0,vy=0;
+  for(var i=0;i<steps;i++){
+    var g=gradF(px,py);
+    vx=beta*vx+g[0];vy=beta*vy+g[1];
+    px-=lr*vx;py-=lr*vy;
+    path.push([px,py]);
+    if(px*px+py*py<0.0001)break;
+  }
+  return path;
+}
+
+function runRMSprop(lr,beta,steps){
+  var path=[[START_X,START_Y]];
+  var px=START_X,py=START_Y,vx=0,vy=0,eps=1e-8;
+  for(var i=0;i<steps;i++){
+    var g=gradF(px,py);
+    vx=beta*vx+(1-beta)*g[0]*g[0];
+    vy=beta*vy+(1-beta)*g[1]*g[1];
+    px-=lr*g[0]/(Math.sqrt(vx)+eps);
+    py-=lr*g[1]/(Math.sqrt(vy)+eps);
+    path.push([px,py]);
+    if(px*px+py*py<0.0001)break;
+  }
+  return path;
+}
+
+function runAdam(lr,steps){
+  var path=[[START_X,START_Y]];
+  var px=START_X,py=START_Y;
+  var mx=0,my=0,vx=0,vy=0;
+  var b1=0.9,b2=0.999,eps=1e-8;
+  for(var i=0;i<steps;i++){
+    var g=gradF(px,py);
+    mx=b1*mx+(1-b1)*g[0];my=b1*my+(1-b1)*g[1];
+    vx=b2*vx+(1-b2)*g[0]*g[0];vy=b2*vy+(1-b2)*g[1]*g[1];
+    var mhx=mx/(1-Math.pow(b1,i+1)),mhy=my/(1-Math.pow(b1,i+1));
+    var vhx=vx/(1-Math.pow(b2,i+1)),vhy=vy/(1-Math.pow(b2,i+1));
+    px-=lr*mhx/(Math.sqrt(vhx)+eps);
+    py-=lr*mhy/(Math.sqrt(vhy)+eps);
+    path.push([px,py]);
+    if(px*px+py*py<0.0001)break;
+  }
+  return path;
+}
+
+function runAdamW(lr,lambda,steps){
+  var path=[[START_X,START_Y]];
+  var px=START_X,py=START_Y;
+  var mx=0,my=0,vx=0,vy=0;
+  var b1=0.9,b2=0.999,eps=1e-8;
+  for(var i=0;i<steps;i++){
+    var g=gradF(px,py);
+    // Moments on clean gradient only (no weight decay in gradient)
+    mx=b1*mx+(1-b1)*g[0];my=b1*my+(1-b1)*g[1];
+    vx=b2*vx+(1-b2)*g[0]*g[0];vy=b2*vy+(1-b2)*g[1]*g[1];
+    var mhx=mx/(1-Math.pow(b1,i+1)),mhy=my/(1-Math.pow(b1,i+1));
+    var vhx=vx/(1-Math.pow(b2,i+1)),vhy=vy/(1-Math.pow(b2,i+1));
+    // Decoupled weight decay + adaptive update
+    px-=lr*(mhx/(Math.sqrt(vhx)+eps)+lambda*px);
+    py-=lr*(mhy/(Math.sqrt(vhy)+eps)+lambda*py);
+    path.push([px,py]);
+    if(px*px+py*py<0.0001)break;
+  }
+  return path;
+}
+
+function runMuon(lr,beta,steps){
+  // Muon approximation for 2D: Nesterov momentum + curvature preconditioning
+  // Real Muon orthogonalizes weight matrices via Newton-Schulz, which equalizes singular values.
+  // In 2D, this is equivalent to preconditioning by the inverse Hessian diagonal —
+  // making the optimizer take equal-sized steps in all directions regardless of curvature.
+  // We estimate the Hessian diagonal via the secant method (gradient differences).
+  var path=[[START_X,START_Y]];
+  var px=START_X,py=START_Y;
+  var vx=0,vy=0;
+  // Initialize curvature estimate from gradient/position ratio
+  var g0=gradF(START_X,START_Y);
+  var hx=Math.abs(g0[0]/(START_X||1)),hy=Math.abs(g0[1]/(START_Y||1));
+  var prevG=null,prevPx=px,prevPy=py;
+  for(var i=0;i<steps;i++){
+    var g=gradF(px,py);
+    // Update curvature estimate via secant method (captures Muon's fast adaptation)
+    if(prevG){
+      var dpx=px-prevPx,dpy=py-prevPy;
+      if(Math.abs(dpx)>1e-10) hx=0.7*hx+0.3*Math.abs((g[0]-prevG[0])/dpx);
+      if(Math.abs(dpy)>1e-10) hy=0.7*hy+0.3*Math.abs((g[1]-prevG[1])/dpy);
+    }
+    prevG=[g[0],g[1]];prevPx=px;prevPy=py;
+    // Preconditioned gradient (quasi-Newton direction — curvature-aware)
+    var ngx=g[0]/Math.max(hx,0.1);
+    var ngy=g[1]/Math.max(hy,0.1);
+    // Nesterov momentum
+    vx=beta*vx+ngx;vy=beta*vy+ngy;
+    px-=lr*(ngx+beta*vx);
+    py-=lr*(ngy+beta*vy);
+    path.push([px,py]);
+    if(px*px+py*py<0.0001)break;
+  }
+  return path;
+}
+
+// Animation state
+var animFrames={};
+function stopAllAnims(){Object.keys(animFrames).forEach(function(k){cancelAnimationFrame(animFrames[k]);delete animFrames[k];})}
+
+function animatePath(key,pathFn,drawFn,maxSteps){
+  stopAnim(key);
+  var step=0;
+  var path=[];
+  function tick(){
+    if(step<=maxSteps){
+      var fullPath=pathFn();
+      path=fullPath.slice(0,step+1);
+      drawFn(path);
+      step++;
+      animFrames[key]=requestAnimationFrame(tick);
+    }
+  }
+  tick();
+}
+function stopAnim(key){if(animFrames[key]){cancelAnimationFrame(animFrames[key]);delete animFrames[key];}}
+
+const renders={};
+
+// ========== S0: WHY OPTIMIZERS MATTER ==========
+renders[0]=()=>{
+  // Loss landscape
+  var c=$('c0a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  var ox=W/2,oy=H/2,scale=50;
+  drawContour(x,W,H,ox,oy,scale);
+  // Labels
+  x.font='600 12px DM Sans';x.fillStyle='#e0f2e8';x.textAlign='left';
+  x.fillText('Loss surface: f(θ₁, θ₂) = θ₁² + 50·θ₂²',30,20);
+  x.font='10px DM Sans';x.fillStyle='rgba(255,255,255,0.4)';
+  x.fillText('An elongated bowl — 50× steeper in θ₂ than θ₁ — this is why SGD zig-zags!',30,36);
+  x.fillText('The valley is narrow in θ₂ (steep walls) and long in θ₁ (gentle slope)',30,H-10);
+
+  // Evolution chain
+  var c2=$('c0b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  var chain=[
+    {l:'SGD',c:'#60a5fa',y:80},
+    {l:'Momentum',c:'#4ade80',y:80},
+    {l:'AdaGrad',c:'#facc15',y:80},
+    {l:'RMSprop',c:'#fb923c',y:80},
+    {l:'Adam',c:'#22d3ee',y:80},
+    {l:'AdamW',c:'#a78bfa',y:80},
+    {l:'Muon',c:'#f87171',y:80},
+  ];
+  var gap=W2/(chain.length+1);
+  chain.forEach(function(item,i){
+    var cx=gap*(i+1);
+    bx(x2,cx-48,50,96,50,item.c+'15',item.c+'40',item.l,item.c,12);
+    if(i<chain.length-1) ar(x2,cx+52,75,cx+gap-52,75,item.c+'66');
+  });
+  // Labels
+  var labels=['Fixed\nstep','Velocity\naccum.','Per-param\nrates','Exp. moving\navg','Momentum+\nadaptive','Decoupled\nweight decay','Orthogonal\nupdates'];
+  chain.forEach(function(item,i){
+    var cx=gap*(i+1);
+    x2.font='9px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+    labels[i].split('\n').forEach(function(line,li){
+      x2.fillText(line,cx,120+li*13);
+    });
+  });
+  x2.font='600 11px DM Sans';x2.fillStyle='#88b8a0';x2.textAlign='center';
+  x2.fillText('Each optimizer solves the previous one\'s key limitation',W2/2,25);
+};
+
+// ========== S1: SGD ==========
+renders[1]=()=>{
+  // Update rule diagram
+  var c=$('c1a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  bx(x,40,40,140,60,'#60a5fa11','#60a5fa33','θ (parameters)','#60a5fa');
+  ar(x,190,70,280,70,'#60a5fa66');
+  bx(x,280,30,180,80,'#fb923c11','#fb923c33','','');
+  x.font='600 12px DM Sans';x.fillStyle='#fb923c';x.textAlign='center';
+  x.fillText('Compute Gradient',370,55);
+  x.font='10px DM Sans';x.fillStyle='#88b8a0';
+  x.fillText('∇L(θ) on mini-batch',370,78);
+  ar(x,470,70,560,70,'#fb923c66');
+  bx(x,560,30,180,80,'#4ade8011','#4ade8033','','');
+  x.font='600 12px DM Sans';x.fillStyle='#4ade80';x.textAlign='center';
+  x.fillText('Update',650,55);
+  x.font='10px DM Sans';x.fillStyle='#88b8a0';
+  x.fillText('θ = θ - η · ∇L(θ)',650,78);
+  ar(x,750,70,840,70,'#4ade8066');
+  bx(x,840,40,80,60,'#60a5fa11','#60a5fa33','θ\'','#60a5fa');
+  // Bottom annotation
+  x.font='10px DM Sans';x.fillStyle='#507860';x.textAlign='center';
+  x.fillText('η (learning rate) = fixed scalar — same for every parameter, every step',W/2,160);
+  x.fillText('∇L = gradient of loss w.r.t. parameters — computed on a random mini-batch (stochastic)',W/2,180);
+  x.fillText('Key weakness: the gradient direction from one mini-batch is noisy and the step size is uniform',W/2,210);
+
+  // Training sim (3D surface)
+  var c2=$('c1b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  var ox=W2/2,oy=H2/2,scale=60;
+  drawContour(x2,W2,H2,ox,oy,scale);
+  var lr=+$('sgdLr').value/1000;
+  $('sgdLrVal').textContent=lr.toFixed(3);
+  if(sgdPath.length>1) drawPath(x2,sgdPath,'#60a5fa','SGD',W2,H2,scale);
+  else{
+    // Draw start point on 3D surface
+    var sz=lossHeight(START_X,START_Y);
+    var sp=project3D(START_X,START_Y,sz,W2/2,H2*0.62,scale*0.9);
+    x2.fillStyle='#60a5fa44';x2.beginPath();x2.arc(sp[0],sp[1],10,0,Math.PI*2);x2.fill();
+    x2.fillStyle='#60a5fa';x2.beginPath();x2.arc(sp[0],sp[1],5,0,Math.PI*2);x2.fill();
+    x2.font='600 11px DM Sans';x2.textAlign='left';x2.fillStyle='#fff';
+    x2.fillText('Start',sp[0]+12,sp[1]-4);
+  }
+  // Legend panel
+  x2.fillStyle='rgba(0,0,0,0.5)';rr(x2,20,H2-55,440,45);x2.fill();
+  x2.font='10px DM Sans';x2.fillStyle='rgba(255,255,255,0.7)';x2.textAlign='left';
+  x2.fillText('f(θ₁,θ₂) = θ₁² + 50·θ₂²  — gradient is 50× steeper in θ₂ than θ₁',30,H2-35);
+  x2.fillText('Watch SGD zig-zag across the narrow valley while barely moving toward the minimum',30,H2-18);
+};
+
+var sgdPath=[];
+$('sgdRun').addEventListener('click',function(){
+  var lr=+$('sgdLr').value/1000;
+  var fullPath=runSGD(lr,200);
+  sgdPath=[];
+  var step=0;
+  stopAnim('sgd');
+  var lastTime=0;
+  function tick(ts){
+    if(step<fullPath.length){
+      if(ts-lastTime>50){// ~20fps — slow enough to see each step
+        sgdPath=fullPath.slice(0,step+1);
+        renders[1]();
+        step++;
+        lastTime=ts;
+      }
+      animFrames['sgd']=requestAnimationFrame(tick);
+    }
+  }
+  animFrames['sgd']=requestAnimationFrame(tick);
+});
+$('sgdReset').addEventListener('click',function(){stopAnim('sgd');sgdPath=[];renders[1]();});
+$('sgdLr').addEventListener('input',function(){stopAnim('sgd');sgdPath=[];renders[1]();});
+
+// ========== S2: MOMENTUM ==========
+renders[2]=()=>{
+  // How momentum works
+  var c=$('c2a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Show velocity accumulation over 5 steps
+  x.font='600 12px DM Sans';x.fillStyle='#88b8a0';x.textAlign='left';
+  x.fillText('Velocity accumulation over 5 steps (β = 0.9)',30,25);
+  var steps=[
+    {g:'g₁ = [2, 8]',v:'v₁ = [2, 8]',note:'First step: v = gradient'},
+    {g:'g₂ = [1.5, -6]',v:'v₂ = [3.3, 1.2]',note:'Oscillation in y dampened'},
+    {g:'g₃ = [1.8, 7]',v:'v₃ = [4.8, 8.1]',note:'y oscillates, x accumulates'},
+    {g:'g₄ = [1.2, -5]',v:'v₄ = [5.5, 2.3]',note:'y cancels out more'},
+    {g:'g₅ = [1.6, 6]',v:'v₅ = [6.6, 8.1]',note:'x keeps growing, y stays bounded'},
+  ];
+  steps.forEach(function(s,i){
+    var y=50+i*44;
+    bx(x,30,y,180,36,'#fb923c08','#fb923c20','','');
+    x.font='10px DM Mono';x.fillStyle='#fb923c';x.textAlign='center';x.fillText(s.g,120,y+22);
+    ar(x,220,y+18,260,y+18,'#507860');
+    bx(x,260,y,200,36,'#4ade8008','#4ade8020','','');
+    x.font='10px DM Mono';x.fillStyle='#4ade80';x.textAlign='center';x.fillText(s.v,360,y+22);
+    x.font='10px DM Sans';x.fillStyle='#507860';x.textAlign='left';x.fillText(s.note,480,y+22);
+  });
+  // Summary
+  x.font='600 11px DM Sans';x.fillStyle='#34d399';x.textAlign='center';
+  x.fillText('x-direction: consistent gradients → velocity grows (accelerates)',W/2,268);
+  x.fillText('y-direction: oscillating gradients → velocity stays small (dampens)',W/2,284);
+
+  // Training sim: SGD vs Momentum (3D)
+  var c2=$('c2b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  var ox=W2/2,oy=H2/2,scale=60;
+  drawContour(x2,W2,H2,ox,oy,scale);
+  var lr=+$('momLr').value/1000;
+  var beta=+$('momBeta').value/100;
+  $('momLrVal').textContent=lr.toFixed(3);
+  $('momBetaVal').textContent=beta.toFixed(2);
+  if(momPaths.sgd.length>1) drawPath(x2,momPaths.sgd,'#60a5fa','SGD',W2,H2,scale);
+  if(momPaths.mom.length>1) drawPath(x2,momPaths.mom,'#4ade80','Momentum',W2,H2,scale);
+  if(momPaths.sgd.length<=1&&momPaths.mom.length<=1){
+    var sz=lossHeight(START_X,START_Y);
+    var sp=project3D(START_X,START_Y,sz,W2/2,H2*0.62,scale*0.9);
+    x2.fillStyle='#fff';x2.beginPath();x2.arc(sp[0],sp[1],5,0,Math.PI*2);x2.fill();
+    x2.font='600 10px DM Sans';x2.textAlign='left';x2.fillStyle='#fff';x2.fillText('Start',sp[0]+8,sp[1]-6);
+  }
+  // Legend
+  x2.fillStyle='rgba(0,0,0,0.5)';rr(x2,20,H2-35,220,27);x2.fill();
+  x2.font='600 10px DM Sans';x2.textAlign='left';
+  x2.fillStyle='#60a5fa';x2.fillText('■ SGD',30,H2-16);
+  x2.fillStyle='#4ade80';x2.fillText('■ Momentum',100,H2-16);
+};
+
+var momPaths={sgd:[],mom:[]};
+$('momRun').addEventListener('click',function(){
+  var lr=+$('momLr').value/1000;
+  var beta=+$('momBeta').value/100;
+  var fullSgd=runSGD(lr,200);
+  var fullMom=runMomentum(lr,beta,200);
+  momPaths={sgd:[],mom:[]};
+  var step=0,maxS=Math.max(fullSgd.length,fullMom.length);
+  stopAnim('mom');
+  var lastTime=0;
+  function tick(ts){
+    if(step<maxS){
+      if(ts-lastTime>50){
+        momPaths.sgd=fullSgd.slice(0,step+1);
+        momPaths.mom=fullMom.slice(0,step+1);
+        renders[2]();
+        step++;
+        lastTime=ts;
+      }
+      animFrames['mom']=requestAnimationFrame(tick);
+    }
+  }
+  animFrames['mom']=requestAnimationFrame(tick);
+});
+$('momReset').addEventListener('click',function(){stopAnim('mom');momPaths={sgd:[],mom:[]};renders[2]();});
+$('momLr').addEventListener('input',function(){stopAnim('mom');momPaths={sgd:[],mom:[]};renders[2]();});
+$('momBeta').addEventListener('input',function(){stopAnim('mom');momPaths={sgd:[],mom:[]};renders[2]();});
+
+// ========== S3: ADAGRAD & RMSPROP ==========
+renders[3]=()=>{
+  // AdaGrad vs RMSprop comparison
+  var c=$('c3a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // AdaGrad side
+  bx(x,30,20,430,260,'#facc1508','#facc1518','','');
+  x.font='600 14px DM Sans';x.fillStyle='#facc15';x.textAlign='center';x.fillText('AdaGrad',245,48);
+  x.font='11px DM Mono';x.fillStyle='#e0f2e8';x.fillText('G_t = G_{t-1} + g²',245,78);
+  x.font='10px DM Sans';x.fillStyle='#88b8a0';
+  x.fillText('Accumulates ALL squared gradients',245,105);
+  x.fillText('G only grows → lr only shrinks',245,125);
+  // Draw accumulation graph
+  x.strokeStyle='#facc1566';x.lineWidth=2;x.beginPath();
+  for(var i=0;i<200;i++){var gx=60+i*1.8,gy=270-Math.min(i*0.8,190);x.lineTo(gx,gy);}
+  x.stroke();
+  x.font='9px DM Sans';x.fillStyle='#facc15';x.textAlign='left';x.fillText('G grows forever →',280,120);
+  x.font='9px DM Sans';x.fillStyle='#f87171';x.textAlign='center';
+  x.fillText('Effective lr → 0',245,250);x.fillText('Training stops!',245,266);
+  // Arrow
+  ar(x,470,150,500,150,'#507860');
+  // RMSprop side
+  bx(x,500,20,430,260,'#fb923c08','#fb923c18','','');
+  x.font='600 14px DM Sans';x.fillStyle='#fb923c';x.textAlign='center';x.fillText('RMSprop',715,48);
+  x.font='11px DM Mono';x.fillStyle='#e0f2e8';x.fillText('E[g²] = β·E[g²] + (1-β)·g²',715,78);
+  x.font='10px DM Sans';x.fillStyle='#88b8a0';
+  x.fillText('Exponential moving average',715,105);
+  x.fillText('Old gradients decay away',715,125);
+  // Draw EMA graph
+  x.strokeStyle='#fb923c66';x.lineWidth=2;x.beginPath();
+  var ema=0;
+  for(var i=0;i<200;i++){
+    var g=Math.sin(i*0.1)*2+3;
+    ema=0.9*ema+0.1*g*g;
+    var gx=530+i*1.8,gy=270-Math.min(ema*8,190);
+    x.lineTo(gx,gy);
+  }
+  x.stroke();
+  x.font='9px DM Sans';x.fillStyle='#fb923c';x.textAlign='left';x.fillText('E[g²] stabilizes →',750,170);
+  x.font='9px DM Sans';x.fillStyle='#4ade80';x.textAlign='center';
+  x.fillText('Effective lr stays healthy',715,250);x.fillText('Training continues!',715,266);
+
+  // Training sim (3D)
+  var c2=$('c3b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  var ox=W2/2,oy=H2/2,scale=60;
+  drawContour(x2,W2,H2,ox,oy,scale);
+  var lr=+$('rmsLr').value/1000;
+  var beta=+$('rmsBeta').value/100;
+  $('rmsLrVal').textContent=lr.toFixed(3);
+  $('rmsBetaVal').textContent=beta.toFixed(2);
+  if(rmsPaths.rms.length>1) drawPath(x2,rmsPaths.rms,'#fb923c','RMSprop',W2,H2,scale);
+  if(rmsPaths.rms.length<=1){
+    var sz=lossHeight(START_X,START_Y);
+    var sp=project3D(START_X,START_Y,sz,W2/2,H2*0.62,scale*0.9);
+    x2.fillStyle='#fff';x2.beginPath();x2.arc(sp[0],sp[1],5,0,Math.PI*2);x2.fill();
+    x2.font='600 10px DM Sans';x2.textAlign='left';x2.fillStyle='#fff';x2.fillText('Start',sp[0]+8,sp[1]-6);
+  }
+  x2.fillStyle='rgba(0,0,0,0.5)';rr(x2,20,H2-35,460,27);x2.fill();
+  x2.font='10px DM Sans';x2.textAlign='left';
+  x2.fillStyle='#fb923c';x2.fillText('■ RMSprop — adapts per-axis, handles the elongated valley much better than SGD',30,H2-16);
+};
+
+var rmsPaths={rms:[]};
+$('rmsRun').addEventListener('click',function(){
+  var lr=+$('rmsLr').value/1000;
+  var beta=+$('rmsBeta').value/100;
+  var fullRms=runRMSprop(lr,beta,200);
+  rmsPaths={rms:[]};
+  var step=0;
+  stopAnim('rms');
+  var lastTime=0;
+  function tick(ts){
+    if(step<fullRms.length){
+      if(ts-lastTime>50){
+        rmsPaths.rms=fullRms.slice(0,step+1);
+        renders[3]();
+        step++;
+        lastTime=ts;
+      }
+      animFrames['rms']=requestAnimationFrame(tick);
+    }
+  }
+  animFrames['rms']=requestAnimationFrame(tick);
+});
+$('rmsReset').addEventListener('click',function(){stopAnim('rms');rmsPaths={rms:[]};renders[3]();});
+$('rmsLr').addEventListener('input',function(){stopAnim('rms');rmsPaths={rms:[]};renders[3]();});
+$('rmsBeta').addEventListener('input',function(){stopAnim('rms');rmsPaths={rms:[]};renders[3]();});
+
+// ========== S4: ADAM ==========
+renders[4]=()=>{
+  // Adam architecture
+  var c=$('c4a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Input
+  bx(x,30,120,120,60,'#fb923c11','#fb923c33','Gradient\ng_t','#fb923c');
+  // Two branches
+  ar(x,160,140,240,80,'#22d3ee66');
+  ar(x,160,160,240,220,'#fb923c66');
+  // 1st moment
+  bx(x,240,50,200,60,'#22d3ee11','#22d3ee33','','');
+  x.font='600 11px DM Sans';x.fillStyle='#22d3ee';x.textAlign='center';
+  x.fillText('1st Moment (Momentum)',340,72);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('m = β₁·m + (1-β₁)·g',340,95);
+  // 2nd moment
+  bx(x,240,190,200,60,'#fb923c11','#fb923c33','','');
+  x.font='600 11px DM Sans';x.fillStyle='#fb923c';x.textAlign='center';
+  x.fillText('2nd Moment (Adaptive)',340,212);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('v = β₂·v + (1-β₂)·g²',340,235);
+  // Bias correction
+  ar(x,450,80,530,80,'#22d3ee66');
+  ar(x,450,220,530,220,'#fb923c66');
+  bx(x,530,50,160,60,'#4ade8011','#4ade8033','','');
+  x.font='600 10px DM Sans';x.fillStyle='#4ade80';x.textAlign='center';
+  x.fillText('Bias Correction',610,70);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('m̂ = m/(1-β₁ᵗ)',610,92);
+  bx(x,530,190,160,60,'#4ade8011','#4ade8033','','');
+  x.font='600 10px DM Sans';x.fillStyle='#4ade80';x.textAlign='center';
+  x.fillText('Bias Correction',610,210);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('v̂ = v/(1-β₂ᵗ)',610,232);
+  // Combine
+  ar(x,700,80,770,140,'#22d3ee66');
+  ar(x,700,220,770,160,'#fb923c66');
+  bx(x,770,120,160,60,'#34d39911','#34d39933','','');
+  x.font='600 11px DM Sans';x.fillStyle='#34d399';x.textAlign='center';
+  x.fillText('Update',850,142);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('η·m̂/√(v̂+ε)',850,165);
+  // Annotation
+  x.font='10px DM Sans';x.fillStyle='#507860';x.textAlign='center';
+  x.fillText('β₁ = 0.9 (momentum decay) — controls how much past gradients influence the direction',W/2,295);
+  x.fillText('β₂ = 0.999 (adaptive rate decay) — controls how much past squared gradients influence the scaling',W/2,312);
+
+  // Training sim (3D)
+  var c2=$('c4b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  var ox=W2/2,oy=H2/2,scale=60;
+  drawContour(x2,W2,H2,ox,oy,scale);
+  var lr=+$('adamLr').value/1000;
+  $('adamLrVal').textContent=lr.toFixed(3);
+  if(adamPaths.adam.length>1) drawPath(x2,adamPaths.adam,'#22d3ee','Adam',W2,H2,scale);
+  if(adamPaths.adam.length<=1){
+    var sz=lossHeight(START_X,START_Y);
+    var sp=project3D(START_X,START_Y,sz,W2/2,H2*0.62,scale*0.9);
+    x2.fillStyle='#fff';x2.beginPath();x2.arc(sp[0],sp[1],5,0,Math.PI*2);x2.fill();
+    x2.font='600 10px DM Sans';x2.textAlign='left';x2.fillStyle='#fff';x2.fillText('Start',sp[0]+8,sp[1]-6);
+  }
+  x2.fillStyle='rgba(0,0,0,0.5)';rr(x2,20,H2-35,460,27);x2.fill();
+  x2.font='10px DM Sans';x2.textAlign='left';
+  x2.fillStyle='#22d3ee';x2.fillText('■ Adam — combines momentum smoothing with per-parameter adaptive rates',30,H2-16);
+};
+
+var adamPaths={adam:[]};
+$('adamRun').addEventListener('click',function(){
+  var lr=+$('adamLr').value/1000;
+  var fullAdam=runAdam(lr,200);
+  adamPaths={adam:[]};
+  var step=0;
+  stopAnim('adam');
+  var lastTime=0;
+  function tick(ts){
+    if(step<fullAdam.length){
+      if(ts-lastTime>50){
+        adamPaths.adam=fullAdam.slice(0,step+1);
+        renders[4]();
+        step++;
+        lastTime=ts;
+      }
+      animFrames['adam']=requestAnimationFrame(tick);
+    }
+  }
+  animFrames['adam']=requestAnimationFrame(tick);
+});
+$('adamReset').addEventListener('click',function(){stopAnim('adam');adamPaths={adam:[]};renders[4]();});
+$('adamLr').addEventListener('input',function(){stopAnim('adam');adamPaths={adam:[]};renders[4]();});
+
+// ========== S5: ADAMW ==========
+renders[5]=()=>{
+  var c=$('c5a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  // Two columns: Adam+L2 vs AdamW
+  // Adam+L2 side
+  bx(x,30,20,430,280,'#f8717108','#f8717118','','');
+  x.font='600 14px DM Sans';x.fillStyle='#f87171';x.textAlign='center';x.fillText('Adam + L2 Regularization',245,48);
+  // Flow
+  bx(x,60,65,160,35,'#fb923c08','#fb923c20','g = ∇L + λ·θ','#fb923c',10);
+  x.font='9px DM Sans';x.fillStyle='#f87171';x.textAlign='center';x.fillText('← regularization mixed in',305,85);
+  ar(x,140,105,140,120,'#507860');
+  bx(x,60,120,160,35,'#22d3ee08','#22d3ee20','m = β₁·m + (1-β₁)·g','#88b8a0',9);
+  ar(x,140,160,140,175,'#507860');
+  bx(x,60,175,160,35,'#fb923c08','#fb923c20','v = β₂·v + (1-β₂)·g²','#88b8a0',9);
+  ar(x,140,215,140,230,'#507860');
+  bx(x,60,230,160,35,'#f8717108','#f8717120','θ -= η · m̂/√(v̂+ε)','#f87171',9);
+  x.font='9px DM Sans';x.fillStyle='#f87171';x.textAlign='left';
+  x.fillText('Both task gradient AND regularization',260,140);
+  x.fillText('get divided by √v̂',260,155);
+  x.fillText('→ Large v̂ = less regularization',260,180);
+  x.fillText('→ Small v̂ = more regularization',260,195);
+  x.fillText('Regularization is UNEVEN',260,225);
+  x.font='600 10px DM Sans';
+  x.fillText('✗ Weight decay depends on gradient history',260,255);
+
+  // AdamW side
+  bx(x,500,20,430,280,'#4ade8008','#4ade8018','','');
+  x.font='600 14px DM Sans';x.fillStyle='#4ade80';x.textAlign='center';x.fillText('AdamW — Decoupled Weight Decay',715,48);
+  bx(x,530,65,160,35,'#fb923c08','#fb923c20','g = ∇L','#fb923c',10);
+  x.font='9px DM Sans';x.fillStyle='#4ade80';x.textAlign='center';x.fillText('← clean gradient only',775,85);
+  ar(x,610,105,610,120,'#507860');
+  bx(x,530,120,160,35,'#22d3ee08','#22d3ee20','m = β₁·m + (1-β₁)·g','#88b8a0',9);
+  ar(x,610,160,610,175,'#507860');
+  bx(x,530,175,160,35,'#fb923c08','#fb923c20','v = β₂·v + (1-β₂)·g²','#88b8a0',9);
+  ar(x,610,215,610,230,'#507860');
+  bx(x,530,230,180,35,'#4ade8008','#4ade8020','θ -= η·(m̂/√v̂ + λ·θ)','#4ade80',9);
+  x.font='9px DM Sans';x.fillStyle='#4ade80';x.textAlign='left';
+  x.fillText('Gradient update and weight decay',730,140);
+  x.fillText('are SEPARATE operations',730,155);
+  x.fillText('→ λ·θ is NOT divided by √v̂',730,180);
+  x.fillText('→ Every parameter decays equally',730,195);
+  x.fillText('Regularization is UNIFORM',730,225);
+  x.font='600 10px DM Sans';
+  x.fillText('✓ Weight decay independent of gradients',730,255);
+};
+
+// ========== S6: MUON ==========
+renders[6]=()=>{
+  // Muon algorithm diagram
+  var c=$('c6a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  x.font='600 13px DM Sans';x.fillStyle='#e0f2e8';x.textAlign='center';
+  x.fillText('Muon: Momentum + Orthogonalization via Newton-Schulz',W/2,25);
+  // Step 1: Nesterov momentum
+  bx(x,30,50,280,70,'#60a5fa08','#60a5fa20','','');
+  x.font='600 11px DM Sans';x.fillStyle='#60a5fa';x.textAlign='center';
+  x.fillText('Step 1: Nesterov Momentum',170,70);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('μ = β·μ + g',170,92);
+  x.font='9px DM Sans';x.fillStyle='#507860';
+  x.fillText('G = μ + β·(μ_new - μ_old)',170,110);
+  ar(x,320,85,370,85,'#60a5fa66');
+  // Step 2: Normalize
+  bx(x,370,50,180,70,'#facc1508','#facc1520','','');
+  x.font='600 11px DM Sans';x.fillStyle='#facc15';x.textAlign='center';
+  x.fillText('Step 2: Normalize',460,70);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('X₀ = G / ‖G‖_F',460,92);
+  x.font='9px DM Sans';x.fillStyle='#507860';
+  x.fillText('Scale to unit Frobenius norm',460,110);
+  ar(x,560,85,610,85,'#facc1566');
+  // Step 3: Newton-Schulz
+  bx(x,610,40,320,90,'#f8717108','#f8717120','','');
+  x.font='600 11px DM Sans';x.fillStyle='#f87171';x.textAlign='center';
+  x.fillText('Step 3: Newton-Schulz (5 iterations)',770,62);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('X = aX + b(X·Xᵀ·X) + c(Xᵀ·X)·X',770,85);
+  x.font='9px DM Sans';x.fillStyle='#507860';
+  x.fillText('Converges to orthogonal matrix',770,107);
+  x.fillText('a=3.4445, b=-4.7750, c=2.0315',770,122);
+  // Step 4: Scale and update
+  ar(x,770,140,770,165,'#f8717166');
+  bx(x,650,165,240,60,'#34d39908','#34d39920','','');
+  x.font='600 11px DM Sans';x.fillStyle='#34d399';x.textAlign='center';
+  x.fillText('Step 4: Scale & Update',770,185);
+  x.font='10px DM Mono';x.fillStyle='#88b8a0';
+  x.fillText('θ -= η · X · √(m×n)',770,208);
+  // Annotations
+  x.font='10px DM Sans';x.fillStyle='#507860';x.textAlign='center';
+  x.fillText('The Newton-Schulz iteration computes the polar decomposition: X → X·(XᵀX)^{-1/2}',W/2,260);
+  x.fillText('This makes all singular values equal to 1 — the update is equally energetic in all directions',W/2,280);
+  x.fillText('No per-parameter statistics needed (unlike Adam) — the matrix structure captures cross-parameter relationships',W/2,300);
+  x.fillText('Only works on 2D+ weight matrices — embeddings and biases still use AdamW',W/2,330);
+
+  // First-order vs second-order comparison
+  var c2=$('c6b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  // Left: gradient direction
+  bx(x2,30,20,420,240,'#60a5fa08','#60a5fa18','','');
+  x2.font='600 12px DM Sans';x2.fillStyle='#60a5fa';x2.textAlign='center';
+  x2.fillText('First-Order (Adam)',240,45);
+  // Draw elongated ellipse contour
+  x2.strokeStyle='rgba(96,165,250,0.2)';x2.lineWidth=1;
+  for(var r=1;r<=4;r++){
+    x2.beginPath();x2.ellipse(240,150,r*40,r*15,0,0,Math.PI*2);x2.stroke();
+  }
+  // Gradient arrow (points across narrow direction)
+  var gx=150,gy=110;
+  x2.strokeStyle='#fb923c';x2.lineWidth=2;x2.setLineDash([]);
+  ar(x2,gx,gy,gx+10,gy+50,'#fb923c');
+  x2.font='9px DM Sans';x2.fillStyle='#fb923c';x2.textAlign='left';x2.fillText('gradient',gx+14,gy+30);
+  x2.font='9px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+  x2.fillText('Gradient points across the valley (steep direction)',240,230);
+  x2.fillText('→ wastes steps bouncing back and forth',240,245);
+
+  // Right: second-order direction
+  bx(x2,510,20,420,240,'#f8717108','#f8717118','','');
+  x2.font='600 12px DM Sans';x2.fillStyle='#f87171';x2.textAlign='center';
+  x2.fillText('Second-Order (Muon)',720,45);
+  x2.strokeStyle='rgba(248,113,113,0.2)';x2.lineWidth=1;
+  for(var r=1;r<=4;r++){
+    x2.beginPath();x2.ellipse(720,150,r*40,r*15,0,0,Math.PI*2);x2.stroke();
+  }
+  // Newton direction (points toward minimum)
+  var gx2=630,gy2=110;
+  ar(x2,gx2,gy2,gx2+70,gy2+35,'#4ade80');
+  x2.font='9px DM Sans';x2.fillStyle='#4ade80';x2.textAlign='left';x2.fillText('ortho update',gx2+15,gy2+10);
+  x2.font='9px DM Sans';x2.fillStyle='#507860';x2.textAlign='center';
+  x2.fillText('Orthogonalized update accounts for curvature',720,230);
+  x2.fillText('→ steps directly toward the minimum',720,245);
+};
+
+// ========== S7: COMPARISON ==========
+renders[7]=()=>{
+  // All optimizers on same surface (3D)
+  var c=$('c7a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  var ox=W/2,oy=H/2,scale=60;
+  drawContour(x,W,H,ox,oy,scale);
+  // Draw all paths
+  var colors={sgd:'#60a5fa',mom:'#4ade80',rms:'#fb923c',adam:'#22d3ee',adamw:'#a78bfa',muon:'#f87171'};
+  if(cmpPaths.sgd.length>1) drawPath(x,cmpPaths.sgd,colors.sgd,'SGD',W,H,scale);
+  if(cmpPaths.mom.length>1) drawPath(x,cmpPaths.mom,colors.mom,'Momentum',W,H,scale);
+  if(cmpPaths.rms.length>1) drawPath(x,cmpPaths.rms,colors.rms,'RMSprop',W,H,scale);
+  if(cmpPaths.adam.length>1) drawPath(x,cmpPaths.adam,colors.adam,'Adam',W,H,scale);
+  if(cmpPaths.adamw.length>1) drawPath(x,cmpPaths.adamw,colors.adamw,'AdamW',W,H,scale);
+  if(cmpPaths.muon.length>1) drawPath(x,cmpPaths.muon,colors.muon,'Muon',W,H,scale);
+  if(cmpPaths.sgd.length<=1){
+    var sz=lossHeight(START_X,START_Y);
+    var sp=project3D(START_X,START_Y,sz,W/2,H*0.62,scale*0.9);
+    x.fillStyle='#fff';x.beginPath();x.arc(sp[0],sp[1],5,0,Math.PI*2);x.fill();
+    x.font='600 10px DM Sans';x.textAlign='left';x.fillStyle='#fff';x.fillText('Start',sp[0]+8,sp[1]-6);
+  }
+  // Legend with per-optimizer lr
+  x.fillStyle='rgba(0,0,0,0.6)';rr(x,20,H-68,920,62);x.fill();
+  x.font='600 9px DM Sans';x.textAlign='left';var lx=30,ly=H-48;
+  x.fillStyle=colors.sgd;x.fillText('■ SGD (η=0.018)',lx,ly);
+  x.fillStyle=colors.mom;x.fillText('■ Momentum (η=0.005)',lx+130,ly);
+  x.fillStyle=colors.rms;x.fillText('■ RMSprop (η=0.3)',lx+290,ly);
+  x.fillStyle=colors.adam;x.fillText('■ Adam (η=0.7)',lx+430,ly);
+  x.fillStyle=colors.adamw;x.fillText('■ AdamW (η=0.7, λ=0.05)',lx+560,ly);
+  x.fillStyle=colors.muon;x.fillText('■ Muon (η=0.05)',lx+740,ly);
+  x.font='9px DM Sans';x.fillStyle='rgba(255,255,255,0.4)';
+  x.fillText('Each optimizer uses its own tuned lr — adaptive optimizers normalize gradients internally so they can use much higher learning rates',lx,ly+16);
+
+  // Evolution chain
+  var c2=$('c7b'),{w:W2,h:H2,x:x2}=dpr(c2);x2.clearRect(0,0,W2,H2);
+  var chain=[
+    {l:'SGD',c:'#60a5fa',fix:'—',prob:'Zig-zags, one lr'},
+    {l:'Momentum',c:'#4ade80',fix:'Velocity accumulation',prob:'Still one lr'},
+    {l:'RMSprop',c:'#fb923c',fix:'Per-param adaptive lr',prob:'No momentum'},
+    {l:'Adam',c:'#22d3ee',fix:'Momentum + adaptive',prob:'Broken weight decay'},
+    {l:'AdamW',c:'#a78bfa',fix:'Decoupled decay',prob:'First-order only'},
+    {l:'Muon',c:'#f87171',fix:'Orthogonalization',prob:'Matrix params only'},
+  ];
+  var gap=W2/(chain.length+1);
+  chain.forEach(function(item,i){
+    var cx=gap*(i+1);
+    bx(x2,cx-55,30,110,40,item.c+'15',item.c+'40',item.l,item.c,11);
+    if(i<chain.length-1) ar(x2,cx+60,50,cx+gap-60,50,item.c+'66');
+    // Fix label (above)
+    if(i>0){
+      x2.font='8px DM Sans';x2.fillStyle='#4ade80';x2.textAlign='center';
+      x2.fillText('✓ '+item.fix,cx,22);
+    }
+    // Problem label (below)
+    x2.font='8px DM Sans';x2.fillStyle='#f87171';x2.textAlign='center';
+    x2.fillText('✗ '+item.prob,cx,88);
+  });
+
+  // Comparison table
+  var c3=$('c7c'),{w:W3,h:H3,x:x3}=dpr(c3);x3.clearRect(0,0,W3,H3);
+  var headers=['Optimizer','Tracks','Memory','Per-Param','Momentum','Second-Order','Best For'];
+  var rows=[
+    ['SGD','—','O(n)','No','No','No','Simple baselines'],
+    ['Momentum','velocity','O(n)','No','Yes','No','Vision (w/ schedule)'],
+    ['RMSprop','E[g²]','O(n)','Yes','No','No','RNNs, RL'],
+    ['Adam','m, v','O(2n)','Yes','Yes','No','General default'],
+    ['AdamW','m, v','O(2n)','Yes','Yes','No','LLMs, ViTs'],
+    ['Muon','μ','O(n)','Cross-param','Nesterov','Approx.','Large LLMs'],
+  ];
+  var colW=[90,70,60,70,70,80,130];
+  var startX=100;
+  // Header
+  x3.font='600 10px DM Sans';x3.fillStyle='#34d399';x3.textAlign='center';
+  var hx=startX;
+  headers.forEach(function(h,i){
+    x3.fillText(h,hx+colW[i]/2,25);
+    hx+=colW[i];
+  });
+  // Separator
+  x3.strokeStyle='#264030';x3.lineWidth=1;x3.beginPath();x3.moveTo(startX,35);x3.lineTo(startX+570,35);x3.stroke();
+  // Rows
+  var rowCols=['#60a5fa','#4ade80','#fb923c','#22d3ee','#a78bfa','#f87171'];
+  rows.forEach(function(row,ri){
+    var ry=55+ri*42;
+    x3.fillStyle=rowCols[ri]+'15';
+    rr(x3,startX-5,ry-12,580,34);x3.fill();
+    var rx=startX;
+    row.forEach(function(cell,ci){
+      x3.font=ci===0?'600 10px DM Sans':'10px DM Sans';
+      x3.fillStyle=ci===0?rowCols[ri]:'#88b8a0';
+      x3.textAlign='center';
+      x3.fillText(cell,rx+colW[ci]/2,ry+5);
+      rx+=colW[ci];
+    });
+  });
+};
+
+var cmpPaths={sgd:[],mom:[],rms:[],adam:[],adamw:[],muon:[]};
+$('cmpRun').addEventListener('click',function(){
+  // Each optimizer uses its own tuned lr — in practice you always tune lr per optimizer
+  var fullSgd=runSGD(0.018,200);            // high enough to show zig-zag
+  var fullMom=runMomentum(0.005,0.9,200);   // lower lr because momentum amplifies steps
+  var fullRms=runRMSprop(0.3,0.9,200);      // adaptive scaling normalizes gradients
+  var fullAdam=runAdam(0.7,200);             // bias correction → needs higher lr
+  var fullAdamW=runAdamW(0.7,0.05,200);      // decoupled weight decay pushes toward zero
+  var fullMuon=runMuon(0.05,0.7,200);          // curvature preconditioning → near second-order convergence
+  cmpPaths={sgd:[],mom:[],rms:[],adam:[],adamw:[],muon:[]};
+  var step=0;
+  var maxS=Math.max(fullSgd.length,fullMom.length,fullRms.length,fullAdam.length,fullAdamW.length,fullMuon.length);
+  stopAnim('cmp');
+  var lastTime=0;
+  function tick(ts){
+    if(step<maxS){
+      if(ts-lastTime>50){
+        cmpPaths.sgd=fullSgd.slice(0,step+1);
+        cmpPaths.mom=fullMom.slice(0,step+1);
+        cmpPaths.rms=fullRms.slice(0,step+1);
+        cmpPaths.adam=fullAdam.slice(0,step+1);
+        cmpPaths.adamw=fullAdamW.slice(0,step+1);
+        cmpPaths.muon=fullMuon.slice(0,step+1);
+        renders[7]();
+        step++;
+        lastTime=ts;
+      }
+      animFrames['cmp']=requestAnimationFrame(tick);
+    }
+  }
+  animFrames['cmp']=requestAnimationFrame(tick);
+});
+$('cmpReset').addEventListener('click',function(){stopAnim('cmp');cmpPaths={sgd:[],mom:[],rms:[],adam:[],adamw:[],muon:[]};renders[7]();});
+
+// ========== S8: SUMMARY ==========
+renders[8]=()=>{
+  var c=$('c8a'),{w:W,h:H,x}=dpr(c);x.clearRect(0,0,W,H);
+  var items=[
+    {l:'SGD',c:'#60a5fa',fix:'The foundation — simple gradient descent',prob:'Zig-zags on elongated surfaces, one learning rate for all, slow near saddle points',y:10},
+    {l:'SGD + Momentum',c:'#4ade80',fix:'Accumulates velocity → dampens oscillations, accelerates consistent directions',prob:'Still uses one global learning rate, no per-parameter adaptation',y:80},
+    {l:'AdaGrad → RMSprop',c:'#fb923c',fix:'Per-parameter adaptive learning rates via squared gradient history (EMA fixes decay)',prob:'No momentum — only adaptive scaling, no direction smoothing',y:150},
+    {l:'Adam',c:'#22d3ee',fix:'Combines momentum (1st moment) + adaptive rates (2nd moment) + bias correction',prob:'L2 regularization is broken — adaptive rates distort weight decay',y:220},
+    {l:'AdamW',c:'#a78bfa',fix:'Decouples weight decay from gradient update → uniform regularization',prob:'First-order only — no curvature info, treats parameters independently',y:290},
+    {l:'Muon',c:'#f87171',fix:'Orthogonalizes momentum via Newton-Schulz → cheap second-order, cross-param awareness',prob:'Only for matrix parameters — use AdamW for embeddings/biases',y:360},
+  ];
+  items.forEach(function(item,i){
+    bx(x,30,item.y,900,62,item.c+'08',item.c+'18','','');
+    x.font='600 12px DM Sans';x.fillStyle=item.c;x.textAlign='left';
+    x.fillText(item.l,50,item.y+18);
+    x.font='10px DM Sans';x.fillStyle='#4ade80';
+    x.fillText('✓ '+item.fix,50,item.y+38);
+    x.font='10px DM Sans';x.fillStyle='#f87171';
+    x.fillText('✗ '+item.prob,50,item.y+54);
+    if(i<items.length-1){
+      x.fillStyle='#507860';x.font='12px DM Sans';x.textAlign='center';x.fillText('↓',480,item.y+70);
+    }
+  });
+  x.font='600 11px DM Sans';x.fillStyle='#34d399';x.textAlign='center';
+  x.fillText('Each optimizer was born from the limitations of its predecessor',W/2,450);
+  x.fillText('Understanding WHY matters more than memorizing the update rules',W/2,468);
+};
+
+// Bind 3D controls to training sim canvases
+init3DControls('c0a');  // overview surface
+init3DControls('c1b');  // SGD sim
+init3DControls('c2b');  // Momentum sim
+init3DControls('c3b');  // RMSprop sim
+init3DControls('c4b');  // Adam sim
+init3DControls('c7a');  // Comparison sim
+
+// Resize handler
+var _rTimer;
+window.addEventListener('resize',function(){clearTimeout(_rTimer);_rTimer=setTimeout(draw,200);});
+
+// Init
+draw();
+</script>
+</body>
+</html>
