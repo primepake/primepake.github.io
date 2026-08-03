@@ -337,6 +337,15 @@ h2 {
 
 
 
+.tagline {
+  margin: 8px 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
 .one {
   width: 200px;
   height: auto;
